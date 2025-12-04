@@ -127,7 +127,7 @@ const Courses = () => {
    * @param {string} courseId - 과목 ID
    */
   const handleCourseClick = (courseId) => {
-    navigate(`/courses/${courseId}`);
+    navigate(`/course/${courseId}`);
   };
 
   /**

@@ -226,12 +226,13 @@ const CourseDetail = () => {
   ];
 
   /**
-   * 과제 목록
+   * 과제 및 시험 목록
    */
   const assignments = [
     {
       id: 1,
       title: 'SQL 기초 실습',
+      type: 'assignment',
       dueDate: '2024-10-05 23:59',
       status: 'submitted',
       score: '95/100',
@@ -240,6 +241,7 @@ const CourseDetail = () => {
     {
       id: 2,
       title: 'ER 다이어그램 설계',
+      type: 'assignment',
       dueDate: '2024-10-12 23:59',
       status: 'submitted',
       score: '88/100',
@@ -247,19 +249,53 @@ const CourseDetail = () => {
     },
     {
       id: 3,
+      title: '중간고사',
+      type: 'exam',
+      dueDate: '2024-10-15 10:00',
+      status: 'not_submitted',
+      score: null,
+      week: 8,
+      duration: '90분',
+      location: '공학관 301호',
+    },
+    {
+      id: 4,
       title: '정규화 실습',
+      type: 'assignment',
       dueDate: '2024-10-19 23:59',
       status: 'pending',
       score: null,
       week: 6,
     },
     {
-      id: 4,
+      id: 5,
+      title: '트랜잭션 퀴즈',
+      type: 'quiz',
+      dueDate: '2024-10-22 14:00',
+      status: 'not_submitted',
+      score: null,
+      week: 7,
+      duration: '30분',
+    },
+    {
+      id: 6,
       title: '트랜잭션 시뮬레이션',
+      type: 'assignment',
       dueDate: '2024-10-26 23:59',
       status: 'not_submitted',
       score: null,
       week: 7,
+    },
+    {
+      id: 7,
+      title: '기말고사',
+      type: 'exam',
+      dueDate: '2024-12-15 10:00',
+      status: 'not_submitted',
+      score: null,
+      week: 16,
+      duration: '120분',
+      location: '공학관 301호',
     },
   ];
 
@@ -465,11 +501,20 @@ const CourseDetail = () => {
           />
           <Tab
             icon={
-              <Badge badgeContent={1} color="error">
+              <Badge badgeContent={2} color="error">
                 <AssignmentIcon />
               </Badge>
             }
             label="과제"
+            iconPosition="start"
+          />
+          <Tab
+            icon={
+              <Badge badgeContent={2} color="warning">
+                <QuizIcon />
+              </Badge>
+            }
+            label="시험/퀴즈"
             iconPosition="start"
           />
           <Tab
@@ -594,7 +639,7 @@ const CourseDetail = () => {
       {/* 과제 탭 */}
       <TabPanel value={currentTab} index={1}>
         <Grid container spacing={3}>
-          {assignments.map((assignment) => (
+          {assignments.filter(a => a.type === 'assignment').map((assignment) => (
             <Grid item xs={12} md={6} key={assignment.id}>
               <Card
                 sx={{
@@ -604,10 +649,25 @@ const CourseDetail = () => {
                 }}
               >
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                      {assignment.title}
-                    </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                        {assignment.title}
+                      </Typography>
+                      <Chip
+                        label={
+                          assignment.type === 'exam' ? '시험' :
+                          assignment.type === 'quiz' ? '퀴즈' : '과제'
+                        }
+                        color={
+                          assignment.type === 'exam' ? 'error' :
+                          assignment.type === 'quiz' ? 'warning' : 'primary'
+                        }
+                        size="small"
+                        variant="outlined"
+                        sx={{ mt: 1 }}
+                      />
+                    </Box>
                     <Chip
                       label={getAssignmentStatusText(assignment.status)}
                       color={getAssignmentColor(assignment.status)}
@@ -617,14 +677,30 @@ const CourseDetail = () => {
 
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      {assignment.week}주차 과제
+                      {assignment.week}주차
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                       <AccessTimeIcon fontSize="small" color="action" />
                       <Typography variant="body2">
-                        마감일: {assignment.dueDate}
+                        {assignment.type === 'exam' || assignment.type === 'quiz' ? '시작 시간' : '마감일'}: {assignment.dueDate}
                       </Typography>
                     </Box>
+                    {assignment.duration && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <AccessTimeIcon fontSize="small" color="action" />
+                        <Typography variant="body2">
+                          시험 시간: {assignment.duration}
+                        </Typography>
+                      </Box>
+                    )}
+                    {assignment.location && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SchoolIcon fontSize="small" color="action" />
+                        <Typography variant="body2">
+                          장소: {assignment.location}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
 
                   {assignment.score && (
@@ -640,12 +716,115 @@ const CourseDetail = () => {
 
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     {assignment.status === 'not_submitted' ? (
-                      <Button variant="contained" fullWidth startIcon={<CreateIcon />}>
-                        과제 제출
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={
+                          assignment.type === 'exam' || assignment.type === 'quiz' ?
+                          <QuizIcon /> : <CreateIcon />
+                        }
+                      >
+                        {assignment.type === 'exam' ? '시험 응시' :
+                         assignment.type === 'quiz' ? '퀴즈 시작' : '과제 제출'}
                       </Button>
                     ) : (
                       <Button variant="outlined" fullWidth startIcon={<VisibilityIcon />}>
-                        제출물 확인
+                        {assignment.type === 'exam' || assignment.type === 'quiz' ? '결과 확인' : '제출물 확인'}
+                      </Button>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </TabPanel>
+
+      {/* 시험/퀴즈 탭 */}
+      <TabPanel value={currentTab} index={2}>
+        <Grid container spacing={3}>
+          {assignments.filter(a => a.type === 'exam' || a.type === 'quiz').map((assignment) => (
+            <Grid item xs={12} md={6} key={assignment.id}>
+              <Card
+                sx={{
+                  height: '100%',
+                  borderLeft: 4,
+                  borderColor: assignment.type === 'exam' ? 'error.main' : 'warning.main',
+                }}
+              >
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                        {assignment.title}
+                      </Typography>
+                      <Chip
+                        label={assignment.type === 'exam' ? '시험' : '퀴즈'}
+                        color={assignment.type === 'exam' ? 'error' : 'warning'}
+                        size="small"
+                        variant="outlined"
+                        sx={{ mt: 1 }}
+                      />
+                    </Box>
+                    <Chip
+                      label={getAssignmentStatusText(assignment.status)}
+                      color={getAssignmentColor(assignment.status)}
+                      size="small"
+                    />
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {assignment.week}주차
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <AccessTimeIcon fontSize="small" color="action" />
+                      <Typography variant="body2">
+                        시작 시간: {assignment.dueDate}
+                      </Typography>
+                    </Box>
+                    {assignment.duration && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <AccessTimeIcon fontSize="small" color="action" />
+                        <Typography variant="body2">
+                          시험 시간: {assignment.duration}
+                        </Typography>
+                      </Box>
+                    )}
+                    {assignment.location && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SchoolIcon fontSize="small" color="action" />
+                        <Typography variant="body2">
+                          장소: {assignment.location}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+
+                  {assignment.score && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        점수
+                      </Typography>
+                      <Typography variant="h5" color="primary">
+                        {assignment.score}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {assignment.status === 'not_submitted' ? (
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={<QuizIcon />}
+                        color={assignment.type === 'exam' ? 'error' : 'warning'}
+                      >
+                        {assignment.type === 'exam' ? '시험 응시' : '퀴즈 시작'}
+                      </Button>
+                    ) : (
+                      <Button variant="outlined" fullWidth startIcon={<VisibilityIcon />}>
+                        결과 확인
                       </Button>
                     )}
                   </Box>
@@ -657,7 +836,7 @@ const CourseDetail = () => {
       </TabPanel>
 
       {/* 공지사항 탭 */}
-      <TabPanel value={currentTab} index={2}>
+      <TabPanel value={currentTab} index={3}>
         <List>
           {notices.map((notice, index) => (
             <React.Fragment key={notice.id}>
@@ -704,35 +883,28 @@ const CourseDetail = () => {
       </TabPanel>
 
       {/* 질의응답 탭 */}
-      <TabPanel value={currentTab} index={3}>
-        <Box sx={{ mb: 3 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={10}>
-              <TextField
-                fullWidth
-                placeholder="질문 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<CreateIcon />}
-                sx={{ height: '100%' }}
-              >
-                질문하기
-              </Button>
-            </Grid>
-          </Grid>
+      <TabPanel value={currentTab} index={4}>
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            placeholder="질문 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<CreateIcon />}
+            sx={{ minWidth: 120 }}
+          >
+            질문하기
+          </Button>
         </Box>
 
         <List>

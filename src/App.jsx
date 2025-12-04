@@ -33,6 +33,7 @@ import Courses from './pages/Courses';
 import Community from './pages/Community';
 import CourseRegistration from './pages/CourseRegistration';
 import CourseDetail from './pages/CourseDetail';
+import CourseSchedule from './pages/CourseSchedule';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
@@ -77,12 +78,12 @@ function App() {
             {/* 대시보드 */}
             <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* 강의 관련 라우트 */}
+            {/* 강의 관련 라우트 - 순서 중요: 구체적인 경로를 먼저 */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/all" element={<Courses />} />
             <Route path="/courses/my" element={<Courses />} />
-            <Route path="/courses/schedule" element={<TempPage title="강의 일정" />} />
-            <Route path="/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/courses/schedule" element={<CourseSchedule />} />
+            <Route path="/course/:courseId" element={<CourseDetail />} />
 
             {/* 수강신청 */}
             <Route path="/registration" element={<CourseRegistration />} />
