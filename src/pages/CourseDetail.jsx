@@ -63,6 +63,8 @@ import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import GroupIcon from '@mui/icons-material/Group';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import QuizIcon from '@mui/icons-material/Quiz';
+import SchoolIcon from '@mui/icons-material/School';
 
 /**
  * 탭 패널 컴포넌트
