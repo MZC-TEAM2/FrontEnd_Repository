@@ -52,10 +52,13 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import PersonIcon from '@mui/icons-material/Person';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 /**
  * 메뉴 아이템 설정
  *
+ * MZC 대학교 학생용 메뉴 구조
  * title: 메뉴 이름
  * path: 이동할 경로
  * icon: 표시할 아이콘
@@ -65,34 +68,40 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
  */
 const menuItems = [
   {
-    title: '대시보드',
+    title: '학습 홈',
     path: '/dashboard',
     icon: <DashboardIcon />,
-    description: '전체 현황 보기',
+    description: '나의 학습 현황',
   },
   {
-    title: '강의',
+    title: '수강 과목',
     path: '/courses',
     icon: <SchoolIcon />,
-    description: '수강 중인 강의',
+    description: '이번 학기 수강 과목',
     children: [
-      { title: '전체 강의', path: '/courses/all', icon: <MenuBookIcon /> },
-      { title: '내 강의', path: '/courses/my', icon: <VideoLibraryIcon /> },
-      { title: '강의 일정', path: '/courses/schedule', icon: <CalendarMonthIcon /> },
+      { title: '전체 과목', path: '/courses/all', icon: <MenuBookIcon /> },
+      { title: '수강 중', path: '/courses/my', icon: <VideoLibraryIcon /> },
+      { title: '시간표', path: '/courses/schedule', icon: <CalendarMonthIcon /> },
     ],
   },
   {
     title: '과제',
     path: '/assignments',
     icon: <AssignmentIcon />,
-    description: '과제 및 제출',
-    badge: '3', // 미완료 과제 수
+    description: '과제 제출 관리',
+    badge: '3', // 미제출 과제 수
   },
   {
-    title: '퀴즈/시험',
+    title: '시험/퀴즈',
     path: '/exams',
     icon: <QuizIcon />,
-    description: '평가 및 시험',
+    description: '중간고사/기말고사',
+  },
+  {
+    title: '출석',
+    path: '/attendance',
+    icon: <AccessTimeIcon />,
+    description: '출석 현황 확인',
   },
   {
     divider: true, // 구분선
@@ -101,33 +110,40 @@ const menuItems = [
     title: '커뮤니티',
     path: '/community',
     icon: <ForumIcon />,
-    description: '토론 및 Q&A',
+    description: '학교 커뮤니티',
     children: [
-      { title: '공지사항', path: '/community/notices', icon: <NotificationsIcon /> },
+      { title: '학사 공지', path: '/community/notices', icon: <NotificationsIcon /> },
       { title: '자유게시판', path: '/community/board', icon: <ForumIcon /> },
-      { title: 'Q&A', path: '/community/qna', icon: <QuizIcon /> },
+      { title: '스터디 모집', path: '/community/study', icon: <GroupIcon /> },
+      { title: '질문/답변', path: '/community/qna', icon: <QuizIcon /> },
     ],
   },
   {
-    title: '학습자 관리',
-    path: '/students',
-    icon: <GroupIcon />,
-    description: '학생 정보 관리',
+    title: '성적 조회',
+    path: '/grades',
+    icon: <AssessmentIcon />,
+    description: '성적 및 학점 확인',
   },
   {
-    title: '성적/통계',
-    path: '/analytics',
-    icon: <AssessmentIcon />,
-    description: '성적 및 분석',
+    title: '학사 일정',
+    path: '/calendar',
+    icon: <CalendarMonthIcon />,
+    description: '학사 일정 확인',
   },
   {
     divider: true, // 구분선
   },
   {
+    title: '내 정보',
+    path: '/profile',
+    icon: <PersonIcon />,
+    description: '학생 정보 관리',
+  },
+  {
     title: '설정',
     path: '/settings',
     icon: <SettingsIcon />,
-    description: '시스템 설정',
+    description: '알림 설정',
   },
 ];
 
@@ -200,18 +216,18 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
             width: 48,
             height: 48,
             bgcolor: theme.palette.primary.main,
-            fontSize: '1.5rem',
-            fontWeight: 600,
+            fontSize: '1.2rem',
+            fontWeight: 700,
           }}
         >
-          L
+          MZC
         </Avatar>
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
-            LMS System
+            MZC 대학교
           </Typography>
           <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-            Learning Management
+            학습관리시스템
           </Typography>
         </Box>
       </Box>
@@ -228,10 +244,10 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-          환영합니다!
+          2024학년도 2학기
         </Typography>
         <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-          백엔드 개발자님
+          컴퓨터공학과 3학년
         </Typography>
       </Box>
 
@@ -350,7 +366,7 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
         }}
       >
         <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-          © 2024 LMS System
+          © 2024 MZC University
         </Typography>
       </Box>
     </Box>
