@@ -54,6 +54,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
 
 /**
  * 메뉴 아이템 설정
@@ -83,6 +84,12 @@ const menuItems = [
       { title: '수강 중', path: '/courses/my', icon: <VideoLibraryIcon /> },
       { title: '시간표', path: '/courses/schedule', icon: <CalendarMonthIcon /> },
     ],
+  },
+  {
+    title: '수강신청',
+    path: '/registration',
+    icon: <HowToRegIcon />,
+    description: '수강신청 및 정정',
   },
   {
     title: '과제',
