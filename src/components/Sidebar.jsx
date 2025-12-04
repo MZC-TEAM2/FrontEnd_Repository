@@ -40,8 +40,6 @@ import {
 // Material UI 아이콘 임포트
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SchoolIcon from '@mui/icons-material/School';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import QuizIcon from '@mui/icons-material/Quiz';
 import ForumIcon from '@mui/icons-material/Forum';
 import GroupIcon from '@mui/icons-material/Group';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -53,7 +51,8 @@ import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
+import QuizIcon from '@mui/icons-material/Quiz';
 
 /**
  * 메뉴 아이템 설정
@@ -85,23 +84,10 @@ const menuItems = [
     ],
   },
   {
-    title: '과제',
-    path: '/assignments',
-    icon: <AssignmentIcon />,
-    description: '과제 제출 관리',
-    badge: '3', // 미제출 과제 수
-  },
-  {
-    title: '시험/퀴즈',
-    path: '/exams',
-    icon: <QuizIcon />,
-    description: '중간고사/기말고사',
-  },
-  {
-    title: '출석',
-    path: '/attendance',
-    icon: <AccessTimeIcon />,
-    description: '출석 현황 확인',
+    title: '수강신청',
+    path: '/registration',
+    icon: <HowToRegIcon />,
+    description: '수강신청 및 정정',
   },
   {
     divider: true, // 구분선
@@ -366,7 +352,7 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
         }}
       >
         <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-          © 2024 MZC University
+          © 2025 MZC University
         </Typography>
       </Box>
     </Box>

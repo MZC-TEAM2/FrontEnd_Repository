@@ -13,7 +13,7 @@
 /* variables.css에 정의 */
 :root {
   --primary: #007bff;
-  --spacing-md: 16px;
+  --spacing-md: 16x;
 }
 
 /* 컴포넌트 CSS에서 사용 */

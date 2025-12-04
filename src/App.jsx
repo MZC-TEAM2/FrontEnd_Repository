@@ -31,6 +31,10 @@ import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
 import Community from './pages/Community';
+import CourseRegistration from './pages/CourseRegistration';
+import CourseDetail from './pages/CourseDetail';
+import CourseSchedule from './pages/CourseSchedule';
+import Grades from './pages/Grades';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
@@ -75,11 +79,15 @@ function App() {
             {/* 대시보드 */}
             <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* 강의 관련 라우트 */}
+            {/* 강의 관련 라우트 - 순서 중요: 구체적인 경로를 먼저 */}
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/all" element={<Courses />} />
             <Route path="/courses/my" element={<Courses />} />
-            <Route path="/courses/schedule" element={<TempPage title="강의 일정" />} />
+            <Route path="/courses/schedule" element={<CourseSchedule />} />
+            <Route path="/course/:courseId" element={<CourseDetail />} />
+
+            {/* 수강신청 */}
+            <Route path="/registration" element={<CourseRegistration />} />
 
             {/* 과제 */}
             <Route path="/assignments" element={<TempPage title="과제" />} />
@@ -96,8 +104,8 @@ function App() {
             {/* 학습자 관리 */}
             <Route path="/students" element={<TempPage title="학습자 관리" />} />
 
-            {/* 성적/통계 */}
-            <Route path="/analytics" element={<TempPage title="성적/통계" />} />
+            {/* 성적 조회 */}
+            <Route path="/grades" element={<Grades />} />
 
             {/* 설정 */}
             <Route path="/settings" element={<TempPage title="설정" />} />
