@@ -19,6 +19,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+// App.css 제거 - Material UI 스타일 사용
 
 // 테마 설정 임포트
 import theme from './theme/theme';
