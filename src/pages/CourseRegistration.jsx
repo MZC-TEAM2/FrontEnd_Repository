@@ -328,7 +328,7 @@ const CourseRegistration = () => {
 
       <Grid container spacing={3}>
         {/* 왼쪽: 과목 목록 및 검색 */}
-        <Grid item xs={12} lg={8}>
+        <Grid item xs={12} md={7}>
           <Paper sx={{ p: 3 }}>
             <Tabs value={tabValue} onChange={(e, val) => setTabValue(val)} sx={{ mb: 3 }}>
               <Tab label="개설 과목" />
@@ -617,54 +617,66 @@ const CourseRegistration = () => {
         </Grid>
 
         {/* 오른쪽: 시간표 및 요약 */}
-        <Grid item xs={12} lg={4}>
-          {/* 학점 요약 */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                수강신청 현황
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+        <Grid item xs={12} md={5}>
+          <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
+            {/* 시간표 미리보기 */}
+            <Box sx={{ flex: 1.5 }}>
+              <TimeTable courses={[...registered, ...cart]} isPreview={true} />
+            </Box>
 
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  신청 완료
-                </Typography>
-                <Typography variant="h5" color="primary">
-                  {registeredCredits}학점 / {registered.length}과목
-                </Typography>
-              </Box>
+            {/* 학점 요약 */}
+            <Box sx={{ flex: 1 }}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    수강신청 현황
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
 
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  장바구니
-                </Typography>
-                <Typography variant="h5" color="warning.main">
-                  {totalCredits}학점 / {cart.length}과목
-                </Typography>
-              </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      신청 완료
+                    </Typography>
+                    <Typography variant="h5" color="primary">
+                      {registeredCredits}학점
+                    </Typography>
+                    <Typography variant="body2">
+                      {registered.length}과목
+                    </Typography>
+                  </Box>
 
-              <Divider sx={{ my: 2 }} />
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      장바구니
+                    </Typography>
+                    <Typography variant="h5" color="warning.main">
+                      {totalCredits}학점
+                    </Typography>
+                    <Typography variant="body2">
+                      {cart.length}과목
+                    </Typography>
+                  </Box>
 
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  총 신청 학점
-                </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {registeredCredits + totalCredits} / 21
-                </Typography>
-              </Box>
+                  <Divider sx={{ my: 2 }} />
 
-              {registeredCredits + totalCredits > 18 && (
-                <Alert severity="warning" sx={{ mt: 2 }}>
-                  수강 학점이 18학점을 초과했습니다.
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      총 신청 학점
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 600 }}>
+                      {registeredCredits + totalCredits}/21
+                    </Typography>
+                  </Box>
 
-          {/* 시간표 미리보기 */}
-          <TimeTable courses={[...registered, ...cart]} isPreview={true} />
+                  {registeredCredits + totalCredits > 18 && (
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                      18학점 초과
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
         </Grid>
       </Grid>
     </Box>

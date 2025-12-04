@@ -34,6 +34,7 @@ import Community from './pages/Community';
 import CourseRegistration from './pages/CourseRegistration';
 import CourseDetail from './pages/CourseDetail';
 import CourseSchedule from './pages/CourseSchedule';
+import Grades from './pages/Grades';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
@@ -103,8 +104,8 @@ function App() {
             {/* 학습자 관리 */}
             <Route path="/students" element={<TempPage title="학습자 관리" />} />
 
-            {/* 성적/통계 */}
-            <Route path="/analytics" element={<TempPage title="성적/통계" />} />
+            {/* 성적 조회 */}
+            <Route path="/grades" element={<Grades />} />
 
             {/* 설정 */}
             <Route path="/settings" element={<TempPage title="설정" />} />
