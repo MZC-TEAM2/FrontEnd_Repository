@@ -1,14 +1,14 @@
 /**
  * Dashboard 페이지
  *
- * LMS 시스템의 대시보드 페이지입니다.
- * 전체적인 학습 현황과 통계를 한눈에 볼 수 있습니다.
+ * MZC 대학교 LMS 시스템의 대시보드 페이지입니다.
+ * 학생의 전체적인 학습 현황과 학사 정보를 한눈에 볼 수 있습니다.
  *
  * 주요 기능:
- * - 학습 진행률 표시
+ * - 이번 학기 수강 과목 현황
  * - 최근 활동 내역
- * - 주요 통계 카드
- * - 일정 및 마감일 표시
+ * - 과제 및 시험 일정
+ * - 학점 및 출석 현황
  */
 
 import React from 'react';
@@ -106,49 +106,49 @@ const Dashboard = () => {
   // 예시 데이터 (실제로는 API에서 가져옴)
   const stats = [
     {
-      title: '수강 중인 강의',
-      value: '5',
-      subtitle: '이번 주 2개 완료',
+      title: '수강 과목',
+      value: '6',
+      subtitle: '총 18학점',
       icon: <SchoolIcon />,
       color: 'primary',
       progress: 65,
     },
     {
-      title: '진행 중인 과제',
+      title: '미제출 과제',
       value: '3',
-      subtitle: '마감 임박 1개',
+      subtitle: '오늘 마감 1개',
       icon: <AssignmentIcon />,
       color: 'warning',
       progress: 40,
     },
     {
-      title: '예정된 시험',
+      title: '이번 주 시험',
       value: '2',
-      subtitle: '다음 시험: 3일 후',
+      subtitle: '중간고사 기간',
       icon: <QuizIcon />,
       color: 'error',
     },
     {
-      title: '학습 시간',
-      value: '24h',
-      subtitle: '이번 주 누적',
+      title: '출석률',
+      value: '92%',
+      subtitle: '결석 2회, 지각 1회',
       icon: <AccessTimeIcon />,
       color: 'success',
-      progress: 80,
+      progress: 92,
     },
   ];
 
   const recentActivities = [
-    { title: 'React 기초 강의 완료', time: '2시간 전', type: 'course' },
-    { title: '과제 제출: JavaScript 실습', time: '5시간 전', type: 'assignment' },
-    { title: '퀴즈 응시: HTML/CSS', time: '1일 전', type: 'quiz' },
-    { title: '토론 참여: 프론트엔드 트렌드', time: '2일 전', type: 'forum' },
+    { title: '데이터베이스 5강 수강 완료', time: '2시간 전', type: 'course' },
+    { title: '알고리즘 과제 #3 제출', time: '5시간 전', type: 'assignment' },
+    { title: '운영체제 퀴즈 응시', time: '1일 전', type: 'quiz' },
+    { title: '스터디 모집 게시글 작성', time: '2일 전', type: 'forum' },
   ];
 
   const upcomingSchedule = [
-    { title: 'Node.js 라이브 세션', date: '12월 5일 14:00', type: 'live' },
-    { title: '중간 프로젝트 제출', date: '12월 7일 23:59', type: 'deadline' },
-    { title: 'React 심화 퀴즈', date: '12월 8일 10:00', type: 'quiz' },
+    { title: '데이터베이스 중간고사', date: '10월 15일 10:00', type: 'quiz' },
+    { title: '알고리즘 과제 #4 마감', date: '10월 16일 23:59', type: 'deadline' },
+    { title: '캡스톤디자인 발표', date: '10월 18일 14:00', type: 'live' },
   ];
 
   return (
@@ -156,10 +156,10 @@ const Dashboard = () => {
       {/* 페이지 헤더 */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
-          대시보드
+          학습 홈
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          안녕하세요! 오늘도 열심히 학습해보세요.
+          MZC 대학교 | 2024학년도 2학기 | 컴퓨터공학과
         </Typography>
       </Box>
 
@@ -293,47 +293,113 @@ const Dashboard = () => {
           </Paper>
         </Grid>
 
-        {/* 학습 진행률 */}
+        {/* 이번 학기 수강 과목 진행률 */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-              주간 학습 진행률
+              이번 학기 수강 과목 (2024-2학기)
             </Typography>
 
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">React 기초</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      CS301 - 데이터베이스
+                    </Typography>
                     <Typography variant="body2" color="primary">
-                      75%
+                      8주차/16주
                     </Typography>
                   </Box>
-                  <LinearProgress variant="determinate" value={75} sx={{ height: 8, borderRadius: 4 }} />
+                  <LinearProgress variant="determinate" value={50} sx={{ height: 8, borderRadius: 4 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    담당교수: 김교수 | 3학점 | 전공필수
+                  </Typography>
                 </Box>
               </Grid>
 
               <Grid item xs={12} md={4}>
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">JavaScript 심화</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      CS302 - 알고리즘
+                    </Typography>
                     <Typography variant="body2" color="primary">
-                      60%
+                      8주차/16주
                     </Typography>
                   </Box>
-                  <LinearProgress variant="determinate" value={60} sx={{ height: 8, borderRadius: 4 }} />
+                  <LinearProgress variant="determinate" value={50} sx={{ height: 8, borderRadius: 4 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    담당교수: 이교수 | 3학점 | 전공필수
+                  </Typography>
                 </Box>
               </Grid>
 
               <Grid item xs={12} md={4}>
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Node.js 입문</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      CS401 - 운영체제
+                    </Typography>
                     <Typography variant="body2" color="primary">
-                      30%
+                      8주차/16주
                     </Typography>
                   </Box>
-                  <LinearProgress variant="determinate" value={30} sx={{ height: 8, borderRadius: 4 }} />
+                  <LinearProgress variant="determinate" value={50} sx={{ height: 8, borderRadius: 4 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    담당교수: 박교수 | 3학점 | 전공선택
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      CS402 - 소프트웨어공학
+                    </Typography>
+                    <Typography variant="body2" color="primary">
+                      8주차/16주
+                    </Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={50} sx={{ height: 8, borderRadius: 4 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    담당교수: 최교수 | 3학점 | 전공선택
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      CS403 - 캡스톤디자인
+                    </Typography>
+                    <Typography variant="body2" color="primary">
+                      8주차/16주
+                    </Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={50} sx={{ height: 8, borderRadius: 4 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    담당교수: 정교수 | 3학점 | 전공필수
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      GE201 - 기술과 창업
+                    </Typography>
+                    <Typography variant="body2" color="primary">
+                      8주차/16주
+                    </Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={50} sx={{ height: 8, borderRadius: 4 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    담당교수: 강교수 | 3학점 | 교양선택
+                  </Typography>
                 </Box>
               </Grid>
             </Grid>
