@@ -176,9 +176,9 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
 
   // 알림 데이터 (예시)
   const notifications = [
-    { id: 1, title: '새 과제가 등록되었습니다', time: '5분 전' },
-    { id: 2, title: '강의 일정이 변경되었습니다', time: '1시간 전' },
-    { id: 3, title: '퀴즈 마감일이 임박했습니다', time: '3시간 전' },
+    { id: 1, title: '데이터베이스 과제가 등록되었습니다', time: '5분 전' },
+    { id: 2, title: '알고리즘 강의실이 변경되었습니다', time: '1시간 전' },
+    { id: 3, title: '운영체제 중간고사 공지', time: '3시간 전' },
   ];
 
   return (
@@ -222,7 +222,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
               color: theme.palette.primary.main,
             }}
           >
-            학습 관리 시스템
+            MZC 대학교 LMS
           </Typography>
         )}
 
@@ -333,10 +333,10 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         {/* 사용자 정보 헤더 */}
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            백엔드 개발자
+            김학생
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            developer@example.com
+            202012345@mzc.ac.kr
           </Typography>
         </Box>
         <Divider />
