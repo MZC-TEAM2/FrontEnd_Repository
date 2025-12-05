@@ -13,11 +13,7 @@ import {
   Alert,
   InputAdornment,
   IconButton,
-  FormControl,
-  InputLabel,
-  Select,
   MenuItem,
-  FormHelperText,
   Grid,
   Divider,
 } from '@mui/material';
@@ -144,12 +140,6 @@ const SignUp = () => {
       newErrors.name = '이름은 2~50자여야 합니다';
     }
 
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = '전화번호를 입력해주세요';
-    } else if (!/^010-\d{4}-\d{4}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = '올바른 전화번호 형식이 아닙니다 (010-0000-0000)';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -171,6 +161,12 @@ const SignUp = () => {
 
     if (formData.userType === 'STUDENT' && !formData.grade) {
       newErrors.grade = '학년을 선택해주세요';
+    }
+
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = '전화번호를 입력해주세요';
+    } else if (!/^010\d{8}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = '올바른 전화번호 형식이 아닙니다 (01012345678)';
     }
 
     setErrors(newErrors);
@@ -243,23 +239,20 @@ const SignUp = () => {
     navigate('/login');
   };
 
-  // Dummy data for colleges and departments
+  // Colleges and departments data (matching backend database)
   const colleges = [
-    { id: 1, name: '공과대학' },
-    { id: 2, name: '인문대학' },
-    { id: 3, name: '자연과학대학' },
-    { id: 4, name: '경영대학' },
+    { id: 1, name: '공과대학', code: 'ENG' },
+    { id: 2, name: '경영대학', code: 'BUS' },
+    { id: 3, name: '인문대학', code: 'HUM' },
   ];
 
   const departments = [
-    { id: 1, name: '컴퓨터공학과', collegeId: 1 },
-    { id: 2, name: '전자공학과', collegeId: 1 },
-    { id: 3, name: '기계공학과', collegeId: 1 },
-    { id: 4, name: '국어국문학과', collegeId: 2 },
-    { id: 5, name: '영어영문학과', collegeId: 2 },
-    { id: 6, name: '수학과', collegeId: 3 },
-    { id: 7, name: '물리학과', collegeId: 3 },
-    { id: 8, name: '경영학과', collegeId: 4 },
+    { id: 1, name: '컴퓨터공학과', code: 'CS', collegeId: 1 },
+    { id: 2, name: '전자공학과', code: 'EE', collegeId: 1 },
+    { id: 3, name: '경영학과', code: 'BA', collegeId: 2 },
+    { id: 4, name: '회계학과', code: 'ACC', collegeId: 2 },
+    { id: 5, name: '국문학과', code: 'KOR', collegeId: 3 },
+    { id: 6, name: '영문학과', code: 'ENG', collegeId: 3 },
   ];
 
   const getStepContent = (step) => {
@@ -461,25 +454,6 @@ const SignUp = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    name="phoneNumber"
-                    label="전화번호"
-                    placeholder="010-0000-0000"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    error={!!errors.phoneNumber}
-                    helperText={errors.phoneNumber}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Phone color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
               </Grid>
             </Box>
           </Box>
@@ -497,51 +471,82 @@ const SignUp = () => {
 
             <Box sx={{ mt: 3 }}>
               <Grid container spacing={2}>
+                {/* 1단계: 사용자 유형 선택 */}
                 <Grid item xs={12}>
-                  <FormControl fullWidth error={!!errors.userType}>
-                    <InputLabel>사용자 유형</InputLabel>
-                    <Select
-                      name="userType"
-                      value={formData.userType}
-                      onChange={handleChange}
-                      label="사용자 유형"
-                    >
-                      <MenuItem value="STUDENT">학생</MenuItem>
-                      <MenuItem value="PROFESSOR">교수</MenuItem>
-                    </Select>
-                    {errors.userType && <FormHelperText>{errors.userType}</FormHelperText>}
-                  </FormControl>
+                  <TextField
+                    fullWidth
+                    select
+                    name="userType"
+                    label="사용자 유형"
+                    value={formData.userType}
+                    onChange={handleChange}
+                    error={!!errors.userType}
+                    helperText={errors.userType || "학생 또는 교수를 선택해주세요"}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <School color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  >
+                    <MenuItem value="">선택하세요</MenuItem>
+                    <MenuItem value="STUDENT">학생</MenuItem>
+                    <MenuItem value="PROFESSOR">교수</MenuItem>
+                  </TextField>
                 </Grid>
 
-                <Grid item xs={12}>
-                  <FormControl fullWidth error={!!errors.collegeId}>
-                    <InputLabel>대학</InputLabel>
-                    <Select
+                {/* 2단계: 사용자 유형을 선택한 후 대학 선택 */}
+                {formData.userType && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      select
                       name="collegeId"
+                      label="대학"
                       value={formData.collegeId}
                       onChange={handleChange}
-                      label="대학"
+                      error={!!errors.collegeId}
+                      helperText={errors.collegeId || "소속 대학을 선택해주세요"}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <School color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
                     >
+                      <MenuItem value="">선택하세요</MenuItem>
                       {colleges.map((college) => (
                         <MenuItem key={college.id} value={college.id}>
                           {college.name}
                         </MenuItem>
                       ))}
-                    </Select>
-                    {errors.collegeId && <FormHelperText>{errors.collegeId}</FormHelperText>}
-                  </FormControl>
-                </Grid>
+                    </TextField>
+                  </Grid>
+                )}
 
-                <Grid item xs={12}>
-                  <FormControl fullWidth error={!!errors.departmentId}>
-                    <InputLabel>학과</InputLabel>
-                    <Select
+                {/* 3단계: 대학을 선택한 후 학과 선택 */}
+                {formData.collegeId && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      select
                       name="departmentId"
+                      label="학과"
                       value={formData.departmentId}
                       onChange={handleChange}
-                      label="학과"
-                      disabled={!formData.collegeId}
+                      error={!!errors.departmentId}
+                      helperText={errors.departmentId || "소속 학과를 선택해주세요"}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <School color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
                     >
+                      <MenuItem value="">선택하세요</MenuItem>
                       {departments
                         .filter(dept => dept.collegeId === Number(formData.collegeId))
                         .map((dept) => (
@@ -549,28 +554,60 @@ const SignUp = () => {
                             {dept.name}
                           </MenuItem>
                         ))}
-                    </Select>
-                    {errors.departmentId && <FormHelperText>{errors.departmentId}</FormHelperText>}
-                  </FormControl>
-                </Grid>
+                    </TextField>
+                  </Grid>
+                )}
 
-                {formData.userType === 'STUDENT' && (
+                {/* 4단계: 학생인 경우 학년 선택 */}
+                {formData.userType === 'STUDENT' && formData.departmentId && (
                   <Grid item xs={12}>
-                    <FormControl fullWidth error={!!errors.grade}>
-                      <InputLabel>학년</InputLabel>
-                      <Select
-                        name="grade"
-                        value={formData.grade}
-                        onChange={handleChange}
-                        label="학년"
-                      >
-                        <MenuItem value={1}>1학년</MenuItem>
-                        <MenuItem value={2}>2학년</MenuItem>
-                        <MenuItem value={3}>3학년</MenuItem>
-                        <MenuItem value={4}>4학년</MenuItem>
-                      </Select>
-                      {errors.grade && <FormHelperText>{errors.grade}</FormHelperText>}
-                    </FormControl>
+                    <TextField
+                      fullWidth
+                      select
+                      name="grade"
+                      label="학년"
+                      value={formData.grade}
+                      onChange={handleChange}
+                      error={!!errors.grade}
+                      helperText={errors.grade || "현재 학년을 선택해주세요"}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <School color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    >
+                      <MenuItem value="">선택하세요</MenuItem>
+                      <MenuItem value={1}>1학년</MenuItem>
+                      <MenuItem value={2}>2학년</MenuItem>
+                      <MenuItem value={3}>3학년</MenuItem>
+                      <MenuItem value={4}>4학년</MenuItem>
+                    </TextField>
+                  </Grid>
+                )}
+
+                {/* 5단계: 전화번호 입력 (학생은 학년 선택 후, 교수는 학과 선택 후) */}
+                {((formData.userType === 'STUDENT' && formData.grade) ||
+                  (formData.userType === 'PROFESSOR' && formData.departmentId)) && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      name="phoneNumber"
+                      label="전화번호"
+                      placeholder="01012345678"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
+                      error={!!errors.phoneNumber}
+                      helperText={errors.phoneNumber || "하이픈(-) 없이 숫자만 입력"}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Phone color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
                   </Grid>
                 )}
               </Grid>
