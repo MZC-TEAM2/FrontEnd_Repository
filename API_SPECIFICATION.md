@@ -1152,6 +1152,56 @@ Authorization: Bearer {accessToken}
 }
 ```
 
+### 9.9 수강신청 상세 조회
+```http
+GET /api/v1/enrollment/{enrollmentId}
+Authorization: Bearer {accessToken}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "enrollmentId": 201,
+    "course": {
+      "id": 102,
+      "courseCode": "CS302",
+      "courseName": "알고리즘",
+      "section": "01",
+      "credits": 3,
+      "courseType": {
+        "code": "MAJOR_REQ",
+        "name": "전공필수"
+      },
+      "description": "알고리즘의 기본 개념과 설계 기법을 학습합니다"
+    },
+    "professor": {
+      "id": 11,
+      "name": "이교수",
+      "email": "lee@mzc.ac.kr",
+      "office": {
+        "building": "공학관",
+        "room": "301호"
+      }
+    },
+    "schedule": [
+      {
+        "dayOfWeek": 2,
+        "dayName": "화",
+        "startTime": "10:11",
+        "endTime": "11:30",
+        "classroom": "공학관 302호"
+      }
+    ],
+    "enrolledAt": "2024-08-16T10:00:00Z",
+    "status": "ENROLLED",
+    "canCancel": true,
+    "cancellationDeadline": "2024-09-06T18:00:00Z"
+  }
+}
+```
+
 ## 10. 공지사항 API
 
 ### 10.1 공지사항 목록
