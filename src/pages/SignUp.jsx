@@ -144,12 +144,6 @@ const SignUp = () => {
       newErrors.name = '이름은 2~50자여야 합니다';
     }
 
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = '전화번호를 입력해주세요';
-    } else if (!/^010-\d{4}-\d{4}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = '올바른 전화번호 형식이 아닙니다 (010-0000-0000)';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -171,6 +165,12 @@ const SignUp = () => {
 
     if (formData.userType === 'STUDENT' && !formData.grade) {
       newErrors.grade = '학년을 선택해주세요';
+    }
+
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = '전화번호를 입력해주세요';
+    } else if (!/^010\d{8}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = '올바른 전화번호 형식이 아닙니다 (01012345678)';
     }
 
     setErrors(newErrors);
@@ -388,10 +388,20 @@ const SignUp = () => {
                     onChange={handleChange}
                     error={!!errors.name}
                     helperText={errors.name}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        paddingRight: '14px', // 패딩 조정으로 너비 일치
+                      },
+                    }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
                           <Person color="action" />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Box sx={{ width: 40 }} /> {/* 빈 공간으로 너비 맞추기 */}
                         </InputAdornment>
                       ),
                     }}
@@ -458,25 +468,6 @@ const SignUp = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    name="phoneNumber"
-                    label="전화번호"
-                    placeholder="010-0000-0000"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    error={!!errors.phoneNumber}
-                    helperText={errors.phoneNumber}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Phone color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
               </Grid>
             </Box>
           </Box>
@@ -570,6 +561,26 @@ const SignUp = () => {
                     </FormControl>
                   </Grid>
                 )}
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="phoneNumber"
+                    label="전화번호"
+                    placeholder="01012345678"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    error={!!errors.phoneNumber}
+                    helperText={errors.phoneNumber || "하이픈(-) 없이 숫자만 입력"}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Phone color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
               </Grid>
             </Box>
           </Box>
