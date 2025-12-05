@@ -243,23 +243,20 @@ const SignUp = () => {
     navigate('/login');
   };
 
-  // Dummy data for colleges and departments
+  // Colleges and departments data (matching backend database)
   const colleges = [
-    { id: 1, name: '공과대학' },
-    { id: 2, name: '인문대학' },
-    { id: 3, name: '자연과학대학' },
-    { id: 4, name: '경영대학' },
+    { id: 1, name: '공과대학', code: 'ENG' },
+    { id: 2, name: '경영대학', code: 'BUS' },
+    { id: 3, name: '인문대학', code: 'HUM' },
   ];
 
   const departments = [
-    { id: 1, name: '컴퓨터공학과', collegeId: 1 },
-    { id: 2, name: '전자공학과', collegeId: 1 },
-    { id: 3, name: '기계공학과', collegeId: 1 },
-    { id: 4, name: '국어국문학과', collegeId: 2 },
-    { id: 5, name: '영어영문학과', collegeId: 2 },
-    { id: 6, name: '수학과', collegeId: 3 },
-    { id: 7, name: '물리학과', collegeId: 3 },
-    { id: 8, name: '경영학과', collegeId: 4 },
+    { id: 1, name: '컴퓨터공학과', code: 'CS', collegeId: 1 },
+    { id: 2, name: '전자공학과', code: 'EE', collegeId: 1 },
+    { id: 3, name: '경영학과', code: 'BA', collegeId: 2 },
+    { id: 4, name: '회계학과', code: 'ACC', collegeId: 2 },
+    { id: 5, name: '국문학과', code: 'KOR', collegeId: 3 },
+    { id: 6, name: '영문학과', code: 'ENG', collegeId: 3 },
   ];
 
   const getStepContent = (step) => {
