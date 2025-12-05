@@ -36,6 +36,11 @@ import CourseDetail from './pages/CourseDetail';
 import CourseSchedule from './pages/CourseSchedule';
 import Grades from './pages/Grades';
 
+// 인증 관련 페이지
+import Login from './pages/Login';
+import SignUp from './pages/SignUp';
+import ForgotPassword from './pages/ForgotPassword';
+
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
 
@@ -70,11 +75,16 @@ function App() {
 
       {/* React Router 설정 */}
       <Router>
-        {/* 메인 레이아웃으로 감싸기 */}
-        <MainLayout>
-          <Routes>
-            {/* 기본 경로 - 대시보드로 리다이렉트 */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Routes>
+          {/* 인증 관련 라우트 (MainLayout 없음) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* 메인 앱 라우트 (MainLayout 포함) */}
+          <Route element={<MainLayout />}>
+            {/* 기본 경로 - 로그인 페이지로 리다이렉트 */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
             {/* 대시보드 */}
             <Route path="/dashboard" element={<Dashboard />} />
@@ -127,8 +137,8 @@ function App() {
                 </Box>
               }
             />
-          </Routes>
-        </MainLayout>
+          </Route>
+        </Routes>
       </Router>
     </ThemeProvider>
   );

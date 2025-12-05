@@ -18,6 +18,7 @@
 import React, { useState } from 'react';
 import { Box, CssBaseline, Toolbar } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Outlet } from 'react-router-dom';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
@@ -53,10 +54,9 @@ const Main = styled('main', {
 /**
  * MainLayout 컴포넌트
  *
- * @param {Object} props
- * @param {React.ReactNode} props.children - 레이아웃 안에 표시할 자식 컴포넌트
+ * React Router v6의 Outlet을 사용하여 중첩된 라우트를 렌더링합니다.
  */
-const MainLayout = ({ children }) => {
+const MainLayout = () => {
   // 사이드바 열림/닫힘 상태 관리
   // true: 사이드바 열림, false: 사이드바 닫힘
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -105,7 +105,7 @@ const MainLayout = ({ children }) => {
             width: '100%',
           }}
         >
-          {children}
+          <Outlet />
         </Box>
       </Main>
     </Box>
