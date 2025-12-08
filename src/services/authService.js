@@ -63,15 +63,36 @@ const authService = {
       password
     });
 
-    // 토큰 저장
-    if (response.data?.data) {
-      const { accessToken, refreshToken, user } = response.data.data;
+    // 토큰 저장 - 백엔드는 데이터를 직접 반환 (data 래핑 없음)
+    if (response.data) {
+      const { accessToken, refreshToken, userType, userNumber, name, email: userEmail, userId } = response.data;
+
+      // 토큰 저장
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+
+      // 사용자 정보 저장
+      const user = {
+        userType,
+        userNumber,
+        name,
+        email: userEmail,
+        userId
+      };
       localStorage.setItem('user', JSON.stringify(user));
+
+      // Login.jsx에서 사용할 수 있도록 success 플래그 추가
+      return {
+        success: true,
+        data: response.data,
+        user
+      };
     }
 
-    return response.data;
+    return {
+      success: false,
+      message: '로그인에 실패했습니다.'
+    };
   },
 
   /**
@@ -104,9 +125,9 @@ const authService = {
   refreshToken: async (refreshToken) => {
     const response = await axiosInstance.post('/api/auth/refresh', { refreshToken });
 
-    // 새 토큰 저장
-    if (response.data?.data) {
-      const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+    // 새 토큰 저장 - 백엔드는 데이터를 직접 반환 (data 래핑 없음)
+    if (response.data) {
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', newRefreshToken);
     }
