@@ -57,7 +57,11 @@ const authService = {
    * @param {string} password - 비밀번호
    */
   login: async (email, password) => {
-    const response = await axiosInstance.post('/api/auth/login', { email, password });
+    // 백엔드는 username 필드를 사용
+    const response = await axiosInstance.post('/api/auth/login', {
+      username: email,
+      password
+    });
 
     // 토큰 저장
     if (response.data?.data) {
