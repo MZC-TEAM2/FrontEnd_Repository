@@ -20,6 +20,7 @@
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -54,6 +55,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import authService from '../services/authService';
 
 /**
  * 검색창 컨테이너 스타일 컴포넌트
@@ -120,6 +122,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
 
   // 상태 관리
   const [anchorEl, setAnchorEl] = useState(null); // 사용자 메뉴
@@ -166,12 +169,19 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   };
 
   /**
-   * 로그아웃 처리 (추후 구현)
+   * 로그아웃 처리
    */
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleMenuClose();
-    // TODO: 로그아웃 로직 구현
-    console.log('로그아웃 처리');
+
+    try {
+      await authService.logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+      // 에러가 발생해도 로그인 페이지로 이동
+      navigate('/login');
+    }
   };
 
   // 알림 데이터 (예시)
