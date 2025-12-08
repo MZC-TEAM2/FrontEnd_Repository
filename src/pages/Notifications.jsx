@@ -42,6 +42,8 @@ import {
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import notificationService from '../services/notificationService';
+import NotificationDetailDialog from '../components/NotificationDetailDialog';
+import { truncateText } from '../utils/textUtils';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -55,6 +57,8 @@ const Notifications = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterType, setFilterType] = useState('ALL');
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   // 알림 타입별 아이콘
   const getNotificationIcon = (type) => {
@@ -191,6 +195,12 @@ const Notifications = () => {
     fetchNotifications();
     fetchUnreadCount();
   }, [selectedTab]);
+
+  // 알림 클릭 처리 (상세보기)
+  const handleNotificationClick = (notification) => {
+    setSelectedNotification(notification);
+    setDetailDialogOpen(true);
+  };
 
   // 알림 읽음 처리
   const handleMarkAsRead = async (notificationId) => {
@@ -393,12 +403,14 @@ const Notifications = () => {
                 {notifications.map((notification, index) => (
                   <React.Fragment key={notification.id}>
                     <ListItem
+                      onClick={() => handleNotificationClick(notification)}
                       sx={{
                         backgroundColor: notification.isRead
                           ? 'transparent'
                           : alpha('#1976d2', 0.05),
                         '&:hover': {
                           backgroundColor: alpha('#1976d2', 0.08),
+                          cursor: 'pointer',
                         },
                         borderRadius: 1,
                         mb: 1,
@@ -407,6 +419,7 @@ const Notifications = () => {
                       <Checkbox
                         checked={selectedNotifications.includes(notification.id)}
                         onChange={() => handleToggleSelect(notification.id)}
+                        onClick={(e) => e.stopPropagation()}
                         sx={{ mr: 1 }}
                       />
 
@@ -454,7 +467,10 @@ const Notifications = () => {
                           <Tooltip title="읽음으로 표시">
                             <IconButton
                               size="small"
-                              onClick={() => handleMarkAsRead(notification.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAsRead(notification.id);
+                              }}
                             >
                               <CheckCircleIcon />
                             </IconButton>
@@ -464,7 +480,10 @@ const Notifications = () => {
                           <IconButton
                             size="small"
                             color="error"
-                            onClick={() => handleDeleteNotification(notification.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNotification(notification.id);
+                            }}
                           >
                             <DeleteIcon />
                           </IconButton>
@@ -512,6 +531,15 @@ const Notifications = () => {
             <ListItemText>읽은 알림 삭제</ListItemText>
           </MenuItem>
         </Menu>
+
+        {/* 알림 상세보기 다이얼로그 */}
+        <NotificationDetailDialog
+          open={detailDialogOpen}
+          onClose={() => setDetailDialogOpen(false)}
+          notification={selectedNotification}
+          onMarkAsRead={handleMarkAsRead}
+          onDelete={handleDeleteNotification}
+        />
       </Paper>
     </Container>
   );

@@ -21,6 +21,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NotificationDetailDialog from './NotificationDetailDialog';
+import { truncateText } from '../utils/textUtils';
 import {
   AppBar,
   Toolbar,
@@ -134,6 +136,8 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
+  const [selectedNotification, setSelectedNotification] = useState(null); // 선택된 알림 (상세보기)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false); // 상세보기 다이얼로그 열림 상태
 
   // 알림 데이터 및 사용자 정보 가져오기
   useEffect(() => {
@@ -204,25 +208,35 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   };
 
   /**
-   * 알림 읽음 처리
+   * 알림 클릭 처리 (상세보기)
    */
-  const handleNotificationClick = async (notification) => {
-    if (!notification.isRead) {
-      try {
-        await notificationService.markAsRead(notification.id);
-        // 알림 목록 업데이트
-        setNotifications(prev =>
-          prev.map(n =>
-            n.id === notification.id ? { ...n, isRead: true } : n
-          )
-        );
-        // 읽지 않은 개수 감소
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      } catch (error) {
-        console.error('알림 읽음 처리 실패:', error);
-      }
-    }
+  const handleNotificationClick = (notification) => {
+    setSelectedNotification(notification);
+    setDetailDialogOpen(true);
     handleMenuClose();
+  };
+
+  /**
+   * 알림 읽음 처리 (콜백)
+   */
+  const handleNotificationRead = (notificationId) => {
+    setNotifications(prev =>
+      prev.map(n =>
+        n.id === notificationId ? { ...n, isRead: true } : n
+      )
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  /**
+   * 알림 삭제 처리 (콜백)
+   */
+  const handleNotificationDelete = (notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    const notification = notifications.find(n => n.id === notificationId);
+    if (notification && !notification.isRead) {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
   };
 
   /**
@@ -510,11 +524,11 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                   <Box component="span" sx={{ fontWeight: 600, color: 'primary.main' }}>
                     [{notification.typeName || notificationService.getNotificationTypeLabel(notification.type)}]
                   </Box>{' '}
-                  {notification.title || '제목 없음'}
+                  {truncateText(notification.title || '제목 없음', 10)}
                 </Typography>
                 {notification.message && (
                   <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {notification.message}
+                    {truncateText(notification.message, 10)}
                   </Typography>
                 )}
                 <Typography variant="caption" color="text.secondary">
@@ -597,6 +611,15 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
           <ListItemText>프로필</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* 알림 상세보기 다이얼로그 */}
+      <NotificationDetailDialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        notification={selectedNotification}
+        onMarkAsRead={handleNotificationRead}
+        onDelete={handleNotificationDelete}
+      />
     </AppBar>
   );
 };
