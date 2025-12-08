@@ -157,13 +157,15 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
     setIsLoadingNotifications(true);
     try {
       const response = await notificationService.getNotifications(null, 5, true);
-      if (response.items) {
+      // 백엔드 응답 구조에 맞게 수정 (notifications 배열)
+      if (response.notifications) {
         // 알림 데이터 포맷팅
-        const formattedNotifications = response.items.map(item => ({
+        const formattedNotifications = response.notifications.map(item => ({
           id: item.id,
-          type: item.type,
+          type: item.typeCode || item.category, // typeCode 또는 category 사용
+          typeName: item.typeName, // 타입 이름 추가
           title: item.title,
-          content: item.content,
+          message: item.message, // content 대신 message
           time: notificationService.formatNotificationTime(item.createdAt),
           isRead: item.isRead,
         }));
@@ -173,9 +175,9 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
       console.error('알림 목록 조회 실패:', error);
       // API 연동 전까지는 더미 데이터 사용
       setNotifications([
-        { id: 1, type: 'ASSIGNMENT', title: '데이터베이스 과제가 등록되었습니다', time: '5분 전', isRead: false },
-        { id: 2, type: 'ANNOUNCEMENT', title: '알고리즘 강의실이 변경되었습니다', time: '1시간 전', isRead: false },
-        { id: 3, type: 'EXAM', title: '운영체제 중간고사 공지', time: '3시간 전', isRead: false },
+        { id: 1, type: 'ASSIGNMENT', typeName: '과제', title: '데이터베이스 과제가 등록되었습니다', message: '과제 내용', time: '5분 전', isRead: false },
+        { id: 2, type: 'ANNOUNCEMENT', typeName: '공지', title: '알고리즘 강의실이 변경되었습니다', message: '강의실 변경 안내', time: '1시간 전', isRead: false },
+        { id: 3, type: 'EXAM', typeName: '시험', title: '운영체제 중간고사 공지', message: '시험 안내', time: '3시간 전', isRead: false },
       ]);
     } finally {
       setIsLoadingNotifications(false);
@@ -498,10 +500,15 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
               <Box sx={{ width: '100%' }}>
                 <Typography variant="body2">
                   <Box component="span" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    [{notificationService.getNotificationTypeLabel(notification.type)}]
+                    [{notification.typeName || notificationService.getNotificationTypeLabel(notification.type)}]
                   </Box>{' '}
-                  {notification.title}
+                  {notification.title || '제목 없음'}
                 </Typography>
+                {notification.message && (
+                  <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {notification.message}
+                  </Typography>
+                )}
                 <Typography variant="caption" color="text.secondary">
                   {notification.time}
                 </Typography>
