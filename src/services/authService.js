@@ -37,12 +37,14 @@ const authService = {
    * @param {Object} data - 회원가입 정보
    */
   signup: async (data) => {
-    // 타입 변환 (문자열 -> 숫자)
+    // emailCode 필드 제거 및 타입 변환 (문자열 -> 숫자)
+    const { emailCode, ...signupData } = data;
+
     const requestData = {
-      ...data,
-      collegeId: Number(data.collegeId),
-      departmentId: Number(data.departmentId),
-      grade: data.grade ? Number(data.grade) : null,
+      ...signupData,
+      collegeId: Number(signupData.collegeId),
+      departmentId: Number(signupData.departmentId),
+      grade: signupData.grade ? Number(signupData.grade) : null,
     };
 
     const response = await axiosInstance.post('/api/auth/signup', requestData);
