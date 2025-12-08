@@ -133,11 +133,16 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const [notifications, setNotifications] = useState([]); // 알림 목록
   const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
 
-  // 알림 데이터 가져오기
+  // 알림 데이터 및 사용자 정보 가져오기
   useEffect(() => {
     // 인증된 사용자인 경우에만 알림 가져오기
     if (authService.isAuthenticated()) {
+      // 사용자 정보 가져오기
+      const user = authService.getCurrentUser();
+      setCurrentUser(user);
+
       fetchNotifications();
       fetchUnreadCount();
 
@@ -389,7 +394,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                     bgcolor: theme.palette.primary.main,
                   }}
                 >
-                  U
+                  {currentUser?.name?.charAt(0) || 'U'}
                 </Avatar>
               </IconButton>
             </Tooltip>
@@ -431,10 +436,13 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         {/* 사용자 정보 헤더 */}
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            김학생
+            {currentUser?.name || '사용자'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            202012345@mzc.ac.kr
+            {currentUser?.userNumber || currentUser?.userId || '학번 없음'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {currentUser?.email || '이메일 없음'}
           </Typography>
         </Box>
         <Divider />
@@ -524,7 +532,10 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         )}
 
         <Divider />
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          navigate('/notifications');
+        }}>
           <Typography
             variant="body2"
             color="primary"
