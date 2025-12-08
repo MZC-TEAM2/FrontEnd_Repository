@@ -16,6 +16,7 @@ import {
   MenuItem,
   Grid,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import {
   Visibility,
@@ -28,6 +29,7 @@ import {
   CheckCircle,
   Timer,
 } from '@mui/icons-material';
+import authService from '../services/authService';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -58,6 +60,9 @@ const SignUp = () => {
   // Errors
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+
+  // Loading states
+  const [isLoading, setIsLoading] = useState(false);
 
   const steps = ['이메일 인증', '기본 정보', '학적 정보'];
 
@@ -173,7 +178,7 @@ const SignUp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSendEmail = () => {
+  const handleSendEmail = async () => {
     if (!formData.email) {
       setErrors({ email: '이메일을 입력해주세요' });
       return;
@@ -184,21 +189,46 @@ const SignUp = () => {
       return;
     }
 
-    // API 통신 대신 임시 처리
-    console.log('이메일 인증 코드 발송:', formData.email);
-    setEmailSent(true);
-    setTimer(300); // 5분 = 300초
-    setIsTimerActive(true);
+    setIsLoading(true);
     setApiError('');
+
+    try {
+      const response = await authService.sendVerificationCode(formData.email);
+
+      if (response.success) {
+        setEmailSent(true);
+        setTimer(300); // 5분 = 300초
+        setIsTimerActive(true);
+      } else {
+        setApiError(response.message || '이메일 발송에 실패했습니다.');
+      }
+    } catch (error) {
+      setApiError(error.message || '이메일 발송 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleVerifyEmail = () => {
+  const handleVerifyEmail = async () => {
     if (validateEmail() && formData.emailCode) {
-      // API 통신 대신 임시 처리
-      console.log('이메일 인증 코드 확인:', formData.emailCode);
-      setEmailVerified(true);
-      setIsTimerActive(false);
-      handleNext();
+      setIsLoading(true);
+      setApiError('');
+
+      try {
+        const response = await authService.verifyCode(formData.email, formData.emailCode);
+
+        if (response.success) {
+          setEmailVerified(true);
+          setIsTimerActive(false);
+          handleNext();
+        } else {
+          setApiError(response.message || '인증 코드가 올바르지 않습니다.');
+        }
+      } catch (error) {
+        setApiError(error.message || '인증 코드 확인 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -232,11 +262,24 @@ const SignUp = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleSubmit = () => {
-    // API 통신 대신 임시 처리
-    console.log('회원가입 데이터:', formData);
-    alert('회원가입이 완료되었습니다!');
-    navigate('/login');
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      const response = await authService.signup(formData);
+
+      if (response.success) {
+        alert('회원가입이 완료되었습니다!');
+        navigate('/login');
+      } else {
+        setApiError(response.message || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      setApiError(error.message || '회원가입 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Colleges and departments data (matching backend database)
@@ -301,9 +344,10 @@ const SignUp = () => {
                       fullWidth
                       variant="contained"
                       onClick={handleSendEmail}
+                      disabled={isLoading}
                       sx={{ py: 1.5 }}
                     >
-                      인증 코드 받기
+                      {isLoading ? <CircularProgress size={24} /> : '인증 코드 받기'}
                     </Button>
                   </Grid>
                 )}
@@ -344,8 +388,9 @@ const SignUp = () => {
                         fullWidth
                         variant="contained"
                         onClick={handleVerifyEmail}
+                        disabled={isLoading}
                       >
-                        인증 확인
+                        {isLoading ? <CircularProgress size={24} /> : '인증 확인'}
                       </Button>
                     </Grid>
                   </>
@@ -681,9 +726,13 @@ const SignUp = () => {
             <Button
               variant="contained"
               onClick={handleNext}
-              disabled={activeStep === 0 && !emailVerified}
+              disabled={(activeStep === 0 && !emailVerified) || isLoading}
             >
-              {activeStep === steps.length - 1 ? '가입 완료' : '다음'}
+              {isLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                activeStep === steps.length - 1 ? '가입 완료' : '다음'
+              )}
             </Button>
           </Box>
 
