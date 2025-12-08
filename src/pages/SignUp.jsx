@@ -287,15 +287,42 @@ const SignUp = () => {
     { id: 1, name: '공과대학', code: 'ENG' },
     { id: 2, name: '경영대학', code: 'BUS' },
     { id: 3, name: '인문대학', code: 'HUM' },
+    { id: 4, name: '자연과학대학', code: 'NAT' },
+    { id: 5, name: '사회과학대학', code: 'SOC' },
+    { id: 6, name: '예술대학', code: 'ART' },
   ];
 
   const departments = [
+    // 공과대학
     { id: 1, name: '컴퓨터공학과', code: 'CS', collegeId: 1 },
     { id: 2, name: '전자공학과', code: 'EE', collegeId: 1 },
-    { id: 3, name: '경영학과', code: 'BA', collegeId: 2 },
-    { id: 4, name: '회계학과', code: 'ACC', collegeId: 2 },
-    { id: 5, name: '국문학과', code: 'KOR', collegeId: 3 },
-    { id: 6, name: '영문학과', code: 'ENG', collegeId: 3 },
+    { id: 3, name: '기계공학과', code: 'ME', collegeId: 1 },
+    { id: 4, name: '화학공학과', code: 'CE', collegeId: 1 },
+    { id: 5, name: '건설환경공학과', code: 'CV', collegeId: 1 },
+    // 경영대학
+    { id: 6, name: '경영학과', code: 'BA', collegeId: 2 },
+    { id: 7, name: '회계학과', code: 'ACC', collegeId: 2 },
+    { id: 8, name: '금융학과', code: 'FIN', collegeId: 2 },
+    { id: 9, name: '마케팅학과', code: 'MKT', collegeId: 2 },
+    // 인문대학
+    { id: 10, name: '국어국문학과', code: 'KOR', collegeId: 3 },
+    { id: 11, name: '영어영문학과', code: 'ENG', collegeId: 3 },
+    { id: 12, name: '사학과', code: 'HIS', collegeId: 3 },
+    { id: 13, name: '철학과', code: 'PHI', collegeId: 3 },
+    // 자연과학대학
+    { id: 14, name: '수학과', code: 'MATH', collegeId: 4 },
+    { id: 15, name: '물리학과', code: 'PHY', collegeId: 4 },
+    { id: 16, name: '화학과', code: 'CHEM', collegeId: 4 },
+    { id: 17, name: '생명과학과', code: 'BIO', collegeId: 4 },
+    // 사회과학대학
+    { id: 18, name: '심리학과', code: 'PSY', collegeId: 5 },
+    { id: 19, name: '사회학과', code: 'SOC', collegeId: 5 },
+    { id: 20, name: '정치외교학과', code: 'POL', collegeId: 5 },
+    { id: 21, name: '경제학과', code: 'ECO', collegeId: 5 },
+    // 예술대학
+    { id: 22, name: '음악학과', code: 'MUS', collegeId: 6 },
+    { id: 23, name: '미술학과', code: 'ART', collegeId: 6 },
+    { id: 24, name: '디자인학과', code: 'DES', collegeId: 6 },
   ];
 
   const getStepContent = (step) => {
