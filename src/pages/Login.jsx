@@ -13,6 +13,7 @@ import {
   IconButton,
   FormControlLabel,
   Checkbox,
+  CircularProgress,
 } from '@mui/material';
 import {
   Visibility,
@@ -21,6 +22,7 @@ import {
   Lock,
   School,
 } from '@mui/icons-material';
+import authService from '../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -31,6 +33,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
   const [loginError, setLoginError] = useState('');
 
   const handleChange = (e) => {
@@ -70,17 +74,33 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validateForm()) {
-      // API 통신은 아직 구현하지 않음
-      // 임시로 모든 로그인 시도를 성공으로 처리
-      console.log('로그인 시도:', formData);
-      console.log('Remember Me:', rememberMe);
+      setIsLoading(true);
+      setLoginError('');
+      setApiError('');
 
-      // 대시보드 페이지로 이동
-      navigate('/dashboard');
+      try {
+        const response = await authService.login(formData.email, formData.password);
+
+        if (response.success) {
+          // Remember Me 처리
+          if (rememberMe) {
+            localStorage.setItem('rememberMe', 'true');
+          }
+
+          // 대시보드 페이지로 이동
+          navigate('/dashboard');
+        } else {
+          setLoginError(response.message || '로그인에 실패했습니다.');
+        }
+      } catch (error) {
+        setLoginError(error.message || '로그인 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -130,9 +150,9 @@ const Login = () => {
           </Box>
 
           {/* Error Alert */}
-          {loginError && (
+          {(loginError || apiError) && (
             <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-              {loginError}
+              {loginError || apiError}
             </Alert>
           )}
 
@@ -238,6 +258,7 @@ const Login = () => {
               fullWidth
               variant="contained"
               size="large"
+              disabled={isLoading}
               sx={{
                 mt: 1,
                 mb: 2,
@@ -253,7 +274,7 @@ const Login = () => {
                 },
               }}
             >
-              로그인
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : '로그인'}
             </Button>
 
             <Divider sx={{ my: 3 }}>또는</Divider>
