@@ -1,0 +1,127 @@
+import axiosInstance from '../api/axiosInstance';
+
+/**
+ * 인증 관련 API 서비스
+ */
+const authService = {
+  /**
+   * 이메일 인증 코드 발송
+   * @param {string} email - 이메일 주소
+   */
+  sendVerificationCode: async (email) => {
+    const response = await axiosInstance.post('/api/auth/signup/email-verification', { email });
+    return response.data;
+  },
+
+  /**
+   * 이메일 인증 코드 확인
+   * @param {string} email - 이메일 주소
+   * @param {string} code - 인증 코드
+   */
+  verifyCode: async (email, code) => {
+    const response = await axiosInstance.post('/api/auth/signup/verify-code', { email, code });
+    return response.data;
+  },
+
+  /**
+   * 이메일 중복 확인
+   * @param {string} email - 이메일 주소
+   */
+  checkEmail: async (email) => {
+    const response = await axiosInstance.get('/api/auth/check-email', { params: { email } });
+    return response.data;
+  },
+
+  /**
+   * 회원가입
+   * @param {Object} data - 회원가입 정보
+   */
+  signup: async (data) => {
+    // 타입 변환 (문자열 -> 숫자)
+    const requestData = {
+      ...data,
+      collegeId: Number(data.collegeId),
+      departmentId: Number(data.departmentId),
+      grade: data.grade ? Number(data.grade) : null,
+    };
+
+    const response = await axiosInstance.post('/api/auth/signup', requestData);
+    return response.data;
+  },
+
+  /**
+   * 로그인
+   * @param {string} email - 이메일
+   * @param {string} password - 비밀번호
+   */
+  login: async (email, password) => {
+    const response = await axiosInstance.post('/api/auth/login', { email, password });
+
+    // 토큰 저장
+    if (response.data?.data) {
+      const { accessToken, refreshToken, user } = response.data.data;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+
+    return response.data;
+  },
+
+  /**
+   * 로그아웃
+   */
+  logout: async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    try {
+      // 서버에 로그아웃 요청
+      await axiosInstance.post('/api/auth/logout', null, {
+        headers: {
+          'Refresh-Token': refreshToken,
+        },
+      });
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      // 로컬 스토리지 정리
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    }
+  },
+
+  /**
+   * 토큰 갱신
+   * @param {string} refreshToken - 리프레시 토큰
+   */
+  refreshToken: async (refreshToken) => {
+    const response = await axiosInstance.post('/api/auth/refresh', { refreshToken });
+
+    // 새 토큰 저장
+    if (response.data?.data) {
+      const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', newRefreshToken);
+    }
+
+    return response.data;
+  },
+
+  /**
+   * 현재 사용자 정보 가져오기
+   */
+  getCurrentUser: () => {
+    const userString = localStorage.getItem('user');
+    return userString ? JSON.parse(userString) : null;
+  },
+
+  /**
+   * 인증 여부 확인
+   */
+  isAuthenticated: () => {
+    return !!localStorage.getItem('accessToken');
+  },
+};
+
+export default authService;
