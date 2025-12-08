@@ -284,7 +284,7 @@ const Login = () => {
           align="center"
           sx={{ mt: 3 }}
         >
-          © 2024 학사 관리 시스템. All rights reserved.
+          © 2025 학사 관리 시스템. All rights reserved.
         </Typography>
       </Container>
     </Box>
