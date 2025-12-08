@@ -54,14 +54,14 @@ const Login = () => {
 
     // Email validation
     if (!formData.email) {
-      newErrors.email = '이메일을 입력해주세요';
+      newErrors.email = '이메일을 입력해주세요(이메일 형식만 맞으면 됩니다.)';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = '올바른 이메일 형식이 아닙니다';
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요';
+      newErrors.password = '비밀번호를 입력해주세요(6자리이상 아무거나 입력해 주십시오)';
     } else if (formData.password.length < 6) {
       newErrors.password = '비밀번호는 최소 6자 이상이어야 합니다';
     }
@@ -284,7 +284,7 @@ const Login = () => {
           align="center"
           sx={{ mt: 3 }}
         >
-          © 2024 학사 관리 시스템. All rights reserved.
+          © 2025 학사 관리 시스템. All rights reserved.
         </Typography>
       </Container>
     </Box>
