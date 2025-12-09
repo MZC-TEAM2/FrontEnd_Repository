@@ -159,7 +159,7 @@ const Dashboard = () => {
           학습 홈
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          MZC 대학교 | 2024학년도 2학기 | 컴퓨터공학과
+          MZC 대학교 | 2026학년도 1학기
         </Typography>
       </Box>
 
