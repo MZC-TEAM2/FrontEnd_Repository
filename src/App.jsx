@@ -17,12 +17,9 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-// App.css 제거 - Material UI 스타일 사용
 
-// 테마 설정 임포트
-import theme from './theme/theme';
+// 테마 Context 임포트
+import { ThemeContextProvider } from './contexts/ThemeContext';
 
 // 레이아웃 컴포넌트
 import MainLayout from './layouts/MainLayout';
@@ -42,6 +39,7 @@ import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
@@ -70,11 +68,8 @@ const TempPage = ({ title }) => (
  */
 function App() {
   return (
-    // Material UI 테마 제공자
-    <ThemeProvider theme={theme}>
-      {/* CSS 기본값 초기화 */}
-      <CssBaseline />
-
+    // 테마 Context Provider (다크모드 지원)
+    <ThemeContextProvider>
       {/* React Router 설정 */}
       <Router>
         <Routes>
@@ -126,7 +121,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
 
             {/* 설정 */}
-            <Route path="/settings" element={<TempPage title="설정" />} />
+            <Route path="/settings" element={<Settings />} />
 
             {/* 404 페이지 */}
             <Route
@@ -148,7 +143,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
-    </ThemeProvider>
+    </ThemeContextProvider>
   );
 }
 
