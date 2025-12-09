@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   Chip,
+  IconButton,
 } from '@mui/material';
 import {
   Person,
@@ -21,9 +22,9 @@ import {
   Home,
   Business,
   School,
-  Badge,
   Save,
   Cancel,
+  Edit,
 } from '@mui/icons-material';
 import profileService from '../services/profileService';
 import authService from '../services/authService';
@@ -141,19 +142,37 @@ const Profile = () => {
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent sx={{ textAlign: 'center', py: 4 }}>
-              <Avatar
-                src={profile?.thumbnailUrl || profile?.profileImageUrl || undefined}
-                sx={{
-                  width: 120,
-                  height: 120,
-                  mx: 'auto',
-                  mb: 2,
-                  bgcolor: 'primary.main',
-                  fontSize: '3rem',
-                }}
-              >
-                {profile?.name?.charAt(0) || 'U'}
-              </Avatar>
+              <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                <Avatar
+                  src={profile?.thumbnailUrl || profile?.profileImageUrl || undefined}
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    bgcolor: 'primary.main',
+                    fontSize: '3rem',
+                  }}
+                >
+                  {profile?.name?.charAt(0) || 'U'}
+                </Avatar>
+                <IconButton
+                  size="small"
+                  onClick={() => setIsEditing(true)}
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    width: 32,
+                    height: 32,
+                  }}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Box>
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
                 {profile?.name}
               </Typography>
