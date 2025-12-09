@@ -402,6 +402,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                 sx={{ ml: 1 }}
               >
                 <Avatar
+                  src={currentUser?.thumbnailUrl || undefined}
                   sx={{
                     width: 36,
                     height: 36,
