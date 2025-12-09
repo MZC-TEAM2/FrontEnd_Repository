@@ -40,6 +40,7 @@ import Grades from './pages/Grades';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
+import Notifications from './pages/Notifications';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
@@ -116,6 +117,9 @@ function App() {
 
             {/* 성적 조회 */}
             <Route path="/grades" element={<Grades />} />
+
+            {/* 알림 */}
+            <Route path="/notifications" element={<Notifications />} />
 
             {/* 설정 */}
             <Route path="/settings" element={<TempPage title="설정" />} />

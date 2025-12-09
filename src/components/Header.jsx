@@ -19,7 +19,10 @@
  * />
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import NotificationDetailDialog from './NotificationDetailDialog';
+import { truncateText } from '../utils/textUtils';
 import {
   AppBar,
   Toolbar,
@@ -54,6 +57,8 @@ import HelpIcon from '@mui/icons-material/Help';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import authService from '../services/authService';
+import notificationService from '../services/notificationService';
 
 /**
  * 검색창 컨테이너 스타일 컴포넌트
@@ -120,12 +125,119 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
 
   // 상태 관리
   const [anchorEl, setAnchorEl] = useState(null); // 사용자 메뉴
   const [notificationAnchor, setNotificationAnchor] = useState(null); // 알림 메뉴
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null); // 모바일 메뉴
   const [darkMode, setDarkMode] = useState(false); // 다크모드 (임시)
+  const [notifications, setNotifications] = useState([]); // 알림 목록
+  const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
+  const [selectedNotification, setSelectedNotification] = useState(null); // 선택된 알림 (상세보기)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false); // 상세보기 다이얼로그 열림 상태
+
+  // 알림 데이터 및 사용자 정보 가져오기
+  useEffect(() => {
+    // 인증된 사용자인 경우에만 알림 가져오기
+    if (authService.isAuthenticated()) {
+      // 사용자 정보 가져오기
+      const user = authService.getCurrentUser();
+      setCurrentUser(user);
+
+      fetchNotifications();
+      fetchUnreadCount();
+
+      // 30초마다 알림 새로고침
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, []);
+
+  /**
+   * 알림 목록 가져오기
+   */
+  const fetchNotifications = async () => {
+    setIsLoadingNotifications(true);
+    try {
+      const response = await notificationService.getNotifications(null, 5, true);
+      // 백엔드 응답 구조에 맞게 수정 (notifications 배열)
+      if (response.notifications) {
+        // 알림 데이터 포맷팅
+        const formattedNotifications = response.notifications.map(item => ({
+          id: item.id,
+          type: item.typeCode || item.category, // typeCode 또는 category 사용
+          typeName: item.typeName, // 타입 이름 추가
+          title: item.title,
+          message: item.message, // content 대신 message
+          time: notificationService.formatNotificationTime(item.createdAt),
+          isRead: item.isRead,
+        }));
+        setNotifications(formattedNotifications);
+      }
+    } catch (error) {
+      console.error('알림 목록 조회 실패:', error);
+      // API 연동 전까지는 더미 데이터 사용
+      setNotifications([
+        { id: 1, type: 'ASSIGNMENT', typeName: '과제', title: '데이터베이스 과제가 등록되었습니다', message: '과제 내용', time: '5분 전', isRead: false },
+        { id: 2, type: 'ANNOUNCEMENT', typeName: '공지', title: '알고리즘 강의실이 변경되었습니다', message: '강의실 변경 안내', time: '1시간 전', isRead: false },
+        { id: 3, type: 'EXAM', typeName: '시험', title: '운영체제 중간고사 공지', message: '시험 안내', time: '3시간 전', isRead: false },
+      ]);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  /**
+   * 읽지 않은 알림 개수 가져오기
+   */
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await notificationService.getUnreadCount();
+      setUnreadCount(response.unreadCount || 0);
+    } catch (error) {
+      console.error('읽지 않은 알림 개수 조회 실패:', error);
+      // API 연동 전까지는 더미 데이터 사용
+      setUnreadCount(3);
+    }
+  };
+
+  /**
+   * 알림 클릭 처리 (상세보기)
+   */
+  const handleNotificationClick = (notification) => {
+    setSelectedNotification(notification);
+    setDetailDialogOpen(true);
+    handleMenuClose();
+  };
+
+  /**
+   * 알림 읽음 처리 (콜백)
+   */
+  const handleNotificationRead = (notificationId) => {
+    setNotifications(prev =>
+      prev.map(n =>
+        n.id === notificationId ? { ...n, isRead: true } : n
+      )
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  /**
+   * 알림 삭제 처리 (콜백)
+   */
+  const handleNotificationDelete = (notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    const notification = notifications.find(n => n.id === notificationId);
+    if (notification && !notification.isRead) {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+  };
 
   /**
    * 사용자 메뉴 열기
@@ -139,6 +251,10 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
    */
   const handleNotificationMenuOpen = (event) => {
     setNotificationAnchor(event.currentTarget);
+    // 알림 메뉴를 열 때 최신 알림 가져오기
+    if (authService.isAuthenticated()) {
+      fetchNotifications();
+    }
   };
 
   /**
@@ -166,20 +282,21 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   };
 
   /**
-   * 로그아웃 처리 (추후 구현)
+   * 로그아웃 처리
    */
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleMenuClose();
-    // TODO: 로그아웃 로직 구현
-    console.log('로그아웃 처리');
+
+    try {
+      await authService.logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+      // 에러가 발생해도 로그인 페이지로 이동
+      navigate('/login');
+    }
   };
 
-  // 알림 데이터 (예시)
-  const notifications = [
-    { id: 1, title: '데이터베이스 과제가 등록되었습니다', time: '5분 전' },
-    { id: 2, title: '알고리즘 강의실이 변경되었습니다', time: '1시간 전' },
-    { id: 3, title: '운영체제 중간고사 공지', time: '3시간 전' },
-  ];
 
   return (
     <AppBar
@@ -265,7 +382,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                 color="inherit"
                 onClick={handleNotificationMenuOpen}
               >
-                <Badge badgeContent={3} color="error">
+                <Badge badgeContent={unreadCount} color="error">
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
@@ -291,7 +408,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                     bgcolor: theme.palette.primary.main,
                   }}
                 >
-                  U
+                  {currentUser?.name?.charAt(0) || 'U'}
                 </Avatar>
               </IconButton>
             </Tooltip>
@@ -333,10 +450,13 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         {/* 사용자 정보 헤더 */}
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            김학생
+            {currentUser?.name || '사용자'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            202012345@mzc.ac.kr
+            {currentUser?.userNumber || currentUser?.userId || '학번 없음'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {currentUser?.email || '이메일 없음'}
           </Typography>
         </Box>
         <Divider />
@@ -390,19 +510,46 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         <Divider />
 
         {/* 알림 리스트 */}
-        {notifications.map((notification) => (
-          <MenuItem key={notification.id} onClick={handleMenuClose}>
-            <Box sx={{ width: '100%' }}>
-              <Typography variant="body2">{notification.title}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {notification.time}
-              </Typography>
-            </Box>
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <MenuItem
+              key={notification.id}
+              onClick={() => handleNotificationClick(notification)}
+              sx={{
+                backgroundColor: notification.isRead ? 'transparent' : alpha(theme.palette.primary.main, 0.05),
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Typography variant="body2">
+                  <Box component="span" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                    [{notification.typeName || notificationService.getNotificationTypeLabel(notification.type)}]
+                  </Box>{' '}
+                  {truncateText(notification.title || '제목 없음', 10)}
+                </Typography>
+                {notification.message && (
+                  <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {truncateText(notification.message, 10)}
+                  </Typography>
+                )}
+                <Typography variant="caption" color="text.secondary">
+                  {notification.time}
+                </Typography>
+              </Box>
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled>
+            <Typography variant="body2" color="text.secondary">
+              {isLoadingNotifications ? '알림을 불러오는 중...' : '새로운 알림이 없습니다'}
+            </Typography>
           </MenuItem>
-        ))}
+        )}
 
         <Divider />
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          navigate('/notifications');
+        }}>
           <Typography
             variant="body2"
             color="primary"
@@ -441,7 +588,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
 
         <MenuItem onClick={handleNotificationMenuOpen}>
           <ListItemIcon>
-            <Badge badgeContent={3} color="error">
+            <Badge badgeContent={unreadCount} color="error">
               <NotificationsIcon />
             </Badge>
           </ListItemIcon>
@@ -464,6 +611,15 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
           <ListItemText>프로필</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* 알림 상세보기 다이얼로그 */}
+      <NotificationDetailDialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        notification={selectedNotification}
+        onMarkAsRead={handleNotificationRead}
+        onDelete={handleNotificationDelete}
+      />
     </AppBar>
   );
 };

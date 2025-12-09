@@ -16,6 +16,7 @@ import {
   MenuItem,
   Grid,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import {
   Visibility,
@@ -28,6 +29,7 @@ import {
   CheckCircle,
   Timer,
 } from '@mui/icons-material';
+import authService from '../services/authService';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -58,6 +60,9 @@ const SignUp = () => {
   // Errors
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+
+  // Loading states
+  const [isLoading, setIsLoading] = useState(false);
 
   const steps = ['이메일 인증', '기본 정보', '학적 정보'];
 
@@ -173,7 +178,7 @@ const SignUp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSendEmail = () => {
+  const handleSendEmail = async () => {
     if (!formData.email) {
       setErrors({ email: '이메일을 입력해주세요' });
       return;
@@ -184,21 +189,46 @@ const SignUp = () => {
       return;
     }
 
-    // API 통신 대신 임시 처리
-    console.log('이메일 인증 코드 발송:', formData.email);
-    setEmailSent(true);
-    setTimer(300); // 5분 = 300초
-    setIsTimerActive(true);
+    setIsLoading(true);
     setApiError('');
+
+    try {
+      const response = await authService.sendVerificationCode(formData.email);
+
+      if (response.success) {
+        setEmailSent(true);
+        setTimer(300); // 5분 = 300초
+        setIsTimerActive(true);
+      } else {
+        setApiError(response.message || '이메일 발송에 실패했습니다.');
+      }
+    } catch (error) {
+      setApiError(error.message || '이메일 발송 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleVerifyEmail = () => {
+  const handleVerifyEmail = async () => {
     if (validateEmail() && formData.emailCode) {
-      // API 통신 대신 임시 처리
-      console.log('이메일 인증 코드 확인:', formData.emailCode);
-      setEmailVerified(true);
-      setIsTimerActive(false);
-      handleNext();
+      setIsLoading(true);
+      setApiError('');
+
+      try {
+        const response = await authService.verifyCode(formData.email, formData.emailCode);
+
+        if (response.success) {
+          setEmailVerified(true);
+          setIsTimerActive(false);
+          handleNext();
+        } else {
+          setApiError(response.message || '인증 코드가 올바르지 않습니다.');
+        }
+      } catch (error) {
+        setApiError(error.message || '인증 코드 확인 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -232,11 +262,24 @@ const SignUp = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleSubmit = () => {
-    // API 통신 대신 임시 처리
-    console.log('회원가입 데이터:', formData);
-    alert('회원가입이 완료되었습니다!');
-    navigate('/login');
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      const response = await authService.signup(formData);
+
+      if (response.success) {
+        alert('회원가입이 완료되었습니다!');
+        navigate('/login');
+      } else {
+        setApiError(response.message || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      setApiError(error.message || '회원가입 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Colleges and departments data (matching backend database)
@@ -244,15 +287,42 @@ const SignUp = () => {
     { id: 1, name: '공과대학', code: 'ENG' },
     { id: 2, name: '경영대학', code: 'BUS' },
     { id: 3, name: '인문대학', code: 'HUM' },
+    { id: 4, name: '자연과학대학', code: 'NAT' },
+    { id: 5, name: '사회과학대학', code: 'SOC' },
+    { id: 6, name: '예술대학', code: 'ART' },
   ];
 
   const departments = [
+    // 공과대학
     { id: 1, name: '컴퓨터공학과', code: 'CS', collegeId: 1 },
     { id: 2, name: '전자공학과', code: 'EE', collegeId: 1 },
-    { id: 3, name: '경영학과', code: 'BA', collegeId: 2 },
-    { id: 4, name: '회계학과', code: 'ACC', collegeId: 2 },
-    { id: 5, name: '국문학과', code: 'KOR', collegeId: 3 },
-    { id: 6, name: '영문학과', code: 'ENG', collegeId: 3 },
+    { id: 3, name: '기계공학과', code: 'ME', collegeId: 1 },
+    { id: 4, name: '화학공학과', code: 'CE', collegeId: 1 },
+    { id: 5, name: '건설환경공학과', code: 'CV', collegeId: 1 },
+    // 경영대학
+    { id: 6, name: '경영학과', code: 'BA', collegeId: 2 },
+    { id: 7, name: '회계학과', code: 'ACC', collegeId: 2 },
+    { id: 8, name: '금융학과', code: 'FIN', collegeId: 2 },
+    { id: 9, name: '마케팅학과', code: 'MKT', collegeId: 2 },
+    // 인문대학
+    { id: 10, name: '국어국문학과', code: 'KOR', collegeId: 3 },
+    { id: 11, name: '영어영문학과', code: 'ENG', collegeId: 3 },
+    { id: 12, name: '사학과', code: 'HIS', collegeId: 3 },
+    { id: 13, name: '철학과', code: 'PHI', collegeId: 3 },
+    // 자연과학대학
+    { id: 14, name: '수학과', code: 'MATH', collegeId: 4 },
+    { id: 15, name: '물리학과', code: 'PHY', collegeId: 4 },
+    { id: 16, name: '화학과', code: 'CHEM', collegeId: 4 },
+    { id: 17, name: '생명과학과', code: 'BIO', collegeId: 4 },
+    // 사회과학대학
+    { id: 18, name: '심리학과', code: 'PSY', collegeId: 5 },
+    { id: 19, name: '사회학과', code: 'SOC', collegeId: 5 },
+    { id: 20, name: '정치외교학과', code: 'POL', collegeId: 5 },
+    { id: 21, name: '경제학과', code: 'ECO', collegeId: 5 },
+    // 예술대학
+    { id: 22, name: '음악학과', code: 'MUS', collegeId: 6 },
+    { id: 23, name: '미술학과', code: 'ART', collegeId: 6 },
+    { id: 24, name: '디자인학과', code: 'DES', collegeId: 6 },
   ];
 
   const getStepContent = (step) => {
@@ -301,9 +371,10 @@ const SignUp = () => {
                       fullWidth
                       variant="contained"
                       onClick={handleSendEmail}
+                      disabled={isLoading}
                       sx={{ py: 1.5 }}
                     >
-                      인증 코드 받기
+                      {isLoading ? <CircularProgress size={24} /> : '인증 코드 받기'}
                     </Button>
                   </Grid>
                 )}
@@ -344,8 +415,9 @@ const SignUp = () => {
                         fullWidth
                         variant="contained"
                         onClick={handleVerifyEmail}
+                        disabled={isLoading}
                       >
-                        인증 확인
+                        {isLoading ? <CircularProgress size={24} /> : '인증 확인'}
                       </Button>
                     </Grid>
                   </>
@@ -681,9 +753,13 @@ const SignUp = () => {
             <Button
               variant="contained"
               onClick={handleNext}
-              disabled={activeStep === 0 && !emailVerified}
+              disabled={(activeStep === 0 && !emailVerified) || isLoading}
             >
-              {activeStep === steps.length - 1 ? '가입 완료' : '다음'}
+              {isLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                activeStep === steps.length - 1 ? '가입 완료' : '다음'
+              )}
             </Button>
           </Box>
 
