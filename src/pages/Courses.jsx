@@ -153,9 +153,6 @@ const Courses = () => {
       <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
         수강 과목
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        2024학년도 2학기 - 총 {courses.length}과목, {courses.reduce((sum, c) => sum + c.credits, 0)}학점
-      </Typography>
 
       <Grid container spacing={3}>
         {courses.map((course) => (
