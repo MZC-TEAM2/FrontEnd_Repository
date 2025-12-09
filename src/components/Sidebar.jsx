@@ -18,8 +18,10 @@
  * />
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import authService from '../services/authService';
+import profileService from '../services/profileService';
 import {
   Drawer,
   List,
@@ -149,6 +151,21 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
 
   // 서브메뉴 열림/닫힘 상태 관리
   const [openSubmenu, setOpenSubmenu] = useState({});
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          const data = await profileService.getMyProfile();
+          setProfile(data);
+        } catch (err) {
+          console.error('프로필 조회 실패:', err);
+        }
+      }
+    };
+    fetchProfile();
+  }, []);
 
   /**
    * 메뉴 클릭 핸들러
@@ -218,7 +235,7 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
         </Box>
       </Box>
 
-      {/* 사용자 정보 영역 (옵션) */}
+      {/* 사용자 정보 영역 */}
       <Box
         sx={{
           p: 2,
@@ -227,13 +244,18 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
           borderRadius: 2,
           bgcolor: theme.palette.primary.light + '20',
           border: `1px solid ${theme.palette.primary.light}40`,
+          cursor: 'pointer',
+          '&:hover': {
+            bgcolor: theme.palette.primary.light + '30',
+          },
         }}
+        onClick={() => navigate('/profile')}
       >
         <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-          2024학년도 2학기
+          {profile?.name || '사용자'}
         </Typography>
         <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-          컴퓨터공학과 3학년
+          {profile?.collegeName || '-'} | {profile?.departmentName || '-'} | {profile?.studentId || profile?.professorId || '-'}
         </Typography>
       </Box>
 
