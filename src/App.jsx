@@ -41,6 +41,7 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import Notifications from './pages/Notifications';
+import Profile from './pages/Profile';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
@@ -120,6 +121,9 @@ function App() {
 
             {/* 알림 */}
             <Route path="/notifications" element={<Notifications />} />
+
+            {/* 프로필 */}
+            <Route path="/profile" element={<Profile />} />
 
             {/* 설정 */}
             <Route path="/settings" element={<TempPage title="설정" />} />

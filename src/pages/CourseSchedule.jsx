@@ -284,7 +284,7 @@ const CourseSchedule = () => {
             시간표
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            2024학년도 2학기 | 총 {totalCredits}학점
+            2026학년도 1학기 | 총 {totalCredits}학점
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>

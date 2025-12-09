@@ -402,6 +402,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                 sx={{ ml: 1 }}
               >
                 <Avatar
+                  src={currentUser?.thumbnailUrl || undefined}
                   sx={{
                     width: 36,
                     height: 36,
@@ -462,14 +463,20 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         <Divider />
 
         {/* 메뉴 아이템 */}
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          navigate('/profile');
+        }}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>내 프로필</ListItemText>
         </MenuItem>
 
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          navigate('/settings');
+        }}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
