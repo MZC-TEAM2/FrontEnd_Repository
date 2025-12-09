@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -14,6 +14,10 @@ import {
   CardContent,
   Chip,
   IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Person,
@@ -25,6 +29,8 @@ import {
   Save,
   Cancel,
   Edit,
+  Delete,
+  PhotoCamera,
 } from '@mui/icons-material';
 import profileService from '../services/profileService';
 import authService from '../services/authService';
@@ -34,8 +40,11 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [imageMenuAnchor, setImageMenuAnchor] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -111,6 +120,85 @@ const Profile = () => {
     setError('');
   };
 
+  const handleImageMenuOpen = (event) => {
+    setImageMenuAnchor(event.currentTarget);
+  };
+
+  const handleImageMenuClose = () => {
+    setImageMenuAnchor(null);
+  };
+
+  const handleImageChangeClick = () => {
+    handleImageMenuClose();
+    fileInputRef.current?.click();
+  };
+
+  const handleImageDeleteClick = () => {
+    handleImageMenuClose();
+    handleImageDelete();
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('JPG, PNG, WEBP 형식의 이미지만 업로드 가능합니다.');
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('이미지 크기는 5MB 이하여야 합니다.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setError('');
+    try {
+      await profileService.uploadProfileImage(file);
+      await fetchProfile();
+      setSuccess('프로필 이미지가 변경되었습니다.');
+
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        const updatedProfile = await profileService.getMyProfile();
+        currentUser.thumbnailUrl = updatedProfile.thumbnailUrl;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+      }
+    } catch (err) {
+      setError('이미지 업로드에 실패했습니다.');
+      console.error('이미지 업로드 실패:', err);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleImageDelete = async () => {
+    if (!window.confirm('프로필 이미지를 삭제하시겠습니까?')) return;
+
+    setIsUploadingImage(true);
+    setError('');
+    try {
+      await profileService.deleteProfileImage();
+      await fetchProfile();
+      setSuccess('프로필 이미지가 삭제되었습니다.');
+
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        currentUser.thumbnailUrl = null;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+      }
+    } catch (err) {
+      setError('이미지 삭제에 실패했습니다.');
+      console.error('이미지 삭제 실패:', err);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
@@ -143,6 +231,13 @@ const Profile = () => {
           <Card>
             <CardContent sx={{ textAlign: 'center', py: 4 }}>
               <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                />
                 <Avatar
                   src={profile?.thumbnailUrl || profile?.profileImageUrl || undefined}
                   sx={{
@@ -152,19 +247,20 @@ const Profile = () => {
                     fontSize: '3rem',
                   }}
                 >
-                  {profile?.name?.charAt(0) || 'U'}
+                  {isUploadingImage ? <CircularProgress size={40} color="inherit" /> : (profile?.name?.charAt(0) || 'U')}
                 </Avatar>
                 <IconButton
                   size="small"
-                  onClick={() => setIsEditing(true)}
+                  onClick={handleImageMenuOpen}
+                  disabled={isUploadingImage}
                   sx={{
                     position: 'absolute',
                     bottom: 0,
                     right: 0,
-                    bgcolor: 'primary.main',
+                    bgcolor: 'grey.500',
                     color: 'white',
                     '&:hover': {
-                      bgcolor: 'primary.dark',
+                      bgcolor: 'grey.700',
                     },
                     width: 32,
                     height: 32,
@@ -172,6 +268,34 @@ const Profile = () => {
                 >
                   <Edit fontSize="small" />
                 </IconButton>
+                <Menu
+                  anchorEl={imageMenuAnchor}
+                  open={Boolean(imageMenuAnchor)}
+                  onClose={handleImageMenuClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                >
+                  <MenuItem onClick={handleImageChangeClick}>
+                    <ListItemIcon>
+                      <PhotoCamera fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>이미지 변경</ListItemText>
+                  </MenuItem>
+                  {(profile?.thumbnailUrl || profile?.profileImageUrl) && (
+                    <MenuItem onClick={handleImageDeleteClick}>
+                      <ListItemIcon>
+                        <Delete fontSize="small" color="error" />
+                      </ListItemIcon>
+                      <ListItemText sx={{ color: 'error.main' }}>이미지 삭제</ListItemText>
+                    </MenuItem>
+                  )}
+                </Menu>
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
                 {profile?.name}
