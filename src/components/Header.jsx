@@ -59,6 +59,7 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import authService from '../services/authService';
 import notificationService from '../services/notificationService';
+import { useThemeContext } from '../contexts/ThemeContext';
 
 /**
  * 검색창 컨테이너 스타일 컴포넌트
@@ -126,12 +127,12 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useThemeContext();
 
   // 상태 관리
   const [anchorEl, setAnchorEl] = useState(null); // 사용자 메뉴
   const [notificationAnchor, setNotificationAnchor] = useState(null); // 알림 메뉴
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null); // 모바일 메뉴
-  const [darkMode, setDarkMode] = useState(false); // 다크모드 (임시)
   const [notifications, setNotifications] = useState([]); // 알림 목록
   const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
@@ -274,14 +275,6 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   };
 
   /**
-   * 다크모드 토글 (추후 구현)
-   */
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // TODO: Redux나 Context를 통한 전역 테마 변경 구현
-  };
-
-  /**
    * 로그아웃 처리
    */
   const handleLogout = async () => {
@@ -362,8 +355,8 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {/* 다크모드 토글 */}
             <Tooltip title="테마 변경">
-              <IconButton onClick={toggleDarkMode} color="inherit">
-                {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+              <IconButton onClick={toggleTheme} color="inherit">
+                {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
               </IconButton>
             </Tooltip>
 
@@ -449,16 +442,28 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {/* 사용자 정보 헤더 */}
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            {currentUser?.name || '사용자'}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {currentUser?.userNumber || currentUser?.userId || '학번 없음'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {currentUser?.email || '이메일 없음'}
-          </Typography>
+        <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar
+            src={currentUser?.thumbnailUrl || undefined}
+            sx={{
+              width: 48,
+              height: 48,
+              bgcolor: theme.palette.primary.main,
+            }}
+          >
+            {currentUser?.name?.charAt(0) || 'U'}
+          </Avatar>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {currentUser?.name || '사용자'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {currentUser?.userNumber || currentUser?.userId || '학번 없음'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {currentUser?.email || '이메일 없음'}
+            </Typography>
+          </Box>
         </Box>
         <Divider />
 
@@ -577,9 +582,9 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
           sx: { mt: 1.5 },
         }}
       >
-        <MenuItem onClick={toggleDarkMode}>
+        <MenuItem onClick={toggleTheme}>
           <ListItemIcon>
-            {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+            {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </ListItemIcon>
           <ListItemText>테마 변경</ListItemText>
         </MenuItem>
