@@ -44,6 +44,9 @@ import Settings from './pages/Settings';
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
 
+// 게시판 컴포넌트
+import NoticeList from './domains/board/components/NoticeList';
+
 /**
  * 임시 페이지 컴포넌트
  * 아직 구현되지 않은 페이지를 위한 플레이스홀더
@@ -103,8 +106,7 @@ function App() {
             <Route path="/exams" element={<TempPage title="퀴즈/시험" />} />
 
             {/* 커뮤니티 관련 라우트 */}
-            <Route path="/community" element={<Community />} />
-            <Route path="/community/notices" element={<Community />} />
+            <Route path="/community/notices" element={<NoticeList />} />
             <Route path="/community/board" element={<Community />} />
             <Route path="/community/qna" element={<Community />} />
 
