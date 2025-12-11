@@ -690,7 +690,7 @@ Authorization: Bearer {accessToken}
 
 ### 강의 목록 조회 (검색 및 필터링)
 ```http
-GET /api/v1/enrollment/courses
+GET /api/v1/courses
 Authorization: Bearer {accessToken}
 ```
 
@@ -701,12 +701,12 @@ Authorization: Bearer {accessToken}
 - `departmentId`: 학과 ID (전체: null)
 - `courseType`: 이수구분 (전체: null, 값: MAJOR_REQ, MAJOR_ELEC, GEN_REQ, GEN_ELEC)
 - `credits`: 학점 (전체: null, 값: 1, 2, 3, 4)
-- `termId`: 학기 ID (필수)
+- `enrollmentPeriodId`: 학기 ID (필수)
 - `sort`: 정렬 (기본값: courseCode,asc)
 
 **Request Example**
 ```
-GET /api/v1/enrollment/courses?page=0&size=20&keyword=데이터베이스&departmentId=1&courseType=MAJOR_REQ&credits=3&termId=10&sort=courseCode,asc
+GET /api/v1/enrollment/courses?page=0&size=20&keyword=데이터베이스&departmentId=1&courseType=MAJOR_REQ&credits=3&enrollmentPeriodId=10&sort=courseCode,asc
 ```
 
 **Response**
@@ -1098,7 +1098,7 @@ GET /api/v1/enrollment/my
 Authorization: Bearer {accessToken}
 ```
 **Query Parameters**
-- `termId`: 학기 ID (선택, 미입력시 현재 학기)
+- `enrollmentPeriodId`: 학기 ID (선택, 미입력시 현재 학기)
 
 **Response**
 ```json
@@ -1154,7 +1154,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.9 수강신청 상세 조회
 ```http
-GET /api/v1/enrollment/{enrollmentId}
+GET /api/v1/courses/{enrollmentId}
 Authorization: Bearer {accessToken}
 ```
 
