@@ -5,10 +5,27 @@ import { Box } from '@mui/material';
  * 탭 패널 컴포넌트
  */
 function TabPanel({ children, value, index }) {
+  if (value !== index) {
+    return null;
+  }
+
   return (
-    <div hidden={value !== index} style={{ display: value === index ? 'flex' : 'none', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      {value === index && <Box sx={{ py: 3, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>{children}</Box>}
-    </div>
+    <Box
+      role="tabpanel"
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      sx={{ 
+        flex: 1,
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: 0, 
+        height: '100%',
+        width: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      {children}
+    </Box>
   );
 }
 
