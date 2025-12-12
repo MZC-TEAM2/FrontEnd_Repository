@@ -22,7 +22,9 @@ import {
   Tab,
   Chip,
   Alert,
+  Snackbar,
 } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 
 // 컴포넌트
 import TabPanel from '../domains/course/components/TabPanel';
@@ -62,13 +64,17 @@ const CourseRegistration = () => {
     handlePageChange,
     addToCart,
     removeFromCart,
+    clearAllCarts,
     confirmRegistration,
     handleSearchKeyPress,
+    handleEnroll,
     setError,
+    toast,
+    setToast,
   } = useCourseRegistration();
 
   return (
-    <Box>
+    <Box sx={{ width: '100%', maxWidth: '100%', mx: 'auto' }}>
       <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
         수강신청
       </Typography>
@@ -79,35 +85,44 @@ const CourseRegistration = () => {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
-        {/* 왼쪽: 과목 목록 및 검색 */}
-        <Grid item xs={12} md={7}>
-          <Paper 
-            sx={{ 
-              p: 3,
-              height: 'auto',
-              minHeight: '400px',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
-          >
+      <Box>
+        {/* 위쪽: 과목 목록 및 검색 */}
+        <Paper 
+          sx={{ 
+            p: 3,
+            mb: 3,
+            height: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            width: '100%',
+            maxWidth: '100%',
+          }}
+        >
             <Tabs 
               value={tabValue} 
-              onChange={(e, val) => setTabValue(val)} 
+              onChange={(e, val) => {
+                setTabValue(val);
+              }}
               sx={{ 
-                mb: 3, 
+                mb: 3,
                 flexShrink: 0,
                 '& .MuiTabs-flexContainer': {
                   justifyContent: 'space-between',
                 },
               }}
             >
-              <Tab label="개설 과목" sx={{ minWidth: 'auto', mr: 'auto' }} />
-              <Box sx={{ display: 'flex' }}>
-                <Tab label="장바구니" icon={<Chip label={cart.length} size="small" color="error" />} />
-                <Tab label="신청 완료" icon={<Chip label={registered.length} size="small" color="success" />} />
-              </Box>
+              <Tab label="개설 과목" sx={{ mr: 'auto' }} />
+              <Tab 
+                label="장바구니"
+                icon={<Chip label={cart.length} size="small" color="warning" sx={{ pointerEvents: 'none' }} />}
+                iconPosition="end"
+              />
+              <Tab 
+                label="신청 완료"
+                icon={<Chip label={registered.length} size="small" color="success" sx={{ pointerEvents: 'none' }} />}
+                iconPosition="end"
+              />
             </Tabs>
 
             {/* 개설 과목 탭 */}
@@ -133,6 +148,7 @@ const CourseRegistration = () => {
                 registered={registered}
                 onAddToCart={addToCart}
                 onRemoveFromCart={removeFromCart}
+                onEnroll={handleEnroll}
               />
             </TabPanel>
 
@@ -143,6 +159,7 @@ const CourseRegistration = () => {
                 totalCredits={totalCredits}
                 registeredCredits={registeredCredits}
                 onRemoveFromCart={removeFromCart}
+                onClearAllCarts={clearAllCarts}
                 onConfirmRegistration={confirmRegistration}
               />
             </TabPanel>
@@ -152,30 +169,45 @@ const CourseRegistration = () => {
               <RegisteredTab registered={registered} />
             </TabPanel>
           </Paper>
-        </Grid>
 
-        {/* 오른쪽: 시간표 및 요약 */}
-        <Grid item xs={12} md={5}>
-          <Grid container spacing={3}>
-            {/* 시간표 미리보기 */}
-            <Grid item xs={12} lg={6}>
-              <Box sx={{ height: '38vh' }}>
-                <TimeTable courses={[...registered, ...cart]} isPreview={true} />
-              </Box>
-            </Grid>
+        {/* 아래쪽: 시간표 및 요약 */}
+        <Box sx={{ display: 'flex', gap: 3, width: '100%' }}>
+          {/* 시간표 미리보기 */}
+          <Box sx={{ flex: 2.5, width: '100%' }}>
+            <TimeTable 
+              courses={[...registered, ...cart]} 
+              isPreview={true}
+              registeredIds={registered.map(c => c.id)}
+            />
+          </Box>
 
-            {/* 학점 요약 */}
-            <Grid item xs={12} lg={6}>
-              <EnrollmentSummary
-                registeredCredits={registeredCredits}
-                totalCredits={totalCredits}
-                registeredCount={registered.length}
-                cartCount={cart.length}
-              />
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+          {/* 학점 요약 */}
+          <Box sx={{ flex: 0.8  }}>
+            <EnrollmentSummary
+              registeredCredits={registeredCredits}
+              totalCredits={totalCredits}
+              registeredCount={registered.length}
+              cartCount={cart.length}
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* 토스트 메시지 */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast({ ...toast, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <MuiAlert
+          onClose={() => setToast({ ...toast, open: false })}
+          severity={toast.severity}
+          sx={{ width: '100%' }}
+        >
+          {toast.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 };

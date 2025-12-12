@@ -690,13 +690,13 @@ Authorization: Bearer {accessToken}
 
 ### 강의 목록 조회 (검색 및 필터링)
 ```http
-GET /api/v1/courses
+GET /api/v1/enrollments/courses
 Authorization: Bearer {accessToken}
 ```
 
 **Query Parameters**
 - `page`: 페이지 번호 (기본값: 0)
-- `size`: 페이지 크기 (기본값: 20)
+- `size`: 페이지 크기 (기본값: 10)
 - `keyword`: 검색어 (과목명, 과목코드, 교수명 통합 검색)
 - `departmentId`: 학과 ID (전체: null)
 - `courseType`: 이수구분 (전체: null, 값: MAJOR_REQ, MAJOR_ELEC, GEN_REQ, GEN_ELEC)
@@ -706,7 +706,7 @@ Authorization: Bearer {accessToken}
 
 **Request Example**
 ```
-GET /api/v1/enrollment/courses?page=0&size=20&keyword=데이터베이스&departmentId=1&courseType=MAJOR_REQ&credits=3&enrollmentPeriodId=10&sort=courseCode,asc
+GET /api/v1/enrollments/courses?page=0&size=10&keyword=데이터베이스&departmentId=1&courseType=MAJOR_REQ&credits=3&enrollmentPeriodId=10&sort=courseCode,asc
 ```
 
 **Response**
@@ -769,7 +769,7 @@ GET /api/v1/enrollment/courses?page=0&size=20&keyword=데이터베이스&departm
 
 ### 9.3 수강신청 장바구니 조회
 ```http
-GET /api/v1/cart
+GET /api/v1/carts
 Authorization: Bearer {accessToken}
 ```
 **Response**
@@ -822,7 +822,7 @@ Authorization: Bearer {accessToken}
 
 ## 9.4 수강신청 장바구니에 강의 추가
 ```http
-POST /api/v1/cart/bulk
+POST /api/v1/carts/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -881,7 +881,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.5 장바구니에서 강의 제거
 ```http
-DELETE /api/v1/cart/bulk
+DELETE /api/v1/carts/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -902,6 +902,7 @@ Authorization: Bearer {accessToken}
     "removedCourses": [
       {
         "cartId": 1,
+        "courseId": 104,
         "courseCode": "CS301",
         "courseName": "데이터베이스",
         "credits": 3
@@ -921,7 +922,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.6 장바구니 전체 제거
 ```http
-DELETE /api/v1/cart
+DELETE /api/v1/carts
 Authorization: Bearer {accessToken}
 ```
 **Response**
@@ -947,7 +948,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.6 수강신청 
 ```http
-POST /api/v1/enrollment/cart
+POST /api/v1/enrollments/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -1044,7 +1045,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.7 수강신청 취소
 ```http
-DELETE /api/v1/enrollment/bulk
+DELETE /api/v1/enrollments/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -1094,7 +1095,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.8 수강신청 목록 조회
 ```http
-GET /api/v1/enrollment/my
+GET /api/v1/enrollments/my
 Authorization: Bearer {accessToken}
 ```
 **Query Parameters**

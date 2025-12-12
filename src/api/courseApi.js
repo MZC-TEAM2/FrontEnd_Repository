@@ -16,7 +16,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
  * @returns {Promise} 수강신청 기간 정보 (enrollmentPeriodId 포함)
  */
 export const getCurrentEnrollmentPeriod = async () => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollment/periods/current`);
+  const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
   return response.data;
 };
 
@@ -25,7 +25,7 @@ export const getCurrentEnrollmentPeriod = async () => {
  * 
  * @param {Object} params - 쿼리 파라미터
  * @param {number} params.page - 페이지 번호 (기본값: 0)
- * @param {number} params.size - 페이지 크기 (기본값: 20)
+ * @param {number} params.size - 페이지 크기 (기본값: 10)
  * @param {string} params.keyword - 검색어 (과목명, 과목코드, 교수명)
  * @param {number|null} params.departmentId - 학과 ID (전체: null)
  * @param {string|null} params.courseType - 이수구분 (MAJOR_REQ, MAJOR_ELEC, GEN_REQ, GEN_ELEC)
@@ -37,7 +37,7 @@ export const getCurrentEnrollmentPeriod = async () => {
 export const getCourses = async (params = {}) => {
   const {
     page = 0,
-    size = 20,
+    size = 10,
     keyword = '',
     departmentId = null,
     courseType = null,
@@ -73,10 +73,11 @@ export const getCourses = async (params = {}) => {
     queryParams.append('credits', credits);
   }
 
+  // 수강신청 기간 중 강의 목록 조회는 /api/v1/enrollment/courses 사용
   const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/courses?${queryParams.toString()}`
+    `${BASE_URL}/api/v1/enrollments/courses?${queryParams.toString()}`
   );
-  
+
   return response.data;
 };
 
@@ -103,4 +104,58 @@ export const getDepartments = async () => {
   
   // 임시로 빈 배열 반환
   return { success: true, data: [] };
+};
+
+/**
+ * 장바구니 조회
+ * @returns {Promise} 장바구니 목록
+ */
+export const getCarts = async () => {
+  const response = await axiosInstance.get(`${BASE_URL}/api/v1/carts`);
+  return response.data;
+};
+
+/**
+ * 장바구니에 강의 추가 (bulk)
+ * @param {number[]} courseIds - 강의 ID 배열
+ * @returns {Promise} 추가 결과
+ */
+export const addToCarts = async (courseIds) => {
+  const response = await axiosInstance.post(`${BASE_URL}/api/v1/carts/bulk`, {
+    courseIds,
+  });
+  return response.data;
+};
+
+/**
+ * 장바구니에서 강의 제거 (bulk)
+ * @param {number[]} cartIds - 장바구니 ID 배열
+ * @returns {Promise} 제거 결과
+ */
+export const removeFromCarts = async (cartIds) => {
+  const response = await axiosInstance.delete(`${BASE_URL}/api/v1/carts/bulk`, {
+    data: { cartIds },
+  });
+  return response.data;
+};
+
+/**
+ * 장바구니 전체 제거
+ * @returns {Promise} 제거 결과
+ */
+export const clearCarts = async () => {
+  const response = await axiosInstance.delete(`${BASE_URL}/api/v1/carts`);
+  return response.data;
+};
+
+/**
+ * 장바구니에서 수강신청 확정
+ * @param {number[]} courseIds - 강의 ID 배열
+ * @returns {Promise} 수강신청 결과
+ */
+export const enrollFromCart = async (courseIds) => {
+  const response = await axiosInstance.post(`${BASE_URL}/api/v1/enrollments/cart`, {
+    courseIds,
+  });
+  return response.data;
 };

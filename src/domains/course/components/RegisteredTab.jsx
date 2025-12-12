@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { formatScheduleTime } from '../utils/scheduleUtils';
 
 /**
  * 신청 완료 탭 컴포넌트
@@ -19,12 +20,14 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 const RegisteredTab = ({ registered }) => {
   return (
     <Box sx={{ 
+      height: '100%',
+      width: '100%',
       display: 'flex', 
       flexDirection: 'column',
       overflow: 'hidden',
     }}>
       {registered.length === 0 ? (
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2 }}>
           <Alert severity="info">아직 신청 완료된 과목이 없습니다.</Alert>
         </Box>
       ) : (
@@ -49,10 +52,7 @@ const RegisteredTab = ({ registered }) => {
                   <TableCell>{course.credits}</TableCell>
                   <TableCell>
                     <Typography variant="caption">
-                      {course.schedule.map((s) => {
-                        const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
-                        return `${dayMap[s.dayOfWeek]} ${s.startTime}-${s.endTime}`;
-                      }).join(', ')}
+                      {course.schedule?.map(formatScheduleTime).join(', ') || '-'}
                     </Typography>
                     <br />
                     <Typography variant="caption" color="text.secondary">

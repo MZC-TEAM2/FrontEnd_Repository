@@ -13,6 +13,7 @@ import {
   IconButton,
 } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import { formatScheduleTime } from '../utils/scheduleUtils';
 
 /**
  * 장바구니 탭 컴포넌트
@@ -22,17 +23,24 @@ const CartTab = ({
   totalCredits,
   registeredCredits,
   onRemoveFromCart,
+  onClearAllCarts,
   onConfirmRegistration,
 }) => {
   return (
     <Box sx={{ 
       height: '100%',
+      width: '100%',
       display: 'flex', 
       flexDirection: 'column',
       overflow: 'hidden',
     }}>
       {cart.length === 0 ? (
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ 
+          width: '100%',
+          display: 'flex', 
+          justifyContent: 'center',
+          pt: 2,
+        }}>
           <Alert severity="info">장바구니가 비어있습니다.</Alert>
         </Box>
       ) : (
@@ -51,23 +59,21 @@ const CartTab = ({
               </TableHead>
               <TableBody>
                 {cart.map((course) => (
-                  <TableRow key={course.id}>
+                  <TableRow key={course.cartId || course.id}>
                     <TableCell>{course.subjectCode}</TableCell>
                     <TableCell>{course.subjectName}</TableCell>
                     <TableCell>{course.professor}</TableCell>
                     <TableCell>{course.credits}</TableCell>
                     <TableCell>
                       <Typography variant="caption">
-                        {course.schedule.map((s) => {
-                          const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
-                          return `${dayMap[s.dayOfWeek]} ${s.startTime}-${s.endTime}`;
-                        }).join(', ')}
+                        {course.schedule?.map(formatScheduleTime).join(', ') || '-'}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
                       <IconButton
                         color="error"
-                        onClick={() => onRemoveFromCart(course.id)}
+                        onClick={() => onRemoveFromCart(course.cartId || course.id)}
+                        title="장바구니에서 제거"
                       >
                         <RemoveCircleOutlineIcon />
                       </IconButton>
@@ -89,6 +95,16 @@ const CartTab = ({
                 학점 ({cart.length}과목)
               </Typography>
             </Box>
+            <Button
+              variant="outlined"
+              color="error"
+              size="large"
+              fullWidth
+              onClick={onClearAllCarts}
+              sx={{ mt: 2 }}
+            >
+              장바구니 비우기
+            </Button>
             <Button
               variant="contained"
               size="large"

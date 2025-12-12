@@ -22,53 +22,55 @@ const EnrollmentSummary = ({
   const total = registeredCredits + totalCredits;
 
   return (
-    <Card>
-      <CardContent sx={{ p: 3, height: '100%', overflow: 'auto' }}>
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+    <Card sx={{  display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto', alignItems: 'center', '&:last-child': { pb: 1.5 } }}>
+        <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600, alignSelf: 'flex-start', width: '100%' }}>
           수강신청 현황
         </Typography>
-        <Divider sx={{ mb: 3 }} />
+        <Divider sx={{ mb: 1.5, width: '100%' }} />
+        
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <Grid container spacing={1.5} sx={{ maxWidth: '100%' }}>
+            <Grid item xs={6}>
+              <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'primary.light', borderRadius: 1.5 }}>
+                <Typography variant="body2" sx={{ color: 'white', mb: 0.5, fontSize: '1.8rem' }}>
+                  신청 완료
+                </Typography>
+                <Typography variant="h5" sx={{ color: 'white', fontSize: '2rem'}}>
+                  {registeredCredits}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'white', fontSize: '1.4rem' }}>
+                  학점 ({registeredCount}과목)
+                </Typography>
+              </Box>
+            </Grid>
 
-        <Grid container spacing={3}>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
-              <Typography variant="body1" sx={{ color: 'white', mb: 1 }}>
-                신청 완료
-              </Typography>
-              <Typography variant="h3" sx={{ color: 'white', fontWeight: 700 }}>
-                {registeredCredits}
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'white' }}>
-                학점 ({registeredCount}과목)
-              </Typography>
-            </Box>
+            <Grid item xs={6} >
+              <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'warning.light', borderRadius: 1.5 }}>
+                <Typography variant="body2" sx={{ color: 'white', mb: 0.5, fontSize: '1.8rem' }}>
+                  장바구니
+                </Typography>
+                <Typography variant="h5" sx={{ color: 'white', fontSize: '2rem'}}>
+                  {totalCredits}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'white', fontSize: '1.4rem' }}>
+                  학점 ({cartCount}과목)
+                </Typography>
+              </Box>
+            </Grid>
           </Grid>
+        </Box>
 
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
-              <Typography variant="body1" sx={{ color: 'white', mb: 1 }}>
-                장바구니
-              </Typography>
-              <Typography variant="h3" sx={{ color: 'white', fontWeight: 700 }}>
-                {totalCredits}
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'white' }}>
-                학점 ({cartCount}과목)
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
+        <Divider sx={{ my: 1.5, width: '100%' }} />
 
-        <Divider sx={{ my: 3 }} />
-
-        <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'grey.100', borderRadius: 2 }}>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+        <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'grey.100', borderRadius: 1.5, width: '100%' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '1.4rem' }}>
             총 신청 학점
           </Typography>
-          <Typography variant="h2" sx={{ fontWeight: 700, color: total > 21 ? 'error.main' : 'text.primary' }}>
+          <Typography variant="h4" sx={{ fontSize: '2rem', color: total > 21 ? 'error.main' : 'text.primary' }}>
             {total}
           </Typography>
-          <Typography variant="h5" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.4rem' }}>
             / 21 학점
           </Typography>
 
@@ -76,9 +78,9 @@ const EnrollmentSummary = ({
             variant="determinate"
             value={Math.min((total / 21) * 100, 100)}
             sx={{
-              mt: 2,
-              height: 10,
-              borderRadius: 5,
+              mt: 1,
+              height: 8,
+              borderRadius: 4,
               bgcolor: 'grey.300'
             }}
             color={total > 21 ? 'error' : total > 18 ? 'warning' : 'primary'}
