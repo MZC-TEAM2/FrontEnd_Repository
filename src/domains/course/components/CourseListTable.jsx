@@ -15,6 +15,10 @@ import {
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import AddIcon from '@mui/icons-material/Add';
+import { formatScheduleTime } from '../utils/scheduleUtils';
 
 /**
  * 과목 목록 테이블 컴포넌트
@@ -28,6 +32,7 @@ const CourseListTable = ({
   registered,
   onAddToCart,
   onRemoveFromCart,
+  onEnroll,
 }) => {
   return (
     <Box sx={{ 
@@ -84,26 +89,27 @@ const CourseListTable = ({
         <Table 
           stickyHeader
           sx={{
-            minWidth: 1000,
             width: '100%',
+            tableLayout: 'fixed',
           }}
         >
           <TableHead>
             <TableRow>
-              <TableCell sx={{ minWidth: 100 }}>과목코드</TableCell>
-              <TableCell sx={{ minWidth: 150 }}>과목명</TableCell>
-              <TableCell sx={{ minWidth: 100 }}>교수</TableCell>
-              <TableCell sx={{ minWidth: 80 }}>학점</TableCell>
-              <TableCell sx={{ minWidth: 100 }}>이수구분</TableCell>
-              <TableCell sx={{ minWidth: 200 }}>시간/강의실</TableCell>
-              <TableCell align="center" sx={{ minWidth: 100 }}>정원</TableCell>
-              <TableCell align="center" sx={{ minWidth: 100 }}>신청</TableCell>
+              <TableCell sx={{ width: '8%', px: 1 }}>과목코드</TableCell>
+              <TableCell sx={{ width: '14%', px: 1 }}>과목명</TableCell>
+              <TableCell sx={{ width: '7%', px: 1 }}>교수</TableCell>
+              <TableCell sx={{ width: '5%', px: 1 }}>학점</TableCell>
+              <TableCell sx={{ width: '9%', px: 1 }}>이수구분</TableCell>
+              <TableCell sx={{ width: '28%', px: 1 }}>시간/강의실</TableCell>
+              <TableCell align="center" sx={{ width: '7%', px: 1 }}>정원</TableCell>
+              <TableCell align="center" sx={{ width: '7%', px: 1 }}>장바구니</TableCell>
+              <TableCell align="center" sx={{ width: '7%', px: 1 }}>신청</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {courses.length === 0 && !loading ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 8, minWidth: 1000 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">
                     조회된 강의가 없습니다.
                   </Typography>
@@ -114,18 +120,19 @@ const CourseListTable = ({
                 const isFull = course.isFull || course.currentStudents >= course.maxStudents;
                 const isInCart = cart.find((c) => c.id === course.id);
                 const isRegistered = registered.find((c) => c.id === course.id);
+                const canEnroll = course.canEnroll !== false; // false가 아닌 경우 모두 true로 처리
 
                 return (
                   <TableRow key={course.id}>
-                    <TableCell>{course.subjectCode}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <TableCell sx={{ px: 1 }}>{course.subjectCode}</TableCell>
+                    <TableCell sx={{ px: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.875rem' }}>
                         {course.subjectName}
                       </Typography>
                     </TableCell>
-                    <TableCell>{course.professor}</TableCell>
-                    <TableCell>{course.credits}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ px: 1 }}>{course.professor}</TableCell>
+                    <TableCell sx={{ px: 1 }}>{course.credits}</TableCell>
+                    <TableCell sx={{ px: 1 }}>
                       <Chip
                         label={course.courseType}
                         size="small"
@@ -133,44 +140,75 @@ const CourseListTable = ({
                           course.courseType.includes('필수') ? 'error' : 'primary'
                         }
                         variant="outlined"
+                        sx={{ fontSize: '0.7rem', height: '24px' }}
                       />
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="caption">
-                        {course.schedule.map((s) => {
-                          const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
-                          return `${dayMap[s.dayOfWeek] || s.dayName || ''} ${s.startTime}-${s.endTime}`;
-                        }).join(', ')}
+                    <TableCell sx={{ px: 1 }}>
+                      <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1.3, display: 'block' }}>
+                        {course.schedule?.map(formatScheduleTime).join(', ') || '-'}
                       </Typography>
-                      <br />
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', display: 'block', mt: 0.3 }}>
                         {course.classroom}
                       </Typography>
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ px: 1 }}>
                       <Chip
                         label={`${course.currentStudents}/${course.maxStudents}`}
                         size="small"
                         color={isFull ? 'error' : 'default'}
+                        sx={{ fontSize: '0.7rem', height: '24px' }}
                       />
                     </TableCell>
-                    <TableCell align="center">
-                      {isRegistered ? (
-                        <Chip label="신청완료" size="small" color="success" />
+                    <TableCell align="center" sx={{ px: 1 }}>
+                      {!canEnroll ? (
+                        null
+                      ) : isRegistered ? (
+                        <Chip label="-" size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: '24px' }} />
                       ) : isInCart ? (
                         <IconButton
                           color="error"
                           onClick={() => onRemoveFromCart(course.id)}
+                          size="small"
+                          title="장바구니에서 제거"
+                          sx={{ padding: '4px' }}
                         >
-                          <RemoveCircleOutlineIcon />
+                          <RemoveCircleOutlineIcon fontSize="small" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          color="secondary"
+                          onClick={() => onAddToCart(course)}
+                          size="small"
+                          title="장바구니에 추가"
+                          sx={{ padding: '4px' }}
+                        >
+                          <ShoppingCartIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                    <TableCell align="center" sx={{ px: 1 }}>
+                      {!canEnroll ? (
+                        null
+                      ) : isRegistered ? (
+                        <IconButton
+                          color="primary"
+                          disabled
+                          size="small"
+                          title="수강신청 완료"
+                          sx={{ padding: '4px' }}
+                        >
+                          <CheckCircleOutlineIcon fontSize="small" />
                         </IconButton>
                       ) : (
                         <IconButton
                           color="primary"
-                          onClick={() => onAddToCart(course)}
-                          disabled={isFull || !course.canEnroll}
+                          onClick={() => onEnroll && onEnroll(course)}
+                          disabled={isFull}
+                          size="small"
+                          title={isFull ? '정원 초과' : '수강신청'}
+                          sx={{ padding: '4px' }}
                         >
-                          <AddCircleOutlineIcon />
+                          <AddIcon fontSize="small" />
                         </IconButton>
                       )}
                     </TableCell>
