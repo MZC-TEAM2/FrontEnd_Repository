@@ -25,45 +25,35 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { createNotice } from '../../../api/boardApi';
+import { createNotice } from '../../../../api/noticeApi';
+import { usePostForm } from '../../hooks/usePostForm';
+import { useFileManager } from '../../hooks/useFileManager';
 
 const NoticeCreatePage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
+  
+  // Custom Hooks
+  const { formData, handleInputChange, validateForm } = usePostForm({
     title: '',
     content: '',
     postType: 'NORMAL',
     isAnonymous: false,
   });
-  const [files, setFiles] = useState([]);
+  const { files, handleFileChange, handleFileRemove } = useFileManager();
 
   // 카테고리 ID (실제로는 API에서 가져오거나 상수로 관리)
   const NOTICE_CATEGORY_ID = 1; // NOTICE 카테고리의 실제 ID로 변경 필요
 
-  const handleInputChange = (e) => {
-    const { name, value, checked, type } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
-  };
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setFiles([...files, ...selectedFiles]);
-  };
-
-  const handleFileRemove = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.content.trim()) {
-      setError('제목과 내용을 입력해주세요.');
+    const validation = validateForm();
+    if (!validation.valid) {
+      setError(validation.message);
       return;
     }
 

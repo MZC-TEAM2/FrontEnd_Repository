@@ -25,9 +25,10 @@ import {
   Campaign as CampaignIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useNoticeBoard } from '../hooks/useNoticeBoard';
+import { useNotice } from '../../hooks/useNotice';
+import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
 
-const NoticeList = () => {
+const NoticeListPage = () => {
   const navigate = useNavigate();
   const {
     notices,
@@ -41,28 +42,7 @@ const NoticeList = () => {
     handlePageChange,
     handleSearch,
     handleSearchKeyPress,
-  } = useNoticeBoard();
-
-  // 날짜 포맷팅
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  };
-
-  // 게시글 타입 라벨
-  const getPostTypeLabel = (postType) => {
-    const types = {
-      NOTICE: { label: '공지', color: 'error' },
-      IMPORTANT: { label: '중요', color: 'warning' },
-      GENERAL: { label: '일반', color: 'default' },
-    };
-    return types[postType] || types.GENERAL;
-  };
+  } = useNotice();
 
   // 상세 페이지로 이동
   const handleRowClick = (id) => {
@@ -82,7 +62,6 @@ const NoticeList = () => {
         <Button
           variant="contained"
           onClick={() => navigate('/notices/create')}
-          sx={{ display: 'none' }} // TODO: 권한에 따라 표시
         >
           공지 작성
         </Button>
@@ -230,4 +209,4 @@ const NoticeList = () => {
   );
 };
 
-export default NoticeList;
+export default NoticeListPage;

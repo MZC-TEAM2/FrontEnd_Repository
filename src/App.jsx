@@ -45,8 +45,10 @@ import Settings from './pages/Settings';
 import { Box, Typography, Paper } from '@mui/material';
 
 // 게시판 컴포넌트
-import NoticeList from './domains/board/components/NoticeList';
-import Notice from './domains/board/components/Notice';
+import NoticeList from './domains/board/components/notice/NoticeListPage';
+import Notice from './domains/board/components/notice/NoticePage';
+import NoticeCreatePage from './domains/board/components/notice/NoticeCreatePage';
+import NoticeEditPage from './domains/board/components/notice/NoticeEditPage';
 
 /**
  * 임시 페이지 컴포넌트
@@ -108,6 +110,8 @@ function App() {
 
             {/* 커뮤니티 관련 라우트 */}
             <Route path="/notices" element={<NoticeList />} />
+            <Route path="/notices/create" element={<NoticeCreatePage />} />
+            <Route path="/notices/:id/edit" element={<NoticeEditPage />} />
             <Route path="/notices/:id" element={<Notice />} />
             <Route path="/community/board" element={<Community />} />
             <Route path="/community/qna" element={<Community />} />

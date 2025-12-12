@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { getNoticeList } from '../../../api/boardApi';
+import { getNoticeList } from '../../../api/noticeApi';
 
 /**
  * 공지사항 게시판 커스텀 훅
  */
-export const useNoticeBoard = () => {
+export const useNotice = () => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

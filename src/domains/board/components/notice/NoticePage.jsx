@@ -22,19 +22,24 @@ import {
   Campaign as CampaignIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { deleteNotice, getNoticeDetail, toggleLike, checkLiked } from '../../../api/boardApi';
+import { getNoticeDetail } from '../../../../api/noticeApi';
+import { usePostLike } from '../../hooks/usePostLike';
+import { usePostDelete } from '../../hooks/usePostDelete';
+import { formatDateTime, getPostTypeLabel } from '../../../../utils/boardUtils';
 
-const Notice = () => {
+const NoticePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
 
   // TODO: 실제 로그인한 사용자 ID 가져오기 (현재는 테스트 계정)
   const currentUserId = 20250101003;
+
+  // Custom Hooks
+  const { isLiked, likeCount, setLikeCount, handleLike, fetchLikeStatus } = usePostLike(id, currentUserId);
+  const { deleting, handleDelete } = usePostDelete(navigate);
 
   // 공지사항 상세 조회
   useEffect(() => {
@@ -50,70 +55,12 @@ const Notice = () => {
       setLikeCount(data.likeCount || 0);
       
       // 사용자의 좋아요 여부 조회
-      const likedData = await checkLiked(id, currentUserId);
-      setIsLiked(likedData.liked || false);
+      await fetchLikeStatus();
     } catch (err) {
       console.error('공지사항 조회 실패:', err);
       setError('공지사항을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 날짜 포맷팅
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  // 게시글 타입 라벨
-  const getPostTypeLabel = (postType) => {
-    const types = {
-      NOTICE: { label: '공지', color: 'error' },
-      IMPORTANT: { label: '중요', color: 'warning' },
-      GENERAL: { label: '일반', color: 'default' },
-    };
-    return types[postType] || types.GENERAL;
-  };
-
-  // 좋아요 토글
-  const handleLike = async () => {
-    try {
-      const response = await toggleLike(id, currentUserId);
-      
-      // 서버 응답에 따라 상태 업데이트
-      setIsLiked(response.liked);
-      
-      // 좋아요 수 업데이트
-      if (response.liked) {
-        setLikeCount((prev) => prev + 1);
-      } else {
-        setLikeCount((prev) => Math.max(0, prev - 1));
-      }
-    } catch (err) {
-      console.error('좋아요 처리 실패:', err);
-      alert('좋아요 처리에 실패했습니다.');
-    }
-  };
-
-  // 삭제
-  const handleDelete = async () => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) return;
-
-    try {
-      await deleteNotice(id);
-      alert('공지사항이 삭제되었습니다.');
-      navigate('/notices');
-    } catch (err) {
-      console.error('삭제 실패:', err);
-      alert('삭제에 실패했습니다.');
     }
   };
 
@@ -147,11 +94,20 @@ const Notice = () => {
         <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/notices')}>
           목록으로
         </Button>
-        <Box sx={{ display: 'none' }}> {/* TODO: 권한에 따라 표시 */}
-          <IconButton onClick={() => navigate(`/notices/${id}/edit`)}>
+        <Box>
+          <IconButton onClick={() => navigate(`/notices/${id}/edit`)} title="수정">
             <EditIcon />
           </IconButton>
-          <IconButton onClick={handleDelete} color="error">
+          <IconButton 
+            onClick={() => handleDelete(id, {
+              confirmMessage: '정말 삭제하시겠습니까?',
+              successMessage: '공지사항이 삭제되었습니다.',
+              redirectPath: '/notices',
+            })} 
+            color="error" 
+            title="삭제"
+            disabled={deleting}
+          >
             <DeleteIcon />
           </IconButton>
         </Box>
@@ -177,7 +133,7 @@ const Notice = () => {
             </Box>
             <Divider orientation="vertical" flexItem />
             <Typography variant="body2" color="text.secondary">
-              {formatDate(notice.createdAt)}
+              {formatDateTime(notice.createdAt)}
             </Typography>
             <Divider orientation="vertical" flexItem />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -272,4 +228,4 @@ const Notice = () => {
   );
 };
 
-export default Notice;
+export default NoticePage;
