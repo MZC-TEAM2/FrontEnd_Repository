@@ -100,7 +100,7 @@ const menuItems = [
     icon: <ForumIcon />,
     description: '학교 커뮤니티',
     children: [
-      { title: '학사 공지', path: '/community/notices', icon: <NotificationsIcon /> },
+      { title: '학사 공지', path: '/notices', icon: <NotificationsIcon /> },
       { title: '자유게시판', path: '/community/board', icon: <ForumIcon /> },
       { title: '스터디 모집', path: '/community/study', icon: <GroupIcon /> },
       { title: '질문/답변', path: '/community/qna', icon: <QuizIcon /> },

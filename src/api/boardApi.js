@@ -45,14 +45,18 @@ export const deleteNotice = async (id) => {
   return response.data;
 };
 
-// 좋아요
-export const likePost = async (id) => {
-  const response = await axiosInstance.post(`/api/v1/boards/posts/${id}/like`);
+// 좋아요 토글 (중복 방지)
+export const toggleLike = async (postId, userId) => {
+  const response = await axiosInstance.post(`/api/v1/boards/posts/${postId}/like`, null, {
+    params: { userId }
+  });
   return response.data;
 };
 
-// 좋아요 취소
-export const unlikePost = async (id) => {
-  const response = await axiosInstance.delete(`/api/v1/boards/posts/${id}/like`);
+// 좋아요 여부 조회
+export const checkLiked = async (postId, userId) => {
+  const response = await axiosInstance.get(`/api/v1/boards/posts/${postId}/liked`, {
+    params: { userId }
+  });
   return response.data;
 };

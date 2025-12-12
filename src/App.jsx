@@ -46,6 +46,7 @@ import { Box, Typography, Paper } from '@mui/material';
 
 // 게시판 컴포넌트
 import NoticeList from './domains/board/components/NoticeList';
+import Notice from './domains/board/components/Notice';
 
 /**
  * 임시 페이지 컴포넌트
@@ -106,7 +107,8 @@ function App() {
             <Route path="/exams" element={<TempPage title="퀴즈/시험" />} />
 
             {/* 커뮤니티 관련 라우트 */}
-            <Route path="/community/notices" element={<NoticeList />} />
+            <Route path="/notices" element={<NoticeList />} />
+            <Route path="/notices/:id" element={<Notice />} />
             <Route path="/community/board" element={<Community />} />
             <Route path="/community/qna" element={<Community />} />
 
