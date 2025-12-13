@@ -15,16 +15,13 @@
 import React from 'react';
 import {
   Box,
-  Grid,
   Paper,
   Typography,
   Tabs,
   Tab,
   Chip,
   Alert,
-  Snackbar,
 } from '@mui/material';
-import MuiAlert from '@mui/material/Alert';
 
 // 컴포넌트
 import TabPanel from '../domains/course/components/TabPanel';
@@ -34,6 +31,7 @@ import CourseListTable from '../domains/course/components/CourseListTable';
 import CartTab from '../domains/course/components/CartTab';
 import RegisteredTab from '../domains/course/components/RegisteredTab';
 import EnrollmentSummary from '../domains/course/components/EnrollmentSummary';
+import ToastManager from '../domains/course/components/ToastManager';
 
 // 커스텀 훅
 import useCourseRegistration from '../domains/course/hooks/useCourseRegistration';
@@ -59,7 +57,7 @@ const CourseRegistration = () => {
     loading,
     error,
     pagination,
-    totalCredits,
+    cartCredits,
     registeredCredits,
     handlePageChange,
     addToCart,
@@ -68,10 +66,16 @@ const CourseRegistration = () => {
     confirmRegistration,
     handleSearchKeyPress,
     handleEnroll,
+    handleCancelEnrollment,
     setError,
-    toast,
-    setToast,
+    // 수강신청 확인 다이얼로그 상태
+    enrollDialogOpen,
+    pendingEnrollCourse,
+    handleEnrollClick,
+    handleEnrollDialogClose,
+    toastRef, // toast ref (리렌더링 방지)
   } = useCourseRegistration();
+
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%', mx: 'auto' }}>
@@ -148,7 +152,12 @@ const CourseRegistration = () => {
                 registered={registered}
                 onAddToCart={addToCart}
                 onRemoveFromCart={removeFromCart}
-                onEnroll={handleEnroll}
+                onEnroll={handleEnrollClick}
+                onEnrollConfirm={handleEnroll}
+                onEnrollDialogClose={handleEnrollDialogClose}
+                enrollDialogOpen={enrollDialogOpen}
+                pendingEnrollCourse={pendingEnrollCourse}
+                onCancelEnrollment={handleCancelEnrollment}
               />
             </TabPanel>
 
@@ -156,7 +165,7 @@ const CourseRegistration = () => {
             <TabPanel value={tabValue} index={1}>
               <CartTab
                 cart={cart}
-                totalCredits={totalCredits}
+                cartCredits={cartCredits}
                 registeredCredits={registeredCredits}
                 onRemoveFromCart={removeFromCart}
                 onClearAllCarts={clearAllCarts}
@@ -166,7 +175,10 @@ const CourseRegistration = () => {
 
             {/* 신청 완료 탭 */}
             <TabPanel value={tabValue} index={2}>
-              <RegisteredTab registered={registered} />
+              <RegisteredTab 
+                registered={registered}
+                onCancelEnrollment={handleCancelEnrollment}
+              />
             </TabPanel>
           </Paper>
 
@@ -185,7 +197,7 @@ const CourseRegistration = () => {
           <Box sx={{ flex: 0.8  }}>
             <EnrollmentSummary
               registeredCredits={registeredCredits}
-              totalCredits={totalCredits}
+              cartCredits={cartCredits}
               registeredCount={registered.length}
               cartCount={cart.length}
             />
@@ -193,21 +205,8 @@ const CourseRegistration = () => {
         </Box>
       </Box>
 
-      {/* 토스트 메시지 */}
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={4000}
-        onClose={() => setToast({ ...toast, open: false })}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <MuiAlert
-          onClose={() => setToast({ ...toast, open: false })}
-          severity={toast.severity}
-          sx={{ width: '100%' }}
-        >
-          {toast.message}
-        </MuiAlert>
-      </Snackbar>
+      {/* 토스트 메시지 (별도 컴포넌트로 분리하여 리렌더링 방지) */}
+      <ToastManager toastRef={toastRef} />
     </Box>
   );
 };

@@ -754,8 +754,7 @@ GET /api/v1/enrollments/courses?page=0&size=10&keyword=데이터베이스&depart
         "enrollment": {
           "current": 35,
           "max": 40,
-          "isFull": false,
-          "availableSeats": 5
+          "isFull": false
         },
         "isInCart": false,
         "isEnrolled": false,
@@ -788,7 +787,9 @@ Authorization: Bearer {accessToken}
           "name": "데이터베이스",
           "section": "01",
           "credits": 3,
-          "courseType": "전공필수"
+          "courseType": "전공필수",
+          "currentStudents": 25,
+          "maxStudents": 30,
         },
         "professor": {
           "id": 10,
@@ -988,11 +989,7 @@ Authorization: Bearer {accessToken}
         "courseName": "데이터베이스",
         "section": "01",
         "errorCode": "COURSE_FULL",
-        "message": "수강 정원이 마감되었습니다",
-        "enrollment": {
-          "current": 45,
-          "max": 45
-        }
+        "message": "수강 정원이 마감되었습니다"
       }
     ]
   },
@@ -1127,6 +1124,8 @@ Authorization: Bearer {accessToken}
           "courseName": "알고리즘",
           "section": "01",
           "credits": 3,
+          "currentStudents": 25,
+          "maxStudents": 30,
           "courseType": {
             "code": "MAJOR_REQ",
             "name": "전공필수"
@@ -1153,7 +1152,7 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-### 9.9 수강신청 상세 조회
+### 9.9 강의 상세 조회
 ```http
 GET /api/v1/courses/{enrollmentId}
 Authorization: Bearer {accessToken}
