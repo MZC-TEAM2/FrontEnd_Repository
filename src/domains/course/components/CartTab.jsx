@@ -20,7 +20,7 @@ import { formatScheduleTime } from '../utils/scheduleUtils';
  */
 const CartTab = ({
   cart,
-  totalCredits,
+  cartCredits,
   registeredCredits,
   onRemoveFromCart,
   onClearAllCarts,
@@ -53,7 +53,8 @@ const CartTab = ({
                   <TableCell>과목명</TableCell>
                   <TableCell>교수</TableCell>
                   <TableCell>학점</TableCell>
-                  <TableCell>시간</TableCell>
+                  <TableCell>시간/강의실</TableCell>
+                  <TableCell align="center">정원</TableCell>
                   <TableCell align="center">제거</TableCell>
                 </TableRow>
               </TableHead>
@@ -68,6 +69,20 @@ const CartTab = ({
                       <Typography variant="caption">
                         {course.schedule?.map(formatScheduleTime).join(', ') || '-'}
                       </Typography>
+                      <br />
+                      <Typography variant="caption" color="text.secondary">
+                        {course.classroom || '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">
+                        {course.currentStudents || 0}/{course.maxStudents || 0}
+                      </Typography>
+                      {course.isFull && (
+                        <Typography variant="caption" color="error" sx={{ display: 'block' }}>
+                          마감
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell align="center">
                       <IconButton
@@ -86,10 +101,10 @@ const CartTab = ({
           <Box sx={{ mt: 3, flexShrink: 0 }}>
             <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
               <Typography variant="body1" sx={{ color: 'white', mb: 1 }}>
-                총 {totalCredits}학점
+                총 {cartCredits}학점
               </Typography>
               <Typography variant="h3" sx={{ color: 'white', fontWeight: 700 }}>
-                {totalCredits}
+                {cartCredits}
               </Typography>
               <Typography variant="body1" sx={{ color: 'white' }}>
                 학점 ({cart.length}과목)
@@ -110,13 +125,13 @@ const CartTab = ({
               size="large"
               fullWidth
               onClick={onConfirmRegistration}
-              disabled={totalCredits === 0 || totalCredits + registeredCredits > 21}
+              disabled={cartCredits === 0 || cartCredits + registeredCredits > 21}
               sx={{ mt: 2 }}
             >
-              수강신청 확정
+              장바구니 일괄 수강신청
             </Button>
 
-            {totalCredits + registeredCredits > 21 && (
+            {cartCredits + registeredCredits > 21 && (
               <Alert severity="error" sx={{ mt: 2 }}>
                 최대 수강 가능 학점(21학점)을 초과했습니다.
               </Alert>

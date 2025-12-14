@@ -15,11 +15,10 @@ import {
  */
 const EnrollmentSummary = ({
   registeredCredits,
-  totalCredits,
+  cartCredits,
   registeredCount,
   cartCount,
 }) => {
-  const total = registeredCredits + totalCredits;
 
   return (
     <Card sx={{  display: 'flex', flexDirection: 'column' }}>
@@ -51,7 +50,7 @@ const EnrollmentSummary = ({
                   장바구니
                 </Typography>
                 <Typography variant="h5" sx={{ color: 'white', fontSize: '2rem'}}>
-                  {totalCredits}
+                  {cartCredits}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'white', fontSize: '1.4rem' }}>
                   학점 ({cartCount}과목)
@@ -67,32 +66,41 @@ const EnrollmentSummary = ({
           <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '1.4rem' }}>
             총 신청 학점
           </Typography>
-          <Typography variant="h4" sx={{ fontSize: '2rem', color: total > 21 ? 'error.main' : 'text.primary' }}>
-            {total}
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.4rem' }}>
-            / 21 학점
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 0.5 }}>
+              <Typography variant="h4" sx={{ fontSize: '2rem', color: registeredCredits > 21 ? 'error.main' : 'text.primary' }}>
+                {registeredCredits}
+              </Typography>
+              {cartCredits > 0 && (
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.2rem' }}>
+                  ({cartCredits})
+                </Typography>
+              )}
+            </Box>
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.4rem' }}>
+              / 21 학점
+            </Typography>
+          </Box>
 
           <LinearProgress
             variant="determinate"
-            value={Math.min((total / 21) * 100, 100)}
+            value={Math.min((registeredCredits / 21) * 100, 100)}
             sx={{
               mt: 1,
               height: 8,
               borderRadius: 4,
               bgcolor: 'grey.300'
             }}
-            color={total > 21 ? 'error' : total > 18 ? 'warning' : 'primary'}
+            color={registeredCredits > 21 ? 'error' : registeredCredits > 18 ? 'warning' : 'primary'}
           />
         </Box>
 
-        {total > 21 && (
+        {registeredCredits > 21 && (
           <Alert severity="error" sx={{ mt: 2 }}>
             최대 수강 가능 학점(21학점)을 초과했습니다!
           </Alert>
         )}
-        {total > 18 && total <= 21 && (
+        {registeredCredits > 18 && registeredCredits <= 21 && (
           <Alert severity="warning" sx={{ mt: 2 }}>
             18학점을 초과했습니다. 신중히 선택하세요.
           </Alert>

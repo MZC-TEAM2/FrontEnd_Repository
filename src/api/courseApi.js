@@ -154,8 +154,40 @@ export const clearCarts = async () => {
  * @returns {Promise} 수강신청 결과
  */
 export const enrollFromCart = async (courseIds) => {
-  const response = await axiosInstance.post(`${BASE_URL}/api/v1/enrollments/cart`, {
+  const response = await axiosInstance.post(`${BASE_URL}/api/v1/enrollments/bulk`, {
     courseIds,
+  });
+  return response.data;
+};
+
+/**
+ * 내 수강신청 목록 조회
+ * @param {number|null} enrollmentPeriodId - 학기 수강신청 기간 ID (선택, 미입력시 현재 학기)
+ * @returns {Promise} 수강신청 목록 및 요약 정보
+ */
+export const getMyEnrollments = async (enrollmentPeriodId = null) => {
+  const queryParams = new URLSearchParams();
+  
+  if (enrollmentPeriodId) {
+    queryParams.append('enrollmentPeriodId', enrollmentPeriodId);
+  }
+
+  const url = queryParams.toString() 
+    ? `${BASE_URL}/api/v1/enrollments/my?${queryParams.toString()}`
+    : `${BASE_URL}/api/v1/enrollments/my`;
+    
+  const response = await axiosInstance.get(url);
+  return response.data;
+};
+
+/**
+ * 수강신청 취소 (bulk)
+ * @param {number[]} enrollmentIds - 수강신청 ID 배열
+ * @returns {Promise} 취소 결과
+ */
+export const cancelEnrollments = async (enrollmentIds) => {
+  const response = await axiosInstance.delete(`${BASE_URL}/api/v1/enrollments/bulk`, {
+    data: { enrollmentIds },
   });
   return response.data;
 };
