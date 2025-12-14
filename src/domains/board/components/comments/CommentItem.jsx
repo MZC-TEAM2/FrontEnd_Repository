@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import CommentForm from './CommentForm';
 import { formatDateTime } from '../../../../utils/boardUtils';
-import attachmentApi from '../../../../api/attachmentApi';
+import { useFileManager } from '../../hooks/useFileManager';
 
 // 개별 댓글 컴포넌트
 const CommentItem = ({
@@ -36,6 +36,7 @@ const CommentItem = ({
   const [isEditing, setIsEditing] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
+  const { downloadFile } = useFileManager();
 
   const isAuthor = currentUserId === comment.authorId;
   const displayName = comment.isAnonymous ? '익명' : comment.authorName || '사용자';
@@ -80,24 +81,6 @@ const CommentItem = ({
   const handleReplySubmit = (content, isAnonymous, attachedFiles) => {
     onReply(comment.id, content, attachedFiles);
     setShowReplyForm(false);
-  };
-
-  // 첨부파일 다운로드
-  const handleDownloadFile = async (attachment) => {
-    try {
-      const blob = await attachmentApi.downloadFile(attachment.id);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = attachment.originalName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('파일 다운로드 실패:', error);
-      alert('파일 다운로드에 실패했습니다.');
-    }
   };
 
   return (
@@ -167,7 +150,7 @@ const CommentItem = ({
                         icon={<AttachFileIcon />}
                         label={`${attachment.originalName} (${(attachment.fileSize / 1024).toFixed(1)}KB)`}
                         size="small"
-                        onClick={() => handleDownloadFile(attachment)}
+                        onClick={() => downloadFile(attachment)}
                         sx={{ maxWidth: 300, cursor: 'pointer' }}
                       />
                     ))}

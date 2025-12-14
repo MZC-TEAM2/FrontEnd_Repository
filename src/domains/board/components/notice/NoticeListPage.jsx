@@ -24,12 +24,11 @@ import {
   ThumbUp as ThumbUpIcon,
   Campaign as CampaignIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useNotice } from '../../hooks/useNotice';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
+import { useNavigate } from 'react-router-dom';
 
 const NoticeListPage = () => {
-  const navigate = useNavigate();
   const {
     notices,
     loading,
@@ -42,12 +41,10 @@ const NoticeListPage = () => {
     handlePageChange,
     handleSearch,
     handleSearchKeyPress,
+    handleRowClick,
   } = useNotice();
 
-  // 상세 페이지로 이동
-  const handleRowClick = (id) => {
-    navigate(`/notices/${id}`);
-  };
+  const navigate = useNavigate();
 
   return (
     <Box>

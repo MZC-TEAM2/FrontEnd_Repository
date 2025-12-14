@@ -24,13 +24,13 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getNoticeDetail } from '../../../../api/noticeApi';
 import { usePostLike } from '../../hooks/usePostLike';
 import { usePostDelete } from '../../hooks/usePostDelete';
 import { useComments } from '../../hooks/useComments';
+import { useFileManager } from '../../hooks/useFileManager';
+import { useNotice } from '../../hooks/useNotice';
 import { formatDateTime, getPostTypeLabel } from '../../../../utils/boardUtils';
 import CommentList from '../comments/CommentList';
-import attachmentApi from '../../../../api/attachmentApi';
 import authService from '../../../../services/authService';
 
 const NoticePage = () => {
@@ -39,6 +39,9 @@ const NoticePage = () => {
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // useNotice 훅에서 공통 함수 가져오기
+  const { fetchNoticeDetail, handleBackToList } = useNotice();
 
   // 현재 로그인한 사용자 정보 가져오기
   const currentUser = authService.getCurrentUser();
@@ -54,47 +57,30 @@ const NoticePage = () => {
     updateComment,
     deleteComment,
   } = useComments(id, currentUserId);
+  const { downloadFile } = useFileManager();
 
   // 공지사항 상세 조회
   useEffect(() => {
-    fetchNoticeDetail();
+    const loadNoticeDetail = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchNoticeDetail(id);
+        setNotice(data);
+        setLikeCount(data.likeCount || 0);
+        
+        // 사용자의 좋아요 여부 조회
+        await fetchLikeStatus();
+      } catch (err) {
+        console.error('공지사항 조회 실패:', err);
+        setError('공지사항을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadNoticeDetail();
   }, [id]);
-
-  const fetchNoticeDetail = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getNoticeDetail(id);
-      setNotice(data);
-      setLikeCount(data.likeCount || 0);
-      
-      // 사용자의 좋아요 여부 조회
-      await fetchLikeStatus();
-    } catch (err) {
-      console.error('공지사항 조회 실패:', err);
-      setError('공지사항을 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 첨부파일 다운로드
-  const handleDownloadFile = async (attachment) => {
-    try {
-      const blob = await attachmentApi.downloadFile(attachment.id);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = attachment.originalName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('파일 다운로드 실패:', error);
-      alert('파일 다운로드에 실패했습니다.');
-    }
-  };
 
   if (loading) {
     return (
@@ -110,7 +96,7 @@ const NoticePage = () => {
         <Alert severity="error" sx={{ mb: 3 }}>
           {error || '공지사항을 찾을 수 없습니다.'}
         </Alert>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/notices')}>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleBackToList}>
           목록으로
         </Button>
       </Box>
@@ -123,7 +109,7 @@ const NoticePage = () => {
     <Box>
       {/* 상단 네비게이션 */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/notices')}>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleBackToList}>
           목록으로
         </Button>
         <Box>
@@ -236,7 +222,7 @@ const NoticePage = () => {
                   </Typography>
                   <IconButton
                     size="small"
-                    onClick={() => handleDownloadFile(attachment)}
+                    onClick={() => downloadFile(attachment)}
                     title="다운로드"
                   >
                     <DownloadIcon fontSize="small" />

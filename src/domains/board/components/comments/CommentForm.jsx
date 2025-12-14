@@ -10,6 +10,7 @@ import {
   Stack,
 } from '@mui/material';
 import { AttachFile, Close } from '@mui/icons-material';
+import { useFileManager } from '../../hooks/useFileManager';
 
 // 댓글 작성 폼 컴포넌트
 const CommentForm = ({
@@ -24,16 +25,26 @@ const CommentForm = ({
 }) => {
   const [content, setContent] = useState(initialContent);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState([]);
-  const [existingAttachments, setExistingAttachments] = useState(initialAttachments);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+  
+  // 파일 관리
+  const {
+    files,
+    existingFiles,
+    deletedFileIds,
+    setExistingFiles,
+    handleFileChange,
+    handleFileRemove,
+    handleExistingFileRemove,
+    resetFiles,
+  } = useFileManager({ maxFiles: 5, maxFileSize: 10 * 1024 * 1024 });
 
   // 초기값 설정
   useEffect(() => {
     setContent(initialContent);
-    setExistingAttachments(initialAttachments);
-  }, [initialContent, initialAttachments]);
+    setExistingFiles(initialAttachments);
+  }, []);
 
   const handleSubmit = async () => {
     if (!content.trim()) {
@@ -48,16 +59,10 @@ const CommentForm = ({
 
     setIsSubmitting(true);
     try {
-      // 삭제된 첨부파일 ID 계산
-      const originalAttachmentIds = initialAttachments.map(att => att.id);
-      const currentAttachmentIds = existingAttachments.map(att => att.id);
-      const removedAttachmentIds = originalAttachmentIds.filter(id => !currentAttachmentIds.includes(id));
-
-      await onSubmit(content, isAnonymous, attachedFiles, removedAttachmentIds);
+      await onSubmit(content, isAnonymous, files, deletedFileIds);
       setContent('');
       setIsAnonymous(false);
-      setAttachedFiles([]);
-      setExistingAttachments([]);
+      resetFiles();
     } catch (error) {
       console.error('댓글 작성 실패:', error);
       alert('댓글 작성에 실패했습니다.');
@@ -69,44 +74,18 @@ const CommentForm = ({
   const handleCancel = () => {
     setContent('');
     setIsAnonymous(false);
-    setAttachedFiles([]);
+    resetFiles();
     if (onCancel) {
       onCancel();
     }
   };
 
   const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      // 최대 5개 파일 제한
-      const totalFiles = attachedFiles.length + files.length;
-      if (totalFiles > 5) {
-        alert('최대 5개까지만 첨부할 수 있습니다.');
-        return;
-      }
-
-      // 파일 크기 제한 (10MB)
-      const maxSize = 10 * 1024 * 1024;
-      const invalidFiles = files.filter(file => file.size > maxSize);
-      if (invalidFiles.length > 0) {
-        alert('10MB 이하의 파일만 첨부할 수 있습니다.');
-        return;
-      }
-
-      setAttachedFiles([...attachedFiles, ...files]);
-    }
+    handleFileChange(e);
     // input 초기화
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleRemoveFile = (index) => {
-    setAttachedFiles(attachedFiles.filter((_, i) => i !== index));
-  };
-
-  const handleRemoveExistingAttachment = (attachmentId) => {
-    setExistingAttachments(existingAttachments.filter(att => att.id !== attachmentId));
   };
 
   const handleAttachClick = () => {
@@ -127,13 +106,13 @@ const CommentForm = ({
       />
 
       {/* 기존 첨부파일 목록 */}
-      {existingAttachments.length > 0 && (
+      {existingFiles.length > 0 && (
         <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
-          {existingAttachments.map((attachment) => (
+          {existingFiles.map((attachment) => (
             <Chip
               key={attachment.id}
               label={attachment.originalName}
-              onDelete={() => handleRemoveExistingAttachment(attachment.id)}
+              onDelete={() => handleExistingFileRemove(attachment.id)}
               size="small"
               color="default"
             />
@@ -142,13 +121,13 @@ const CommentForm = ({
       )}
 
       {/* 새로 추가된 첨부파일 목록 */}
-      {attachedFiles.length > 0 && (
+      {files.length > 0 && (
         <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
-          {attachedFiles.map((file, index) => (
+          {files.map((file, index) => (
             <Chip
               key={index}
               label={`${file.name} (${(file.size / 1024).toFixed(1)}KB)`}
-              onDelete={() => handleRemoveFile(index)}
+              onDelete={() => handleFileRemove(index)}
               deleteIcon={<Close />}
               size="small"
               color="primary"
@@ -188,7 +167,7 @@ const CommentForm = ({
               />
               <IconButton
                 onClick={handleAttachClick}
-                disabled={isSubmitting || attachedFiles.length >= 5}
+                disabled={isSubmitting || files.length + existingFiles.length >= 5}
                 size="small"
                 sx={{ ml: 1 }}
               >
