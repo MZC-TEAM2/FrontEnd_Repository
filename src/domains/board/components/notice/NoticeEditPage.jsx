@@ -27,6 +27,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { getNoticeDetail } from '../../../../api/noticeApi';
 import { updatePost } from '../../../../api/postApi';
+import attachmentApi from '../../../../api/attachmentApi';
 import { usePostForm } from '../../hooks/usePostForm';
 import { useFileManager } from '../../hooks/useFileManager';
 
@@ -97,29 +98,29 @@ const NoticeEditPage = () => {
     setError(null);
 
     try {
-      const formDataToSend = new FormData();
-      
-      // JSON 데이터를 Blob으로 변환하여 추가
-      const requestDto = {
+      // 1단계: 새 파일 업로드
+      let newAttachmentIds = [];
+      if (files.length > 0) {
+        console.log('새 파일 업로드 중... (' + files.length + '개)');
+        const uploadResult = await attachmentApi.uploadMultipleFiles(files, 'POST_CONTENT');
+        newAttachmentIds = uploadResult.data.map(file => file.id);
+        console.log('파일 업로드 완료:', newAttachmentIds);
+      }
+
+      // 2단계: 게시글 수정
+      console.log('게시글 수정 중...');
+      const requestData = {
         categoryId: NOTICE_CATEGORY_ID,
         title: formData.title,
         content: formData.content,
         postType: formData.postType,
         isAnonymous: formData.isAnonymous,
-        deleteAttachmentIds: deletedFileIds.length > 0 ? deletedFileIds : null,
+        attachmentIds: newAttachmentIds,
+        deleteAttachmentIds: deletedFileIds.length > 0 ? deletedFileIds : [],
       };
-      
-      formDataToSend.append(
-        'request',
-        new Blob([JSON.stringify(requestDto)], { type: 'application/json' })
-      );
 
-      // 새로 추가된 파일들
-      files.forEach((file) => {
-        formDataToSend.append('files', file);
-      });
-
-      await updatePost(id, formDataToSend);
+      await updatePost(id, requestData);
+      console.log('게시글 수정 완료');
       
       // 수정된 게시글 상세 페이지로 이동 (replace로 히스토리 대체)
       navigate(`/notices/${id}`, { replace: true });

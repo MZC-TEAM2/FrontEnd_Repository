@@ -20,10 +20,10 @@ export const getNoticeDetail = async (id) => {
 };
 
 // 공지사항 작성
-export const createNotice = async (formData) => {
-  const response = await axiosInstance.post('/api/v1/boards/NOTICE/posts', formData, {
+export const createNotice = async (data) => {
+  const response = await axiosInstance.post('/api/v1/boards/NOTICE/posts', data, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': 'application/json',
     },
   });
   return response.data;

@@ -6,10 +6,10 @@ import axiosInstance from './axiosInstance';
  */
 
 // 게시글 수정
-export const updatePost = async (id, formData) => {
-  const response = await axiosInstance.put(`/api/v1/boards/posts/${id}`, formData, {
+export const updatePost = async (id, data) => {
+  const response = await axiosInstance.put(`/api/v1/boards/posts/${id}`, data, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': 'application/json',
     },
   });
   return response.data;

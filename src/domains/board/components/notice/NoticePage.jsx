@@ -20,12 +20,18 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Campaign as CampaignIcon,
+  AttachFile as AttachFileIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getNoticeDetail } from '../../../../api/noticeApi';
 import { usePostLike } from '../../hooks/usePostLike';
 import { usePostDelete } from '../../hooks/usePostDelete';
+import { useComments } from '../../hooks/useComments';
 import { formatDateTime, getPostTypeLabel } from '../../../../utils/boardUtils';
+import CommentList from '../comments/CommentList';
+import attachmentApi from '../../../../api/attachmentApi';
+import authService from '../../../../services/authService';
 
 const NoticePage = () => {
   const navigate = useNavigate();
@@ -34,12 +40,20 @@ const NoticePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // TODO: 실제 로그인한 사용자 ID 가져오기 (현재는 테스트 계정)
-  const currentUserId = 20250101003;
+  // 현재 로그인한 사용자 정보 가져오기
+  const currentUser = authService.getCurrentUser();
+  const currentUserId = currentUser?.userId || null;
 
   // Custom Hooks
   const { isLiked, likeCount, setLikeCount, handleLike, fetchLikeStatus } = usePostLike(id, currentUserId);
   const { deleting, handleDelete } = usePostDelete(navigate);
+  const {
+    comments,
+    createComment,
+    createReply,
+    updateComment,
+    deleteComment,
+  } = useComments(id, currentUserId);
 
   // 공지사항 상세 조회
   useEffect(() => {
@@ -61,6 +75,24 @@ const NoticePage = () => {
       setError('공지사항을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 첨부파일 다운로드
+  const handleDownloadFile = async (attachment) => {
+    try {
+      const blob = await attachmentApi.downloadFile(attachment.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('파일 다운로드 실패:', error);
+      alert('파일 다운로드에 실패했습니다.');
     }
   };
 
@@ -184,17 +216,32 @@ const NoticePage = () => {
               첨부파일 ({notice.attachments.length})
             </Typography>
             <Stack spacing={1}>
-              {notice.attachments.map((file, index) => (
-                <Button
-                  key={index}
-                  variant="outlined"
-                  size="small"
-                  href={file.url}
-                  target="_blank"
-                  sx={{ justifyContent: 'flex-start' }}
+              {notice.attachments.map((attachment) => (
+                <Box
+                  key={attachment.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    p: 1,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    '&:hover': { bgcolor: 'action.hover' },
+                  }}
                 >
-                  {file.originalName || `첨부파일 ${index + 1}`}
-                </Button>
+                  <AttachFileIcon fontSize="small" color="action" />
+                  <Typography variant="body2" sx={{ flex: 1 }}>
+                    {attachment.originalName}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDownloadFile(attachment)}
+                    title="다운로드"
+                  >
+                    <DownloadIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               ))}
             </Stack>
           </Box>
@@ -215,14 +262,17 @@ const NoticePage = () => {
         </Box>
       </Paper>
 
-      {/* 댓글 영역 (TODO: 추후 구현) */}
+      {/* 댓글 영역 */}
       <Paper sx={{ p: 4, mt: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          댓글
-        </Typography>
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
-          댓글 기능은 준비 중입니다.
-        </Typography>
+        <CommentList
+          comments={comments}
+          currentUserId={currentUserId}
+          onSubmit={createComment}
+          onEdit={updateComment}
+          onDelete={deleteComment}
+          onReply={createReply}
+          allowComments={true}
+        />
       </Paper>
     </Box>
   );

@@ -26,8 +26,10 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { createNotice } from '../../../../api/noticeApi';
+import attachmentApi from '../../../../api/attachmentApi';
 import { usePostForm } from '../../hooks/usePostForm';
 import { useFileManager } from '../../hooks/useFileManager';
+import authService from '../../../../services/authService';
 
 const NoticeCreatePage = () => {
   const navigate = useNavigate();
@@ -46,6 +48,10 @@ const NoticeCreatePage = () => {
   // 카테고리 ID (실제로는 API에서 가져오거나 상수로 관리)
   const NOTICE_CATEGORY_ID = 1; // NOTICE 카테고리의 실제 ID로 변경 필요
 
+  // 현재 로그인한 사용자 정보 가져오기
+  const currentUser = authService.getCurrentUser();
+  const currentUserId = currentUser?.userId || null;
+
 
 
   const handleSubmit = async (e) => {
@@ -61,28 +67,29 @@ const NoticeCreatePage = () => {
     setError(null);
 
     try {
-      const formDataToSend = new FormData();
-      
-      // JSON 데이터를 Blob으로 변환하여 추가
-      const requestDto = {
+      // 1단계: 파일 업로드
+      let attachmentIds = [];
+      if (files.length > 0) {
+        console.log('파일 업로드 중... (' + files.length + '개)');
+        const uploadResult = await attachmentApi.uploadMultipleFiles(files, 'POST_CONTENT');
+        attachmentIds = uploadResult.data.map(file => file.id);
+        console.log('파일 업로드 완료:', attachmentIds);
+      }
+
+      // 2단계: 게시글 생성
+      console.log('게시글 작성 중...');
+      const requestData = {
         categoryId: NOTICE_CATEGORY_ID,
+        authorId: currentUserId,
         title: formData.title,
         content: formData.content,
         postType: formData.postType,
         isAnonymous: formData.isAnonymous,
+        attachmentIds: attachmentIds,
       };
-      
-      formDataToSend.append(
-        'request',
-        new Blob([JSON.stringify(requestDto)], { type: 'application/json' })
-      );
 
-      // 파일 추가
-      files.forEach((file) => {
-        formDataToSend.append('files', file);
-      });
-
-      const response = await createNotice(formDataToSend);
+      const response = await createNotice(requestData);
+      console.log('게시글 작성 완료:', response);
       
       // 생성된 게시글 상세 페이지로 이동
       navigate(`/notices/${response.id}`);
