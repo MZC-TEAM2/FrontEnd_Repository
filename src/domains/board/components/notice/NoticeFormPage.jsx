@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -24,29 +24,53 @@ import {
   AttachFile as AttachFileIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { createNotice } from '../../../../api/noticeApi';
+import { useNavigate, useParams } from 'react-router-dom';
 import { usePostForm } from '../../hooks/usePostForm';
 import { useFileManager } from '../../hooks/useFileManager';
+import { useNotice } from '../../hooks/useNotice';
 
-const NoticeCreatePage = () => {
+const NoticeFormPage = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
+  const [submitting, setSubmitting] = useState(false);
   
   // Custom Hooks
-  const { formData, handleInputChange, validateForm } = usePostForm({
+  const { formData, setFormData, handleInputChange, validateForm } = usePostForm({
     title: '',
     content: '',
     postType: 'NORMAL',
     isAnonymous: false,
   });
-  const { files, handleFileChange, handleFileRemove } = useFileManager();
+  const {
+    files,
+    existingFiles,
+    deletedFileIds,
+    setExistingFiles,
+    handleFileChange,
+    handleFileRemove,
+    handleExistingFileRemove,
+    uploadFiles,
+  } = useFileManager();
+  const {
+    loading,
+    error,
+    setError,
+    createNoticePost,
+    updateNoticePost,
+    loadNoticeForEdit,
+  } = useNotice();
 
   // 카테고리 ID (실제로는 API에서 가져오거나 상수로 관리)
-  const NOTICE_CATEGORY_ID = 1; // NOTICE 카테고리의 실제 ID로 변경 필요
+  const NOTICE_CATEGORY_ID = 1;
 
-
+  // 수정 모드일 때 기존 게시글 데이터 로드
+  useEffect(() => {
+    if (isEditMode) {
+      loadNoticeForEdit(id, setFormData, setExistingFiles);
+    }
+  }, [id, isEditMode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,49 +81,50 @@ const NoticeCreatePage = () => {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
     setError(null);
 
     try {
-      const formDataToSend = new FormData();
+      const attachmentIds = await uploadFiles();
       
-      // JSON 데이터를 Blob으로 변환하여 추가
-      const requestDto = {
-        categoryId: NOTICE_CATEGORY_ID,
-        title: formData.title,
-        content: formData.content,
-        postType: formData.postType,
-        isAnonymous: formData.isAnonymous,
-      };
-      
-      formDataToSend.append(
-        'request',
-        new Blob([JSON.stringify(requestDto)], { type: 'application/json' })
-      );
-
-      // 파일 추가
-      files.forEach((file) => {
-        formDataToSend.append('files', file);
-      });
-
-      const response = await createNotice(formDataToSend);
-      
-      // 생성된 게시글 상세 페이지로 이동
-      navigate(`/notices/${response.id}`);
+      if (isEditMode) {
+        await updateNoticePost(id, formData, attachmentIds, deletedFileIds, NOTICE_CATEGORY_ID);
+        navigate(`/notices/${id}`, { replace: true });
+        window.location.reload();
+      } else {
+        const response = await createNoticePost(formData, attachmentIds, NOTICE_CATEGORY_ID);
+        navigate(`/notices/${response.id}`);
+      }
     } catch (err) {
-      console.error('공지사항 생성 실패:', err);
-      setError(err.response?.data?.message || '공지사항 생성에 실패했습니다.');
+      console.error(`공지사항 ${isEditMode ? '수정' : '생성'} 실패:`, err);
+      setError(err.response?.data?.message || `공지사항 ${isEditMode ? '수정' : '생성'}에 실패했습니다.`);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  const handleCancel = () => {
+    if (isEditMode) {
+      navigate(`/notices/${id}`);
+    } else {
+      navigate('/notices');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
       {/* 상단 네비게이션 */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/notices')}>
-          목록으로
+        <Button startIcon={<ArrowBackIcon />} onClick={handleCancel}>
+          {isEditMode ? '취소' : '목록으로'}
         </Button>
       </Box>
 
@@ -110,10 +135,10 @@ const NoticeCreatePage = () => {
         </Alert>
       )}
 
-      {/* 작성 폼 */}
+      {/* 작성/수정 폼 */}
       <Paper sx={{ p: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
-          공지사항 작성
+          {isEditMode ? '공지사항 수정' : '공지사항 작성'}
         </Typography>
 
         <form onSubmit={handleSubmit}>
@@ -158,14 +183,38 @@ const NoticeCreatePage = () => {
             sx={{ mb: 3 }}
           />
 
-          {/* 파일 첨부 */}
+          {/* 기존 첨부파일 (수정 모드에서만 표시) */}
+          {isEditMode && existingFiles.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+                기존 첨부파일
+              </Typography>
+              <List sx={{ bgcolor: 'grey.50', borderRadius: 1 }}>
+                {existingFiles.map((file, index) => (
+                  <ListItem key={index}>
+                    <ListItemText
+                      primary={file.originalName}
+                      secondary={file.size ? `${(file.size / 1024).toFixed(2)} KB` : ''}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton edge="end" onClick={() => handleExistingFileRemove(file.id)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          )}
+
+          {/* 새 파일 첨부 */}
           <Box sx={{ mb: 3 }}>
             <Button
               variant="outlined"
               component="label"
               startIcon={<AttachFileIcon />}
             >
-              파일 첨부
+              {isEditMode ? '파일 추가' : '파일 첨부'}
               <input
                 type="file"
                 hidden
@@ -174,7 +223,7 @@ const NoticeCreatePage = () => {
               />
             </Button>
 
-            {/* 첨부된 파일 목록 */}
+            {/* 새로 추가된 파일 목록 */}
             {files.length > 0 && (
               <List sx={{ mt: 2 }}>
                 {files.map((file, index) => (
@@ -212,18 +261,18 @@ const NoticeCreatePage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button
               variant="outlined"
-              onClick={() => navigate('/notices')}
-              disabled={loading}
+              onClick={handleCancel}
+              disabled={submitting}
             >
               취소
             </Button>
             <Button
               type="submit"
               variant="contained"
-              disabled={loading}
-              startIcon={loading && <CircularProgress size={20} />}
+              disabled={submitting}
+              startIcon={submitting && <CircularProgress size={20} />}
             >
-              {loading ? '작성 중...' : '작성 완료'}
+              {submitting ? (isEditMode ? '수정 중...' : '작성 중...') : (isEditMode ? '수정 완료' : '작성 완료')}
             </Button>
           </Box>
         </form>
@@ -232,4 +281,4 @@ const NoticeCreatePage = () => {
   );
 };
 
-export default NoticeCreatePage;
+export default NoticeFormPage;
