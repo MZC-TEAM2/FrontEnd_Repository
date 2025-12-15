@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -17,20 +17,29 @@ import {
   CircularProgress,
   Alert,
   Button,
+  Stack,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
   ThumbUp as ThumbUpIcon,
-  Campaign as CampaignIcon,
+  Work as WorkIcon,
 } from '@mui/icons-material';
-import { useNotice } from '../../hooks/useNotice';
+import { useBoard } from '../../hooks/useBoard';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
 import { useNavigate } from 'react-router-dom';
 
-const NoticeListPage = () => {
+/**
+ * 취업정보 게시판 페이지
+ * - 모든 사용자 접근 가능
+ * - 해시태그 기반 카테고리별 필터링
+ */
+const CareerBoardPage = () => {
+  const navigate = useNavigate();
+  const [selectedTopic, setSelectedTopic] = useState(null);
+
   const {
-    notices,
+    posts,
     loading,
     error,
     page,
@@ -42,27 +51,67 @@ const NoticeListPage = () => {
     handleSearch,
     handleSearchKeyPress,
     handleRowClick,
-  } = useNotice();
+  } = useBoard('CAREER');
 
-  const navigate = useNavigate();
+  // 취업 게시판 카테고리 목록
+  const careerTopics = [
+    { id: '채용공고', name: '채용공고', icon: '📢', color: 'primary' },
+    { id: '면접후기', name: '면접후기', icon: '💼', color: 'secondary' },
+    { id: '인턴', name: '인턴', icon: '🎓', color: 'info' },
+    { id: '자소서첨삭', name: '자소서첨삭', icon: '✍️', color: 'warning' },
+    { id: '포트폴리오', name: '포트폴리오', icon: '📁', color: 'success' },
+    { id: '이력서', name: '이력서', icon: '📄', color: 'error' },
+  ];
+
+  // 주제별 필터링된 게시글
+  const filteredPosts = selectedTopic
+    ? posts.filter(post => 
+        post.hashtags?.some(tag => tag.tagName === selectedTopic)
+      )
+    : posts;
 
   return (
     <Box>
       {/* 헤더 */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CampaignIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+          <WorkIcon sx={{ fontSize: 32, color: 'primary.main' }} />
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            공지사항
+            취업정보
           </Typography>
         </Box>
         <Button
           variant="contained"
-          onClick={() => navigate('/notices/create')}
+          onClick={() => navigate('/boards/career/create')}
         >
-          공지 작성
+          채용 공고 등록
         </Button>
       </Box>
+
+      {/* 카테고리 필터 */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+          카테고리 선택
+        </Typography>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Chip
+            label="전체"
+            onClick={() => setSelectedTopic(null)}
+            color={selectedTopic === null ? 'primary' : 'default'}
+            sx={{ mb: 1 }}
+          />
+          {careerTopics.map(topic => (
+            <Chip
+              key={topic.id}
+              label={`${topic.icon} ${topic.name}`}
+              onClick={() => setSelectedTopic(topic.id)}
+              color={selectedTopic === topic.id ? topic.color : 'default'}
+              variant={selectedTopic === topic.id ? 'filled' : 'outlined'}
+              sx={{ mb: 1 }}
+            />
+          ))}
+        </Stack>
+      </Paper>
 
       {/* 검색 영역 */}
       <Paper sx={{ p: 2, mb: 3 }}>
@@ -96,7 +145,7 @@ const NoticeListPage = () => {
         </Alert>
       )}
 
-      {/* 공지사항 테이블 */}
+      {/* 게시글 테이블 */}
       <Paper>
         <TableContainer>
           <Table>
@@ -133,20 +182,22 @@ const NoticeListPage = () => {
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : notices.length === 0 ? (
+              ) : filteredPosts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                    <Typography color="text.secondary">공지사항이 없습니다.</Typography>
+                    <Typography color="text.secondary">
+                      {selectedTopic ? `"${selectedTopic}" 카테고리의 게시글이 없습니다.` : '게시글이 없습니다.'}
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                notices.map((notice, index) => {
-                  const postType = getPostTypeLabel(notice.postType);
+                filteredPosts.map((post, index) => {
+                  const postType = getPostTypeLabel(post.postType);
                   return (
                     <TableRow
-                      key={notice.id}
+                      key={post.id}
                       hover
-                      onClick={() => handleRowClick(notice.id)}
+                      onClick={() => handleRowClick(post.id, '/boards/career')}
                       sx={{ cursor: 'pointer' }}
                     >
                       <TableCell align="center">
@@ -160,23 +211,38 @@ const NoticeListPage = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {notice.title}
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {post.title}
+                          </Typography>
+                          {post.hashtags && post.hashtags.length > 0 && (
+                            <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                              {post.hashtags.map((tag, idx) => (
+                                <Chip
+                                  key={idx}
+                                  label={`#${tag.tagName}`}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ height: 20, fontSize: '0.7rem' }}
+                                />
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="body2" color="text.secondary">
+                          {formatDate(post.createdAt)}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
                         <Typography variant="body2" color="text.secondary">
-                          {formatDate(notice.createdAt)}
+                          {post.viewCount || 0}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
                         <Typography variant="body2" color="text.secondary">
-                          {notice.viewCount || 0}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" color="text.secondary">
-                          {notice.likeCount || 0}
+                          {post.likeCount || 0}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -188,7 +254,7 @@ const NoticeListPage = () => {
         </TableContainer>
 
         {/* 페이지네이션 */}
-        {!loading && notices.length > 0 && (
+        {!loading && filteredPosts.length > 0 && (
           <TablePagination
             component="div"
             count={totalElements}
@@ -206,4 +272,4 @@ const NoticeListPage = () => {
   );
 };
 
-export default NoticeListPage;
+export default CareerBoardPage;
