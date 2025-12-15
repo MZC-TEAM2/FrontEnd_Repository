@@ -33,9 +33,10 @@ import {
   PhotoCamera,
 } from '@mui/icons-material';
 import profileService from '../services/profileService';
-import authService from '../services/authService';
+import { useUserContext } from '../contexts/UserContext';
 
 const Profile = () => {
+  const { updateUser } = useUserContext();
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -95,12 +96,8 @@ const Profile = () => {
       setIsEditing(false);
       setSuccess('프로필이 성공적으로 수정되었습니다.');
 
-      // localStorage의 사용자 정보도 업데이트
-      const currentUser = authService.getCurrentUser();
-      if (currentUser) {
-        currentUser.name = updatedProfile.name;
-        localStorage.setItem('user', JSON.stringify(currentUser));
-      }
+      // Context를 통해 전역 사용자 정보 업데이트
+      updateUser({ name: updatedProfile.name });
     } catch (err) {
       setError('프로필 수정에 실패했습니다.');
       console.error('프로필 수정 실패:', err);
@@ -158,15 +155,12 @@ const Profile = () => {
     setError('');
     try {
       await profileService.uploadProfileImage(file);
-      await fetchProfile();
+      const updatedProfile = await profileService.getMyProfile();
+      setProfile(updatedProfile);
       setSuccess('프로필 이미지가 변경되었습니다.');
 
-      const currentUser = authService.getCurrentUser();
-      if (currentUser) {
-        const updatedProfile = await profileService.getMyProfile();
-        currentUser.thumbnailUrl = updatedProfile.thumbnailUrl;
-        localStorage.setItem('user', JSON.stringify(currentUser));
-      }
+      // Context를 통해 전역 사용자 정보 업데이트
+      updateUser({ thumbnailUrl: updatedProfile.thumbnailUrl });
     } catch (err) {
       setError('이미지 업로드에 실패했습니다.');
       console.error('이미지 업로드 실패:', err);
@@ -183,14 +177,12 @@ const Profile = () => {
     setError('');
     try {
       await profileService.deleteProfileImage();
-      await fetchProfile();
+      const updatedProfile = await profileService.getMyProfile();
+      setProfile(updatedProfile);
       setSuccess('프로필 이미지가 삭제되었습니다.');
 
-      const currentUser = authService.getCurrentUser();
-      if (currentUser) {
-        currentUser.thumbnailUrl = null;
-        localStorage.setItem('user', JSON.stringify(currentUser));
-      }
+      // Context를 통해 전역 사용자 정보 업데이트
+      updateUser({ thumbnailUrl: null });
     } catch (err) {
       setError('이미지 삭제에 실패했습니다.');
       console.error('이미지 삭제 실패:', err);

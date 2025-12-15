@@ -36,18 +36,20 @@ const Main = styled('main', {
 })(({ theme, open }) => ({
   flexGrow: 1,
   padding: theme.spacing(3), // 24px 패딩
-  transition: theme.transitions.create('margin', {
+  transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   marginLeft: 0,
-  // 사이드바가 열려있을 때 왼쪽 마진 추가
+  width: '100%',
+  // 사이드바가 열려있을 때 너비 조정
   ...(open && {
-    transition: theme.transitions.create('margin', {
+    transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
     marginLeft: `${DRAWER_WIDTH}px`,
+    width: `calc(100% - ${DRAWER_WIDTH}px)`,
   }),
 }));
 
@@ -96,13 +98,11 @@ const MainLayout = () => {
         {/* 실제 콘텐츠가 표시되는 영역 */}
         <Box
           sx={{
-            // 반응형 패딩 설정
-            px: { xs: 1, sm: 2, md: 3 }, // 좌우 패딩
             py: { xs: 2, sm: 3 }, // 상하 패딩
-            // 최대 너비 제한 (옵션)
+            px: { xs: 2, sm: 3 }, // 좌우 패딩
+            width: '100%',
             maxWidth: '1400px',
             margin: '0 auto',
-            width: '100%',
           }}
         >
           <Outlet />

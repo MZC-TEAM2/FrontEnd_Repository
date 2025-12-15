@@ -18,8 +18,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// 테마 Context 임포트
+// Context 임포트
 import { ThemeContextProvider } from './contexts/ThemeContext';
+import { UserContextProvider } from './contexts/UserContext';
 
 // 레이아웃 컴포넌트
 import MainLayout from './layouts/MainLayout';
@@ -73,10 +74,9 @@ const TempPage = ({ title }) => (
  */
 function App() {
   return (
-    // 테마 Context Provider (다크모드 지원)
     <ThemeContextProvider>
-      {/* React Router 설정 */}
-      <Router>
+      <UserContextProvider>
+        <Router>
         <Routes>
           {/* 인증 관련 라우트 (MainLayout 없음) */}
           <Route path="/login" element={<Login />} />
@@ -149,7 +149,8 @@ function App() {
             />
           </Route>
         </Routes>
-      </Router>
+        </Router>
+      </UserContextProvider>
     </ThemeContextProvider>
   );
 }

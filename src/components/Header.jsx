@@ -60,6 +60,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import authService from '../services/authService';
 import notificationService from '../services/notificationService';
 import { useThemeContext } from '../contexts/ThemeContext';
+import { useUserContext } from '../contexts/UserContext';
 
 /**
  * 검색창 컨테이너 스타일 컴포넌트
@@ -128,6 +129,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { isDarkMode, toggleTheme } = useThemeContext();
+  const { user: currentUser } = useUserContext();
 
   // 상태 관리
   const [anchorEl, setAnchorEl] = useState(null); // 사용자 메뉴
@@ -136,18 +138,12 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const [notifications, setNotifications] = useState([]); // 알림 목록
   const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
   const [selectedNotification, setSelectedNotification] = useState(null); // 선택된 알림 (상세보기)
   const [detailDialogOpen, setDetailDialogOpen] = useState(false); // 상세보기 다이얼로그 열림 상태
 
-  // 알림 데이터 및 사용자 정보 가져오기
+  // 알림 데이터 가져오기
   useEffect(() => {
-    // 인증된 사용자인 경우에만 알림 가져오기
     if (authService.isAuthenticated()) {
-      // 사용자 정보 가져오기
-      const user = authService.getCurrentUser();
-      setCurrentUser(user);
-
       fetchNotifications();
       fetchUnreadCount();
 

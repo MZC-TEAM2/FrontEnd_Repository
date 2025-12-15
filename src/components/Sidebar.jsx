@@ -18,10 +18,9 @@
  * />
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import authService from '../services/authService';
-import profileService from '../services/profileService';
+import { useUserContext } from '../contexts/UserContext';
 import {
   Drawer,
   List,
@@ -148,24 +147,10 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { user: profile } = useUserContext();
 
   // 서브메뉴 열림/닫힘 상태 관리
   const [openSubmenu, setOpenSubmenu] = useState({});
-  const [profile, setProfile] = useState(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (authService.isAuthenticated()) {
-        try {
-          const data = await profileService.getMyProfile();
-          setProfile(data);
-        } catch (err) {
-          console.error('프로필 조회 실패:', err);
-        }
-      }
-    };
-    fetchProfile();
-  }, []);
 
   /**
    * 메뉴 클릭 핸들러
@@ -203,7 +188,7 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
    * 사이드바 콘텐츠 렌더링
    */
   const drawerContent = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column'}}>
       {/* 로고/브랜드 영역 */}
       <Box
         sx={{
