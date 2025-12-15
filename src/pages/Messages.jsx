@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -31,6 +31,7 @@ const CONVERSATION_LIST_WIDTH = 320;
 const Messages = () => {
   const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
+  const messagesEndRef = useRef(null);
 
   // 상태 관리
   const [conversations, setConversations] = useState([]);
@@ -41,6 +42,16 @@ const Messages = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [newConversationDialogOpen, setNewConversationDialogOpen] = useState(false);
+
+  // 메시지 목록 맨 아래로 스크롤
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // 메시지 변경 시 스크롤
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // URL 파라미터에서 대화방 ID 가져오기
   useEffect(() => {
@@ -414,6 +425,8 @@ const Messages = () => {
                   </Typography>
                 </Box>
               )}
+              {/* 스크롤 앵커 */}
+              <div ref={messagesEndRef} />
             </Box>
 
             {/* 메시지 입력 */}
