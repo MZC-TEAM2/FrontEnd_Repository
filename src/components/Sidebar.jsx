@@ -22,6 +22,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import profileService from '../services/profileService';
+import messageService from '../services/messageService';
+
+// 읽지 않은 메시지 폴링 주기 (10초)
+const UNREAD_COUNT_POLLING_INTERVAL = 10000;
 import {
   Drawer,
   List,
@@ -64,6 +68,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import WorkIcon from '@mui/icons-material/Work';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import DescriptionIcon from '@mui/icons-material/Description';
+import MailIcon from '@mui/icons-material/Mail';
 
 /**
  * 메뉴 아이템 설정
@@ -140,6 +145,13 @@ const menuItems = [
     divider: true, // 구분선
   },
   {
+    title: '메시지',
+    path: '/messages',
+    icon: <MailIcon />,
+    description: '쪽지 보내기/받기',
+    hasBadge: true, // 동적 뱃지 표시 플래그
+  },
+  {
     title: '내 정보',
     path: '/profile',
     icon: <PersonIcon />,
@@ -170,6 +182,8 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
   // 서브메뉴 열림/닫힘 상태 관리
   const [openSubmenu, setOpenSubmenu] = useState({});
   const [profile, setProfile] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -184,6 +198,49 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
     };
     fetchProfile();
   }, []);
+
+  // 화면 포커스 감지
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // 읽지 않은 메시지 수 초기 로드
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          const count = await messageService.getUnreadCount();
+          setUnreadCount(count || 0);
+        } catch (err) {
+          console.error('읽지 않은 메시지 수 조회 실패:', err);
+        }
+      }
+    };
+    fetchUnreadCount();
+  }, []);
+
+  // 읽지 않은 메시지 수 폴링 (10초 주기)
+  useEffect(() => {
+    if (!isPageVisible || !authService.isAuthenticated()) return;
+
+    const pollUnreadCount = setInterval(async () => {
+      try {
+        const count = await messageService.getUnreadCount();
+        setUnreadCount(count || 0);
+      } catch (err) {
+        console.error('읽지 않은 메시지 수 폴링 실패:', err);
+      }
+    }, UNREAD_COUNT_POLLING_INTERVAL);
+
+    return () => clearInterval(pollUnreadCount);
+  }, [isPageVisible]);
 
   /**
    * 메뉴 클릭 핸들러
@@ -343,6 +400,9 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
           }
 
           // 일반 메뉴 아이템
+          // 동적 뱃지 값 (메시지의 경우 unreadCount 사용)
+          const badgeValue = item.hasBadge ? unreadCount : item.badge;
+
           return (
             <ListItemButton
               key={item.title}
@@ -365,9 +425,9 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
                 primary={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <span>{item.title}</span>
-                    {item.badge && (
+                    {badgeValue > 0 && (
                       <Chip
-                        label={item.badge}
+                        label={badgeValue > 99 ? '99+' : badgeValue}
                         size="small"
                         color="error"
                         sx={{ height: 20, fontSize: '0.75rem' }}
