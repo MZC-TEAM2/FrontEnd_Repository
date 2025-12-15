@@ -24,6 +24,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import messageService from '../services/messageService';
+import NewConversationDialog from '../components/NewConversationDialog';
 
 const CONVERSATION_LIST_WIDTH = 320;
 
@@ -39,6 +40,7 @@ const Messages = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [newConversationDialogOpen, setNewConversationDialogOpen] = useState(false);
 
   // URL 파라미터에서 대화방 ID 가져오기
   useEffect(() => {
@@ -167,6 +169,28 @@ const Messages = () => {
     }
   };
 
+  const handleNewConversationCreated = (conversation) => {
+    // 새 대화방을 목록 맨 앞에 추가
+    setConversations(prev => [
+      {
+        conversationId: conversation.conversationId,
+        otherUserId: conversation.otherUserId,
+        otherUserName: conversation.otherUserName,
+        otherUserThumbnailUrl: conversation.otherUserThumbnailUrl,
+        lastMessageContent: '',
+        lastMessageAt: conversation.createdAt,
+        isLastMessageMine: false,
+        unreadCount: 0,
+      },
+      ...prev.filter(c => c.conversationId !== conversation.conversationId),
+    ]);
+
+    // 새 대화방 선택
+    setSelectedConversationId(conversation.conversationId);
+    setSearchParams({ id: conversation.conversationId.toString() });
+    setMessages([]);
+  };
+
   const selectedConversation = conversations.find(
     conv => conv.conversationId === selectedConversationId
   );
@@ -192,7 +216,7 @@ const Messages = () => {
             <Button
               size="small"
               startIcon={<AddIcon />}
-              onClick={() => {/* TODO: 새 대화 다이얼로그 */}}
+              onClick={() => setNewConversationDialogOpen(true)}
             >
               새 대화
             </Button>
@@ -382,6 +406,13 @@ const Messages = () => {
           </Box>
         )}
       </Paper>
+
+      {/* 새 대화 다이얼로그 */}
+      <NewConversationDialog
+        open={newConversationDialogOpen}
+        onClose={() => setNewConversationDialogOpen(false)}
+        onConversationCreated={handleNewConversationCreated}
+      />
     </Box>
   );
 };
