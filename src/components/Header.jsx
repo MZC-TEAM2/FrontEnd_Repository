@@ -681,7 +681,16 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {messageService.truncateContent(conversation.lastMessageContent, 25)}
+                    <Box
+                      component="span"
+                      sx={{
+                        color: conversation.isLastMessageMine ? 'primary.main' : 'text.secondary',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {conversation.isLastMessageMine ? '나: ' : `${conversation.otherUserName}: `}
+                    </Box>
+                    {messageService.truncateContent(conversation.lastMessageContent, 20)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {messageService.formatMessageTime(conversation.lastMessageAt)}
