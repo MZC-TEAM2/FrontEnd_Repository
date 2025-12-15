@@ -40,6 +40,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Messages from './pages/Messages';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
@@ -123,6 +124,9 @@ function App() {
 
             {/* 알림 */}
             <Route path="/notifications" element={<Notifications />} />
+
+            {/* 메시지 */}
+            <Route path="/messages" element={<Messages />} />
 
             {/* 프로필 */}
             <Route path="/profile" element={<Profile />} />
