@@ -32,6 +32,7 @@ const Messages = () => {
   const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   // 상태 관리
   const [conversations, setConversations] = useState([]);
@@ -40,18 +41,27 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [newConversationDialogOpen, setNewConversationDialogOpen] = useState(false);
 
+  // 페이지네이션 상태
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+
   // 메시지 목록 맨 아래로 스크롤
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
-  // 메시지 변경 시 스크롤
+  // 첫 로드 시에만 맨 아래로 스크롤
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (isInitialLoad && messages.length > 0) {
+      scrollToBottom('auto');
+      setIsInitialLoad(false);
+    }
+  }, [messages, isInitialLoad]);
 
   // URL 파라미터에서 대화방 ID 가져오기
   useEffect(() => {
@@ -95,14 +105,60 @@ const Messages = () => {
 
   const fetchMessages = async (conversationId) => {
     setIsLoadingMessages(true);
+    setIsInitialLoad(true);
     try {
       const data = await messageService.getMessages(conversationId);
-      setMessages(data || []);
+      // API 응답: { messages: [...], nextCursor: ..., hasMore: ... }
+      const messageList = data.messages || data || [];
+      // 최신순(DESC)으로 오므로 reverse하여 오래된 순으로 표시
+      setMessages(Array.isArray(messageList) ? [...messageList].reverse() : []);
+      setNextCursor(data.nextCursor || null);
+      setHasMore(data.hasMore || false);
     } catch (error) {
       console.error('메시지 조회 실패:', error);
       setMessages([]);
+      setNextCursor(null);
+      setHasMore(false);
     } finally {
       setIsLoadingMessages(false);
+    }
+  };
+
+  // 이전 메시지 더 불러오기 (위로 스크롤 시)
+  const loadMoreMessages = async () => {
+    if (!hasMore || isLoadingMore || !nextCursor) return;
+
+    setIsLoadingMore(true);
+    const container = messagesContainerRef.current;
+    const prevScrollHeight = container?.scrollHeight || 0;
+
+    try {
+      const data = await messageService.getMessages(selectedConversationId, nextCursor);
+      const olderMessages = data.messages || [];
+      // 오래된 메시지를 앞에 추가 (reverse하여 오래된 순으로)
+      setMessages(prev => [...[...olderMessages].reverse(), ...prev]);
+      setNextCursor(data.nextCursor || null);
+      setHasMore(data.hasMore || false);
+
+      // 스크롤 위치 유지
+      requestAnimationFrame(() => {
+        if (container) {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop = newScrollHeight - prevScrollHeight;
+        }
+      });
+    } catch (error) {
+      console.error('이전 메시지 조회 실패:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  // 스크롤 이벤트 핸들러 (위로 스크롤 시 이전 메시지 로드)
+  const handleScroll = (e) => {
+    const { scrollTop } = e.target;
+    if (scrollTop === 0 && hasMore && !isLoadingMore) {
+      loadMoreMessages();
     }
   };
 
@@ -135,6 +191,9 @@ const Messages = () => {
       const sentMessage = await messageService.sendMessage(selectedConversationId, newMessage.trim());
       setMessages(prev => [...prev, { ...sentMessage, isMine: true }]);
       setNewMessage('');
+
+      // 전송 후 맨 아래로 스크롤
+      setTimeout(() => scrollToBottom(), 100);
 
       // 대화방 목록의 마지막 메시지 업데이트
       setConversations(prev =>
@@ -337,7 +396,17 @@ const Messages = () => {
             </Box>
 
             {/* 메시지 목록 */}
-            <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+            <Box
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              sx={{ flex: 1, overflow: 'auto', p: 2 }}
+            >
+              {/* 이전 메시지 로딩 인디케이터 */}
+              {isLoadingMore && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
               {isLoadingMessages ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                   <CircularProgress size={32} />

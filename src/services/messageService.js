@@ -63,11 +63,18 @@ const messageService = {
   // ==================== 메시지 API ====================
 
   /**
-   * 대화방의 메시지 목록 조회
+   * 대화방의 메시지 목록 조회 (커서 기반 페이지네이션)
    * @param {number} conversationId - 대화방 ID
+   * @param {number} cursor - 마지막 메시지 ID (첫 페이지는 생략)
+   * @param {number} size - 조회 개수 (기본값: 20)
+   * @returns {Promise<{messages: Array, nextCursor: number|null, hasMore: boolean}>}
    */
-  getMessages: async (conversationId) => {
-    const response = await axiosInstance.get(`/api/v1/messages/conversations/${conversationId}`);
+  getMessages: async (conversationId, cursor = null, size = 20) => {
+    const params = { size };
+    if (cursor) {
+      params.cursor = cursor;
+    }
+    const response = await axiosInstance.get(`/api/v1/messages/conversations/${conversationId}`, { params });
     return response.data;
   },
 
