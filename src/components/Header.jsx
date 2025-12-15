@@ -667,7 +667,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {conversation.otherUserNumber ? `${conversation.otherUserNumber} / ${conversation.otherUserName}` : conversation.otherUserName}
+                      {conversation.otherUserId ? `${conversation.otherUserId} / ${conversation.otherUserName}` : conversation.otherUserName}
                     </Typography>
                     <Badge badgeContent={conversation.unreadCount} color="error" sx={{ ml: 1 }} />
                   </Box>

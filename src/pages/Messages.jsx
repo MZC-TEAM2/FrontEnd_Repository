@@ -286,7 +286,7 @@ const Messages = () => {
                     </Badge>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={conversation.otherUserNumber ? `${conversation.otherUserNumber} / ${conversation.otherUserName}` : conversation.otherUserName}
+                    primary={conversation.otherUserId ? `${conversation.otherUserId} / ${conversation.otherUserName}` : conversation.otherUserName}
                     secondary={
                       <Typography
                         variant="caption"
@@ -329,8 +329,8 @@ const Messages = () => {
                   {selectedConversation?.otherUserName?.charAt(0) || 'U'}
                 </Avatar>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  {selectedConversation?.otherUserNumber
-                    ? `${selectedConversation.otherUserNumber} / ${selectedConversation.otherUserName}`
+                  {selectedConversation?.otherUserId
+                    ? `${selectedConversation.otherUserId} / ${selectedConversation.otherUserName}`
                     : selectedConversation?.otherUserName || '알 수 없음'}
                 </Typography>
               </Box>

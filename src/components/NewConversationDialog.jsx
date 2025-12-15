@@ -250,7 +250,7 @@ const NewConversationDialog = ({ open, onClose, onConversationCreated }) => {
                     <ListItemText
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <span>{user.userNumber ? `${user.userNumber} / ${user.name}` : user.name}</span>
+                          <span>{user.userId ? `${user.userId} / ${user.name}` : user.name}</span>
                           <Chip
                             label={user.userType === 'STUDENT' ? '학생' : '교수'}
                             size="small"
