@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -27,6 +27,10 @@ import messageService from '../services/messageService';
 import NewConversationDialog from '../components/NewConversationDialog';
 
 const CONVERSATION_LIST_WIDTH = 320;
+
+// Polling 주기 상수
+const CONVERSATION_POLLING_INTERVAL = 5000; // 5초
+const MESSAGE_POLLING_INTERVAL = 3000; // 3초
 
 const Messages = () => {
   const theme = useTheme();
@@ -71,10 +75,41 @@ const Messages = () => {
     }
   }, [searchParams]);
 
-  // 대화방 목록 로드
+  // 화면 포커스 상태 관리
+  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
+
+  // 화면 포커스 감지
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // 대화방 목록 로드 (초기)
   useEffect(() => {
     fetchConversations();
   }, []);
+
+  // 대화방 목록 폴링 (5초 주기)
+  useEffect(() => {
+    if (!isPageVisible) return;
+
+    const pollConversations = setInterval(async () => {
+      try {
+        const data = await messageService.getConversations();
+        setConversations(data || []);
+      } catch (error) {
+        console.error('대화방 목록 폴링 실패:', error);
+      }
+    }, CONVERSATION_POLLING_INTERVAL);
+
+    return () => clearInterval(pollConversations);
+  }, [isPageVisible]);
 
   // 선택된 대화방의 메시지 로드
   useEffect(() => {
@@ -83,6 +118,40 @@ const Messages = () => {
       markAsRead(selectedConversationId);
     }
   }, [selectedConversationId]);
+
+  // 채팅방 내 메시지 폴링 (3초 주기)
+  useEffect(() => {
+    if (!isPageVisible || !selectedConversationId) return;
+
+    const pollMessages = setInterval(async () => {
+      try {
+        const data = await messageService.getMessages(selectedConversationId);
+        const messageList = data.messages || data || [];
+        const newMessages = Array.isArray(messageList) ? [...messageList].reverse() : [];
+
+        // 새 메시지가 있는지 확인 (마지막 메시지 ID 비교)
+        setMessages(prev => {
+          const prevLastId = prev.length > 0 ? prev[prev.length - 1].messageId : null;
+          const newLastId = newMessages.length > 0 ? newMessages[newMessages.length - 1].messageId : null;
+
+          // 새 메시지가 도착한 경우에만 업데이트
+          if (newLastId && newLastId !== prevLastId) {
+            // 새 메시지가 있으면 스크롤
+            setTimeout(() => scrollToBottom(), 100);
+            return newMessages;
+          }
+          return prev;
+        });
+
+        // 읽음 처리
+        markAsRead(selectedConversationId);
+      } catch (error) {
+        console.error('메시지 폴링 실패:', error);
+      }
+    }, MESSAGE_POLLING_INTERVAL);
+
+    return () => clearInterval(pollMessages);
+  }, [isPageVisible, selectedConversationId]);
 
   const fetchConversations = async () => {
     setIsLoadingConversations(true);
