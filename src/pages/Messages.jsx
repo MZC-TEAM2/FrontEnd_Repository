@@ -162,6 +162,17 @@ const Messages = () => {
     }
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    if (!window.confirm('메시지를 삭제하시겠습니까?')) return;
+
+    try {
+      await messageService.deleteMessage(messageId);
+      setMessages(prev => prev.filter(msg => msg.messageId !== messageId));
+    } catch (error) {
+      console.error('메시지 삭제 실패:', error);
+    }
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -319,45 +330,83 @@ const Messages = () => {
                   <CircularProgress size={32} />
                 </Box>
               ) : messages.length > 0 ? (
-                messages.map((message) => (
-                  <Box
-                    key={message.messageId}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: message.isMine ? 'flex-end' : 'flex-start',
-                      mb: 1.5,
-                    }}
-                  >
+                messages.map((message) => {
+                  const isMyMessage = message.isMine || message.mine;
+                  return (
                     <Box
+                      key={message.messageId}
                       sx={{
-                        maxWidth: '70%',
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: message.isMine
-                          ? theme.palette.primary.main
-                          : theme.palette.grey[100],
-                        color: message.isMine
-                          ? theme.palette.primary.contrastText
-                          : theme.palette.text.primary,
+                        display: 'flex',
+                        justifyContent: isMyMessage ? 'flex-end' : 'flex-start',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        mb: 1.5,
+                        '&:hover .delete-btn': {
+                          opacity: 1,
+                        },
                       }}
                     >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {message.content}
-                      </Typography>
-                      <Typography
-                        variant="caption"
+                      {/* 내 메시지일 때 삭제 버튼 왼쪽 */}
+                      {isMyMessage && (
+                        <IconButton
+                          className="delete-btn"
+                          size="small"
+                          onClick={() => handleDeleteMessage(message.messageId)}
+                          sx={{
+                            opacity: 0,
+                            transition: 'opacity 0.2s',
+                            color: theme.palette.text.secondary,
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                      <Box
                         sx={{
-                          display: 'block',
-                          mt: 0.5,
-                          opacity: 0.7,
-                          textAlign: message.isMine ? 'right' : 'left',
+                          maxWidth: '70%',
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: isMyMessage
+                            ? theme.palette.primary.main
+                            : theme.palette.grey[100],
+                          color: isMyMessage
+                            ? theme.palette.primary.contrastText
+                            : theme.palette.text.primary,
                         }}
                       >
-                        {messageService.formatMessageTime(message.createdAt)}
-                      </Typography>
+                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {message.content}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: 'block',
+                            mt: 0.5,
+                            opacity: 0.7,
+                            textAlign: isMyMessage ? 'right' : 'left',
+                          }}
+                        >
+                          {messageService.formatMessageTime(message.createdAt)}
+                        </Typography>
+                      </Box>
+                      {/* 상대방 메시지일 때 삭제 버튼 오른쪽 */}
+                      {!isMyMessage && (
+                        <IconButton
+                          className="delete-btn"
+                          size="small"
+                          onClick={() => handleDeleteMessage(message.messageId)}
+                          sx={{
+                            opacity: 0,
+                            transition: 'opacity 0.2s',
+                            color: theme.palette.text.secondary,
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      )}
                     </Box>
-                  </Box>
-                ))
+                  );
+                })
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="body2" color="text.secondary">
