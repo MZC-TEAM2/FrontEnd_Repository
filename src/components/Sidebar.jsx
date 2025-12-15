@@ -59,6 +59,15 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import QuizIcon from '@mui/icons-material/Quiz';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import GroupsIcon from '@mui/icons-material/Groups';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import WorkIcon from '@mui/icons-material/Work';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import DescriptionIcon from '@mui/icons-material/Description';
 import MailIcon from '@mui/icons-material/Mail';
 
 /**
@@ -105,10 +114,19 @@ const menuItems = [
     icon: <ForumIcon />,
     description: '학교 커뮤니티',
     children: [
-      { title: '학사 공지', path: '/notices', icon: <NotificationsIcon /> },
-      { title: '자유게시판', path: '/community/board', icon: <ForumIcon /> },
-      { title: '스터디 모집', path: '/community/study', icon: <GroupIcon /> },
-      { title: '질문/답변', path: '/community/qna', icon: <QuizIcon /> },
+      { title: '학사 공지', path: '/notices', icon: <CampaignIcon /> },
+      { title: '자유게시판', path: '/boards/free', icon: <ForumIcon /> },
+      { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
+      { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
+      { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
+      { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon /> },
+      { title: '학생 게시판', path: '/boards/student', icon: <GroupsIcon /> },
+      { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
+      { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
+      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
+      { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
+      { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
+      { title: '스터디 모집', path: '/boards/study', icon: <GroupIcon /> },
     ],
   },
   {

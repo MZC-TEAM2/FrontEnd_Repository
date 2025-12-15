@@ -46,9 +46,21 @@ import Messages from './pages/Messages';
 import { Box, Typography, Paper } from '@mui/material';
 
 // 게시판 컴포넌트
-import NoticeList from './domains/board/components/notice/NoticeListPage';
+import NoticeBoard from './domains/board/components/notice/NoticeBoard';
 import Notice from './domains/board/components/notice/NoticePage';
 import NoticeFormPage from './domains/board/components/notice/NoticeFormPage';
+import ProfessorBoard from './domains/board/components/professor/ProfessorBoardPage';
+import StudentBoard from './domains/board/components/student/StudentBoardPage';
+import FreeBoard from './domains/board/components/free/FreeBoardPage';
+import QuestionBoard from './domains/board/components/question/QuestionBoardPage';
+import DiscussionBoard from './domains/board/components/discussion/DiscussionBoardPage';
+import DepartmentBoard from './domains/board/components/department/DepartmentBoardPage';
+import ContestBoard from './domains/board/components/contest/ContestBoardPage';
+import CareerBoard from './domains/board/components/career/CareerBoardPage';
+import AssignmentBoard from './domains/board/components/assignment/AssignmentBoardPage';
+import ExamBoard from './domains/board/components/exam/ExamBoardPage';
+import QuizBoard from './domains/board/components/quiz/QuizBoardPage';
+import StudyBoard from './domains/board/components/study/StudyRecruitmentBoardPage';
 
 /**
  * 임시 페이지 컴포넌트
@@ -109,10 +121,25 @@ function App() {
             <Route path="/exams" element={<TempPage title="퀴즈/시험" />} />
 
             {/* 커뮤니티 관련 라우트 */}
-            <Route path="/notices" element={<NoticeList />} />
+            <Route path="/notices" element={<NoticeBoard />} />
             <Route path="/notices/create" element={<NoticeFormPage />} />
             <Route path="/notices/:id/edit" element={<NoticeFormPage />} />
             <Route path="/notices/:id" element={<Notice />} />
+            
+            {/* 게시판 라우트 */}
+            <Route path="/boards/professor" element={<ProfessorBoard />} />
+            <Route path="/boards/student" element={<StudentBoard />} />
+            <Route path="/boards/free" element={<FreeBoard />} />
+            <Route path="/boards/question" element={<QuestionBoard />} />
+            <Route path="/boards/discussion" element={<DiscussionBoard />} />
+            <Route path="/boards/department" element={<DepartmentBoard />} />
+            <Route path="/boards/contest" element={<ContestBoard />} />
+            <Route path="/boards/career" element={<CareerBoard />} />
+            <Route path="/boards/assignment" element={<AssignmentBoard />} />
+            <Route path="/boards/exam" element={<ExamBoard />} />
+            <Route path="/boards/quiz" element={<QuizBoard />} />
+            <Route path="/boards/study" element={<StudyBoard />} />
+            
             <Route path="/community/board" element={<Community />} />
             <Route path="/community/qna" element={<Community />} />
 
