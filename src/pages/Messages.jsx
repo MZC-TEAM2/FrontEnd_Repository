@@ -122,7 +122,7 @@ const Messages = () => {
     setIsSending(true);
     try {
       const sentMessage = await messageService.sendMessage(selectedConversationId, newMessage.trim());
-      setMessages(prev => [...prev, sentMessage]);
+      setMessages(prev => [...prev, { ...sentMessage, isMine: true }]);
       setNewMessage('');
 
       // 대화방 목록의 마지막 메시지 업데이트
