@@ -1,4 +1,4 @@
-import { getQuestionDetail, createQuestion } from '../../../api/questionApi';
+import { getPost, createPost } from '../../../api/postApi';
 import { usePostDetail } from './usePostDetail';
 
 /**
@@ -20,14 +20,14 @@ export const useQuestion = () => {
     setLoading,
     fetchDetail,
     handleBackToList,
-    createPost,
+    createPost: createPostFn,
     updatePostData,
     loadForEdit,
   } = usePostDetail({
     categoryId: 3,
     listPath: '/questions',
-    detailApi: getQuestionDetail,
-    createApi: createQuestion,
+    detailApi: (id) => getPost('QUESTION', id),
+    createApi: (data) => createPost('QUESTION', data),
     boardName: '질문 게시판',
   });
 
@@ -38,7 +38,7 @@ export const useQuestion = () => {
     setLoading,
     fetchQuestionDetail: fetchDetail,
     handleBackToList,
-    createQuestionPost: createPost,
+    createQuestionPost: createPostFn,
     updateQuestionPost: updatePostData,
     loadQuestionForEdit: loadForEdit,
   };

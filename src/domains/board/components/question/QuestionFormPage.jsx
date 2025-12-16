@@ -108,13 +108,12 @@ const QuestionFormPage = () => {
           {isEditMode ? '질문 게시판 수정' : '질문 게시판 작성'}
         </Typography>
 
-        <form onSubmit={handleSubmit}>
-          {/* 게시글 타입 */}
-          <PostTypeSelector
-            boardType="QUESTION"
-            value={formData.postType}
-            onChange={handleInputChange}
-          />
+        {/* 게시글 타입 */}
+        <PostTypeSelector
+          boardType="QUESTION"
+          value={formData.postType}
+          onChange={handleInputChange}
+        />
 
           {/* 제목 */}
           <TextField
@@ -176,9 +175,9 @@ const QuestionFormPage = () => {
           <PostFormActions
             isEditMode={isEditMode}
             submitting={submitting}
+            onSubmit={handleSubmit}
             onCancel={handleCancel}
           />
-        </form>
       </Paper>
     </Box>
   );

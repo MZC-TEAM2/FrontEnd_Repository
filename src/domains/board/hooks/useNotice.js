@@ -1,4 +1,4 @@
-import { getNoticeDetail, createNotice } from '../../../api/noticeApi';
+import { getPost, createPost } from '../../../api/postApi';
 import { usePostDetail } from './usePostDetail';
 
 /**
@@ -20,14 +20,14 @@ export const useNotice = () => {
     setLoading,
     fetchDetail,
     handleBackToList,
-    createPost,
+    createPost: createPostFn,
     updatePostData,
     loadForEdit,
   } = usePostDetail({
     categoryId: 1,
     listPath: '/notices',
-    detailApi: getNoticeDetail,
-    createApi: createNotice,
+    detailApi: (id) => getPost('NOTICE', id),
+    createApi: (data) => createPost('NOTICE', data),
     boardName: '공지사항',
   });
 
@@ -38,7 +38,7 @@ export const useNotice = () => {
     setLoading,
     fetchNoticeDetail: fetchDetail,
     handleBackToList,
-    createNoticePost: createPost,
+    createNoticePost: createPostFn,
     updateNoticePost: updatePostData,
     loadNoticeForEdit: loadForEdit,
   };

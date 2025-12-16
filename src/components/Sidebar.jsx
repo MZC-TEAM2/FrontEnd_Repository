@@ -119,8 +119,8 @@ const menuItems = [
       { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
       { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
       { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
-      { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon /> },
-      { title: '학생 게시판', path: '/boards/student', icon: <GroupsIcon /> },
+      { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon />, requiredRole: 'PROFESSOR' },
+      { title: '학생 게시판', path: '/boards/student', icon: <GroupsIcon />, requiredRole: 'STUDENT' },
       { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
       { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
       { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
@@ -370,7 +370,16 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
                 {/* 하위 메뉴 */}
                 <Collapse in={openSubmenu[item.title]} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding>
-                    {item.children.map((child) => (
+                    {item.children
+                      .filter(child => {
+                        // requiredRole이 없으면 모두에게 표시
+                        if (!child.requiredRole) return true;
+                        
+                        // 현재 사용자의 userType 확인
+                        const user = authService.getCurrentUser();
+                        return user?.userType === child.requiredRole;
+                      })
+                      .map((child) => (
                       <ListItemButton
                         key={child.title}
                         onClick={() => handleMenuClick(child.path)}

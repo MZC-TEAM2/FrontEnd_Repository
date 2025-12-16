@@ -73,15 +73,15 @@ export const usePostFormSubmit = (config) => {
       
       const postData = {
         ...formData,
-        hashtags: hashtags.length > 0 ? hashtags : undefined
+        hashtags: hashtags || []
       };
       
       if (isEditMode) {
-        await updatePostFn(id, postData, attachmentIds, deletedFileIds, categoryId);
+        await updatePostFn(id, postData, attachmentIds, deletedFileIds);
         navigate(`${basePath}/${id}`, { replace: true });
         window.location.reload();
       } else {
-        const response = await createPostFn(postData, attachmentIds, categoryId);
+        const response = await createPostFn(postData, attachmentIds);
         navigate(`${basePath}/${response.id}`);
       }
     } catch (err) {

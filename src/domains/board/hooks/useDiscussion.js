@@ -1,4 +1,4 @@
-import { getDiscussionDetail, createDiscussion } from '../../../api/discussionApi';
+import { getPost, createPost } from '../../../api/postApi';
 import { usePostDetail } from './usePostDetail';
 
 /**
@@ -20,14 +20,14 @@ export const useDiscussion = () => {
     setLoading,
     fetchDetail,
     handleBackToList,
-    createPost,
+    createPost: createPostFn,
     updatePostData,
     loadForEdit,
   } = usePostDetail({
     categoryId: 4,
     listPath: '/discussions',
-    detailApi: getDiscussionDetail,
-    createApi: createDiscussion,
+    detailApi: (id) => getPost('DISCUSSION', id),
+    createApi: (data) => createPost('DISCUSSION', data),
     boardName: '토론 게시판',
   });
 
@@ -38,7 +38,7 @@ export const useDiscussion = () => {
     setLoading,
     fetchDiscussionDetail: fetchDetail,
     handleBackToList,
-    createDiscussionPost: createPost,
+    createDiscussionPost: createPostFn,
     updateDiscussionPost: updatePostData,
     loadDiscussionForEdit: loadForEdit,
   };

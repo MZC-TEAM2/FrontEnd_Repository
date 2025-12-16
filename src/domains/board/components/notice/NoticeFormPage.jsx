@@ -108,9 +108,8 @@ const NoticeFormPage = () => {
           {isEditMode ? '공지사항 수정' : '공지사항 작성'}
         </Typography>
 
-        <form onSubmit={handleSubmit}>
-          {/* 게시글 타입 */}
-          <PostTypeSelector boardType="NOTICE" value={formData.postType} onChange={handleInputChange} />
+        {/* 게시글 타입 */}
+        <PostTypeSelector boardType="NOTICE" value={formData.postType} onChange={handleInputChange} />
 
           {/* 제목 */}
           <TextField
@@ -173,9 +172,9 @@ const NoticeFormPage = () => {
           <PostFormActions
             isEditMode={isEditMode}
             submitting={submitting}
+            onSubmit={handleSubmit}
             onCancel={handleCancel}
           />
-        </form>
       </Paper>
     </Box>
   );

@@ -50,7 +50,11 @@ import NoticeBoard from './domains/board/components/notice/NoticeBoard';
 import Notice from './domains/board/components/notice/NoticePage';
 import NoticeFormPage from './domains/board/components/notice/NoticeFormPage';
 import ProfessorBoard from './domains/board/components/professor/ProfessorBoardPage';
+import ProfessorPage from './domains/board/components/professor/ProfessorPage';
+import ProfessorFormPage from './domains/board/components/professor/ProfessorFormPage';
 import StudentBoard from './domains/board/components/student/StudentBoardPage';
+import StudentPage from './domains/board/components/student/StudentPage';
+import StudentFormPage from './domains/board/components/student/StudentFormPage';
 import FreeBoard from './domains/board/components/free/FreeBoardPage';
 import FreePage from './domains/board/components/free/FreePage';
 import FreeFormPage from './domains/board/components/free/FreeFormPage';
@@ -160,7 +164,15 @@ function App() {
             
             {/* 게시판 라우트 (레거시 경로 유지) */}
             <Route path="/boards/professor" element={<ProfessorBoard />} />
+            <Route path="/boards/professor/create" element={<ProfessorFormPage />} />
+            <Route path="/boards/professor/:id/edit" element={<ProfessorFormPage />} />
+            <Route path="/boards/professor/:id" element={<ProfessorPage />} />
+            
             <Route path="/boards/student" element={<StudentBoard />} />
+            <Route path="/boards/student/create" element={<StudentFormPage />} />
+            <Route path="/boards/student/:id/edit" element={<StudentFormPage />} />
+            <Route path="/boards/student/:id" element={<StudentPage />} />
+            
             <Route path="/boards/free" element={<FreeBoard />} />
             <Route path="/boards/question" element={<QuestionBoard />} />
             <Route path="/boards/discussion" element={<DiscussionBoard />} />

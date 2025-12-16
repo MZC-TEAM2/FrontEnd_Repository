@@ -1,4 +1,4 @@
-import { getFreeDetail, createFree } from '../../../api/freeApi';
+import { getPost, createPost } from '../../../api/postApi';
 import { usePostDetail } from './usePostDetail';
 
 /**
@@ -20,14 +20,14 @@ export const useFree = () => {
     setLoading,
     fetchDetail,
     handleBackToList,
-    createPost,
+    createPost: createPostFn,
     updatePostData,
     loadForEdit,
   } = usePostDetail({
     categoryId: 2,
     listPath: '/free',
-    detailApi: getFreeDetail,
-    createApi: createFree,
+    detailApi: (id) => getPost('FREE', id),
+    createApi: (data) => createPost('FREE', data),
     boardName: '자유 게시판',
   });
 
@@ -38,7 +38,7 @@ export const useFree = () => {
     setLoading,
     fetchFreeDetail: fetchDetail,
     handleBackToList,
-    createFreePost: createPost,
+    createFreePost: createPostFn,
     updateFreePost: updatePostData,
     loadFreeForEdit: loadForEdit,
   };

@@ -1,4 +1,4 @@
-import { getDepartmentDetail, createDepartment } from '../../../api/departmentApi';
+import { getPost, createPost } from '../../../api/postApi';
 import { usePostDetail } from './usePostDetail';
 
 /**
@@ -20,14 +20,14 @@ export const useDepartment = () => {
     setLoading,
     fetchDetail,
     handleBackToList,
-    createPost,
+    createPost: createPostFn,
     updatePostData,
     loadForEdit,
   } = usePostDetail({
     categoryId: 5,
     listPath: '/departments',
-    detailApi: getDepartmentDetail,
-    createApi: createDepartment,
+    detailApi: (id) => getPost('DEPARTMENT', id),
+    createApi: (data) => createPost('DEPARTMENT', data),
     boardName: '학과 게시판',
   });
 
@@ -38,7 +38,7 @@ export const useDepartment = () => {
     setLoading,
     fetchDepartmentDetail: fetchDetail,
     handleBackToList,
-    createDepartmentPost: createPost,
+    createDepartmentPost: createPostFn,
     updateDepartmentPost: updatePostData,
     loadDepartmentForEdit: loadForEdit,
   };

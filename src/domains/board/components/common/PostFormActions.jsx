@@ -13,8 +13,9 @@ import {
  * @param {boolean} isEditMode - 수정 모드 여부
  * @param {boolean} submitting - 제출 중 상태
  * @param {Function} onCancel - 취소 버튼 클릭 시 호출되는 콜백
+ * @param {Function} onSubmit - 제출 버튼 클릭 시 호출되는 콜백
  */
-const PostFormActions = ({ isEditMode, submitting, onCancel }) => {
+const PostFormActions = ({ isEditMode, submitting, onCancel, onSubmit }) => {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
       <Button
@@ -25,8 +26,8 @@ const PostFormActions = ({ isEditMode, submitting, onCancel }) => {
         취소
       </Button>
       <Button
-        type="submit"
         variant="contained"
+        onClick={onSubmit}
         disabled={submitting}
         startIcon={submitting && <CircularProgress size={20} />}
       >
@@ -40,6 +41,7 @@ PostFormActions.propTypes = {
   isEditMode: PropTypes.bool.isRequired,
   submitting: PropTypes.bool.isRequired,
   onCancel: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
 };
 
 export default PostFormActions;
