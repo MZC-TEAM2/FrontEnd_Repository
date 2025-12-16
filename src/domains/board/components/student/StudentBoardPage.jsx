@@ -28,6 +28,7 @@ import {
 import { useBoard } from '../../hooks/useBoard';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
 import { useNavigate } from 'react-router-dom';
+import { STUDENT_HASHTAGS } from '../../constants/boardHashtags';
 
 /**
  * 학생 게시판 페이지
@@ -52,15 +53,6 @@ const StudentBoardPage = () => {
     handleSearchKeyPress,
     handleRowClick,
   } = useBoard('STUDENT');
-
-  // 학생 게시판 주제 목록
-  const studentTopics = [
-    { id: '학업고민', name: '학업고민', icon: '📚', color: 'primary' },
-    { id: '진로상담', name: '진로상담', icon: '🎯', color: 'secondary' },
-    { id: '대외활동', name: '대외활동', icon: '🌟', color: 'info' },
-    { id: '학생회', name: '학생회', icon: '🏛️', color: 'warning' },
-    { id: '동아리모집', name: '동아리모집', icon: '👥', color: 'success' },
-  ];
 
   // 주제별 필터링된 게시글
   const filteredPosts = selectedTopic
@@ -99,7 +91,7 @@ const StudentBoardPage = () => {
             color={selectedTopic === null ? 'primary' : 'default'}
             sx={{ mb: 1 }}
           />
-          {studentTopics.map(topic => (
+          {STUDENT_HASHTAGS.map(topic => (
             <Chip
               key={topic.id}
               label={`${topic.icon} ${topic.name}`}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -18,6 +18,7 @@ import {
   CircularProgress,
   Alert,
   Button,
+  Stack,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,6 +40,8 @@ import { useNavigate } from 'react-router-dom';
  * @param {string} createPath - 작성 페이지 경로 (예: /boards/professor/create)
  * @param {boolean} showCreateButton - 작성 버튼 표시 여부 (기본: true)
  * @param {string} createButtonText - 작성 버튼 텍스트 (기본: "글 작성")
+ * @param {Array} hashtags - 필터링할 해시태그 목록 (선택사항)
+ * @param {boolean} showHashtagsInTable - 테이블에 해시태그 표시 여부 (기본: false)
  */
 const BoardListPage = ({
   boardType,
@@ -48,7 +51,10 @@ const BoardListPage = ({
   createPath,
   showCreateButton = true,
   createButtonText = '글 작성',
+  hashtags = [],
+  showHashtagsInTable = false,
 }) => {
+  const [selectedHashtag, setSelectedHashtag] = useState(null);
   const {
     posts,
     loading,
@@ -65,6 +71,13 @@ const BoardListPage = ({
   } = useBoard(boardType);
 
   const navigate = useNavigate();
+
+  // 해시태그로 필터링된 게시글
+  const filteredPosts = selectedHashtag
+    ? posts.filter(post => 
+        post.hashtags?.some(tag => tag.tagName === selectedHashtag)
+      )
+    : posts;
 
   return (
     <Box>
@@ -85,6 +98,33 @@ const BoardListPage = ({
           </Button>
         )}
       </Box>
+
+      {/* 해시태그 필터 */}
+      {hashtags.length > 0 && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+            주제 선택
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Chip
+              label="전체"
+              onClick={() => setSelectedHashtag(null)}
+              color={selectedHashtag === null ? 'primary' : 'default'}
+              sx={{ mb: 1 }}
+            />
+            {hashtags.map(hashtag => (
+              <Chip
+                key={hashtag.id}
+                label={`${hashtag.icon || ''} ${hashtag.name}`}
+                onClick={() => setSelectedHashtag(hashtag.id)}
+                color={selectedHashtag === hashtag.id ? hashtag.color || 'primary' : 'default'}
+                variant={selectedHashtag === hashtag.id ? 'filled' : 'outlined'}
+                sx={{ mb: 1 }}
+              />
+            ))}
+          </Stack>
+        </Paper>
+      )}
 
       {/* 검색 영역 */}
       <Paper sx={{ p: 2, mb: 3 }}>
@@ -155,14 +195,16 @@ const BoardListPage = ({
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : posts.length === 0 ? (
+              ) : filteredPosts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                    <Typography color="text.secondary">게시글이 없습니다.</Typography>
+                    <Typography color="text.secondary">
+                      {selectedHashtag ? `"${selectedHashtag}" 주제의 게시글이 없습니다.` : '게시글이 없습니다.'}
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                posts.map((post, index) => {
+                filteredPosts.map((post, index) => {
                   const postType = getPostTypeLabel(post.postType);
                   return (
                     <TableRow
@@ -182,9 +224,24 @@ const BoardListPage = ({
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {post.title}
-                        </Typography>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {post.title}
+                          </Typography>
+                          {showHashtagsInTable && post.hashtags && post.hashtags.length > 0 && (
+                            <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                              {post.hashtags.map((tag, idx) => (
+                                <Chip
+                                  key={idx}
+                                  label={`#${tag.tagName}`}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ height: 20, fontSize: '0.7rem' }}
+                                />
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell align="center">
                         <Typography variant="body2" color="text.secondary">
@@ -236,6 +293,15 @@ BoardListPage.propTypes = {
   createPath: PropTypes.string.isRequired,
   showCreateButton: PropTypes.bool,
   createButtonText: PropTypes.string,
+  hashtags: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      icon: PropTypes.string,
+      color: PropTypes.string,
+    })
+  ),
+  showHashtagsInTable: PropTypes.bool,
 };
 
 export default BoardListPage;

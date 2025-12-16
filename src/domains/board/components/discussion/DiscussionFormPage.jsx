@@ -16,14 +16,14 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePostForm } from '../../hooks/usePostForm';
 import { useFileManager } from '../../hooks/useFileManager';
-import { useNotice } from '../../hooks/useNotice';
+import { useDiscussion } from '../../hooks/useDiscussion';
 import { usePostFormSubmit } from '../../hooks/usePostFormSubmit';
 import HashtagInput from '../common/HashtagInput';
 import FileAttachment from '../common/FileAttachment';
 import PostTypeSelector from '../common/PostTypeSelector';
 import PostFormActions from '../common/PostFormActions';
 
-const NoticeFormPage = () => {
+const DiscussionFormPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -49,10 +49,10 @@ const NoticeFormPage = () => {
     loading,
     error,
     setError,
-    createNoticePost,
-    updateNoticePost,
-    loadNoticeForEdit,
-  } = useNotice();
+    createDiscussionPost,
+    updateDiscussionPost,
+    loadDiscussionForEdit,
+  } = useDiscussion();
 
   const {
     submitting,
@@ -63,12 +63,12 @@ const NoticeFormPage = () => {
   } = usePostFormSubmit({
     id,
     isEditMode,
-    basePath: '/notices',
-    categoryId: 1,
-    boardName: '공지사항',
-    createPostFn: createNoticePost,
-    updatePostFn: updateNoticePost,
-    loadForEditFn: loadNoticeForEdit,
+    basePath: '/discussions',
+    categoryId: 4,
+    boardName: '토론 게시판',
+    createPostFn: createDiscussionPost,
+    updatePostFn: updateDiscussionPost,
+    loadForEditFn: loadDiscussionForEdit,
     setFormData,
     setExistingFiles,
     validateForm,
@@ -105,12 +105,12 @@ const NoticeFormPage = () => {
       {/* 작성/수정 폼 */}
       <Paper sx={{ p: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
-          {isEditMode ? '공지사항 수정' : '공지사항 작성'}
+          {isEditMode ? '토론 게시판 수정' : '토론 게시판 작성'}
         </Typography>
 
         <form onSubmit={handleSubmit}>
           {/* 게시글 타입 */}
-          <PostTypeSelector boardType="NOTICE" value={formData.postType} onChange={handleInputChange} />
+          <PostTypeSelector boardType="DISCUSSION" value={formData.postType} onChange={handleInputChange} />
 
           {/* 제목 */}
           <TextField
@@ -142,7 +142,7 @@ const NoticeFormPage = () => {
           <HashtagInput 
             hashtags={hashtags} 
             onHashtagsChange={setHashtags} 
-            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 학사일정, 중요공지)" 
+            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: AI윤리, 개인정보보호)" 
           />
 
           {/* 파일 첨부 */}
@@ -155,14 +155,13 @@ const NoticeFormPage = () => {
             onExistingFileRemove={handleExistingFileRemove}
           />
 
-          {/* 익명 여부 (공지사항은 보통 익명 불가) */}
+          {/* 익명 여부 */}
           <FormControlLabel
             control={
               <Checkbox
                 name="isAnonymous"
                 checked={formData.isAnonymous}
                 onChange={handleInputChange}
-                disabled // 공지사항은 익명 불가
               />
             }
             label="익명으로 작성"
@@ -181,4 +180,4 @@ const NoticeFormPage = () => {
   );
 };
 
-export default NoticeFormPage;
+export default DiscussionFormPage;

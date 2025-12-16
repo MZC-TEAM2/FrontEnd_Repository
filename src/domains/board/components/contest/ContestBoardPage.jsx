@@ -28,6 +28,7 @@ import {
 import { useBoard } from '../../hooks/useBoard';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
 import { useNavigate } from 'react-router-dom';
+import { CONTEST_HASHTAGS } from '../../constants/boardHashtags';
 
 /**
  * 공모전 게시판 페이지
@@ -52,16 +53,6 @@ const ContestBoardPage = () => {
     handleSearchKeyPress,
     handleRowClick,
   } = useBoard('CONTEST');
-
-  // 공모전 분야 목록
-  const contestTopics = [
-    { id: 'IT/소프트웨어', name: 'IT/소프트웨어', icon: '💻', color: 'primary' },
-    { id: '디자인', name: '디자인', icon: '🎨', color: 'secondary' },
-    { id: '마케팅', name: '마케팅', icon: '📊', color: 'info' },
-    { id: '아이디어', name: '아이디어', icon: '💡', color: 'warning' },
-    { id: '창업', name: '창업', icon: '🚀', color: 'error' },
-    { id: '사회혁신', name: '사회혁신', icon: '🌱', color: 'success' },
-  ];
 
   // 주제별 필터링된 게시글
   const filteredPosts = selectedTopic
@@ -100,7 +91,7 @@ const ContestBoardPage = () => {
             color={selectedTopic === null ? 'primary' : 'default'}
             sx={{ mb: 1 }}
           />
-          {contestTopics.map(topic => (
+          {CONTEST_HASHTAGS.map(topic => (
             <Chip
               key={topic.id}
               label={`${topic.icon} ${topic.name}`}

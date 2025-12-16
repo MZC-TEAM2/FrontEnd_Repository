@@ -9,14 +9,14 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
-  Campaign as CampaignIcon,
+  HelpOutline as HelpOutlineIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePostLike } from '../../hooks/usePostLike';
 import { usePostDelete } from '../../hooks/usePostDelete';
 import { useComments } from '../../hooks/useComments';
 import { useFileManager } from '../../hooks/useFileManager';
-import { useNotice } from '../../hooks/useNotice';
+import { useQuestion } from '../../hooks/useQuestion';
 import { formatDateTime, getPostTypeLabel } from '../../../../utils/boardUtils';
 import CommentList from '../comments/CommentList';
 import authService from '../../../../services/authService';
@@ -27,15 +27,15 @@ import PostHashtags from '../common/PostHashtags';
 import PostAttachments from '../common/PostAttachments';
 import PostActions from '../common/PostActions';
 
-const NoticePage = () => {
+const QuestionPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [notice, setNotice] = useState(null);
+  const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // useNotice 훅에서 공통 함수 가져오기
-  const { fetchNoticeDetail, handleBackToList } = useNotice();
+  // useQuestion 훅에서 공통 함수 가져오기
+  const { fetchQuestionDetail, handleBackToList } = useQuestion();
 
   // 현재 로그인한 사용자 정보 가져오기
   const currentUser = authService.getCurrentUser();
@@ -53,27 +53,27 @@ const NoticePage = () => {
   } = useComments(id, currentUserId);
   const { downloadFile } = useFileManager();
 
-  // 공지사항 상세 조회
+  // 질문 게시판 상세 조회
   useEffect(() => {
-    const loadNoticeDetail = async () => {
+    const loadDetail = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchNoticeDetail(id);
-        setNotice(data);
+        const data = await fetchQuestionDetail(id);
+        setPost(data);
         setLikeCount(data.likeCount || 0);
         
         // 사용자의 좋아요 여부 조회
         await fetchLikeStatus();
       } catch (err) {
-        console.error('공지사항 조회 실패:', err);
-        setError('공지사항을 불러오는데 실패했습니다.');
+        console.error('질문 게시판 조회 실패:', err);
+        setError('게시글을 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
       }
     };
     
-    loadNoticeDetail();
+    loadDetail();
   }, [id]);
 
   if (loading) {
@@ -84,11 +84,11 @@ const NoticePage = () => {
     );
   }
 
-  if (error || !notice) {
+  if (error || !post) {
     return (
       <Box>
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error || '공지사항을 찾을 수 없습니다.'}
+          {error || '게시글을 찾을 수 없습니다.'}
         </Alert>
         <Button startIcon={<ArrowBackIcon />} onClick={handleBackToList}>
           목록으로
@@ -97,45 +97,45 @@ const NoticePage = () => {
     );
   }
 
-  const postType = getPostTypeLabel(notice.postType);
+  const postType = getPostTypeLabel(post.postType);
 
   return (
     <Box>
       {/* 상단 네비게이션 */}
       <PostNavigation
         onBack={handleBackToList}
-        onEdit={() => navigate(`/notices/${id}/edit`)}
+        onEdit={() => navigate(`/questions/${id}/edit`)}
         onDelete={() => handleDelete(id, {
           confirmMessage: '정말 삭제하시겠습니까?',
-          successMessage: '공지사항이 삭제되었습니다.',
-          redirectPath: '/notices',
+          successMessage: '게시글이 삭제되었습니다.',
+          redirectPath: '/questions',
         })}
         deleting={deleting}
       />
 
-      {/* 공지사항 상세 */}
+      {/* 게시글 상세 */}
       <Paper sx={{ p: 4 }}>
         {/* 헤더 */}
         <PostHeader
-          icon={<CampaignIcon sx={{ color: 'primary.main' }} />}
+          icon={<HelpOutlineIcon sx={{ color: 'primary.main' }} />}
           postType={postType}
-          title={notice.title}
-          authorName={notice.authorName}
-          createdAt={formatDateTime(notice.createdAt)}
-          viewCount={notice.viewCount}
+          title={post.title}
+          authorName={post.authorName}
+          createdAt={formatDateTime(post.createdAt)}
+          viewCount={post.viewCount}
           likeCount={likeCount}
         />
 
         <Divider sx={{ my: 3 }} />
 
         {/* 본문 */}
-        <PostContent content={notice.content} />
+        <PostContent content={post.content} />
 
         {/* 해시태그 */}
-        <PostHashtags hashtags={notice.hashtags} />
+        <PostHashtags hashtags={post.hashtags} />
 
         {/* 첨부파일 */}
-        <PostAttachments attachments={notice.attachments} onDownload={downloadFile} />
+        <PostAttachments attachments={post.attachments} onDownload={downloadFile} />
 
         <Divider sx={{ my: 3 }} />
 
@@ -159,4 +159,4 @@ const NoticePage = () => {
   );
 };
 
-export default NoticePage;
+export default QuestionPage;

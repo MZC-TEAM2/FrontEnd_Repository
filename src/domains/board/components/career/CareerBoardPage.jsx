@@ -28,6 +28,7 @@ import {
 import { useBoard } from '../../hooks/useBoard';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
 import { useNavigate } from 'react-router-dom';
+import { CAREER_HASHTAGS } from '../../constants/boardHashtags';
 
 /**
  * 취업정보 게시판 페이지
@@ -52,16 +53,6 @@ const CareerBoardPage = () => {
     handleSearchKeyPress,
     handleRowClick,
   } = useBoard('CAREER');
-
-  // 취업 게시판 카테고리 목록
-  const careerTopics = [
-    { id: '채용공고', name: '채용공고', icon: '📢', color: 'primary' },
-    { id: '면접후기', name: '면접후기', icon: '💼', color: 'secondary' },
-    { id: '인턴', name: '인턴', icon: '🎓', color: 'info' },
-    { id: '자소서첨삭', name: '자소서첨삭', icon: '✍️', color: 'warning' },
-    { id: '포트폴리오', name: '포트폴리오', icon: '📁', color: 'success' },
-    { id: '이력서', name: '이력서', icon: '📄', color: 'error' },
-  ];
 
   // 주제별 필터링된 게시글
   const filteredPosts = selectedTopic
@@ -100,7 +91,7 @@ const CareerBoardPage = () => {
             color={selectedTopic === null ? 'primary' : 'default'}
             sx={{ mb: 1 }}
           />
-          {careerTopics.map(topic => (
+          {CAREER_HASHTAGS.map(topic => (
             <Chip
               key={topic.id}
               label={`${topic.icon} ${topic.name}`}
