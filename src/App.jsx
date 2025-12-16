@@ -68,7 +68,11 @@ import DepartmentBoard from './domains/board/components/department/DepartmentBoa
 import DepartmentPage from './domains/board/components/department/DepartmentPage';
 import DepartmentFormPage from './domains/board/components/department/DepartmentFormPage';
 import ContestBoard from './domains/board/components/contest/ContestBoardPage';
+import ContestPage from './domains/board/components/contest/ContestPage';
+import ContestFormPage from './domains/board/components/contest/ContestFormPage';
 import CareerBoard from './domains/board/components/career/CareerBoardPage';
+import CareerPage from './domains/board/components/career/CareerPage';
+import CareerFormPage from './domains/board/components/career/CareerFormPage';
 import AssignmentBoard from './domains/board/components/assignment/AssignmentBoardPage';
 import ExamBoard from './domains/board/components/exam/ExamBoardPage';
 import QuizBoard from './domains/board/components/quiz/QuizBoardPage';
@@ -177,8 +181,16 @@ function App() {
             <Route path="/boards/question" element={<QuestionBoard />} />
             <Route path="/boards/discussion" element={<DiscussionBoard />} />
             <Route path="/boards/department" element={<DepartmentBoard />} />
+            
             <Route path="/boards/contest" element={<ContestBoard />} />
+            <Route path="/boards/contest/create" element={<ContestFormPage />} />
+            <Route path="/boards/contest/:id/edit" element={<ContestFormPage />} />
+            <Route path="/boards/contest/:id" element={<ContestPage />} />
+            
             <Route path="/boards/career" element={<CareerBoard />} />
+            <Route path="/boards/career/create" element={<CareerFormPage />} />
+            <Route path="/boards/career/:id/edit" element={<CareerFormPage />} />
+            <Route path="/boards/career/:id" element={<CareerPage />} />
             <Route path="/boards/assignment" element={<AssignmentBoard />} />
             <Route path="/boards/exam" element={<ExamBoard />} />
             <Route path="/boards/quiz" element={<QuizBoard />} />

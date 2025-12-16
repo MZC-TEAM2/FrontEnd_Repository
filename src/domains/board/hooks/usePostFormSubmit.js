@@ -53,7 +53,8 @@ export const usePostFormSubmit = (config) => {
         }
       });
     }
-  }, [id, isEditMode, loadForEditFn, setFormData, setExistingFiles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEditMode]);
 
   // 제출 처리
   const handleSubmit = async (e) => {
