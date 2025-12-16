@@ -28,6 +28,7 @@ import {
 import { useBoard } from '../../hooks/useBoard';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
 import { useNavigate } from 'react-router-dom';
+import { STUDY_HASHTAGS } from '../../constants/boardHashtags';
 
 /**
  * 스터디 모집 게시판 페이지
@@ -52,15 +53,6 @@ const StudyRecruitmentBoardPage = () => {
     handleSearchKeyPress,
     handleRowClick,
   } = useBoard('STUDY_RECRUITMENT');
-
-  // 스터디 분야 목록
-  const studyTopics = [
-    { id: '코딩테스트', name: '코딩테스트', icon: '💻', color: 'primary' },
-    { id: '자격증', name: '자격증', icon: '📜', color: 'secondary' },
-    { id: '프로젝트', name: '프로젝트', icon: '🚀', color: 'info' },
-    { id: '토익토스', name: '토익토스', icon: '🗣️', color: 'warning' },
-    { id: '전공공부', name: '전공공부', icon: '📚', color: 'success' },
-  ];
 
   // 주제별 필터링된 게시글
   const filteredPosts = selectedTopic
@@ -99,7 +91,7 @@ const StudyRecruitmentBoardPage = () => {
             color={selectedTopic === null ? 'primary' : 'default'}
             sx={{ mb: 1 }}
           />
-          {studyTopics.map(topic => (
+          {STUDY_HASHTAGS.map(topic => (
             <Chip
               key={topic.id}
               label={`${topic.icon} ${topic.name}`}

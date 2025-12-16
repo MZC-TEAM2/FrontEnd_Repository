@@ -50,11 +50,23 @@ import NoticeBoard from './domains/board/components/notice/NoticeBoard';
 import Notice from './domains/board/components/notice/NoticePage';
 import NoticeFormPage from './domains/board/components/notice/NoticeFormPage';
 import ProfessorBoard from './domains/board/components/professor/ProfessorBoardPage';
+import ProfessorPage from './domains/board/components/professor/ProfessorPage';
+import ProfessorFormPage from './domains/board/components/professor/ProfessorFormPage';
 import StudentBoard from './domains/board/components/student/StudentBoardPage';
+import StudentPage from './domains/board/components/student/StudentPage';
+import StudentFormPage from './domains/board/components/student/StudentFormPage';
 import FreeBoard from './domains/board/components/free/FreeBoardPage';
+import FreePage from './domains/board/components/free/FreePage';
+import FreeFormPage from './domains/board/components/free/FreeFormPage';
 import QuestionBoard from './domains/board/components/question/QuestionBoardPage';
+import QuestionPage from './domains/board/components/question/QuestionPage';
+import QuestionFormPage from './domains/board/components/question/QuestionFormPage';
 import DiscussionBoard from './domains/board/components/discussion/DiscussionBoardPage';
+import DiscussionPage from './domains/board/components/discussion/DiscussionPage';
+import DiscussionFormPage from './domains/board/components/discussion/DiscussionFormPage';
 import DepartmentBoard from './domains/board/components/department/DepartmentBoardPage';
+import DepartmentPage from './domains/board/components/department/DepartmentPage';
+import DepartmentFormPage from './domains/board/components/department/DepartmentFormPage';
 import ContestBoard from './domains/board/components/contest/ContestBoardPage';
 import CareerBoard from './domains/board/components/career/CareerBoardPage';
 import AssignmentBoard from './domains/board/components/assignment/AssignmentBoardPage';
@@ -126,9 +138,41 @@ function App() {
             <Route path="/notices/:id/edit" element={<NoticeFormPage />} />
             <Route path="/notices/:id" element={<Notice />} />
             
-            {/* 게시판 라우트 */}
+            {/* 자유 게시판 */}
+            <Route path="/free" element={<FreeBoard />} />
+            <Route path="/free/create" element={<FreeFormPage />} />
+            <Route path="/free/:id/edit" element={<FreeFormPage />} />
+            <Route path="/free/:id" element={<FreePage />} />
+            
+            {/* 질문 게시판 */}
+            <Route path="/questions" element={<QuestionBoard />} />
+            <Route path="/questions/create" element={<QuestionFormPage />} />
+            <Route path="/questions/:id/edit" element={<QuestionFormPage />} />
+            <Route path="/questions/:id" element={<QuestionPage />} />
+            
+            {/* 토론 게시판 */}
+            <Route path="/discussions" element={<DiscussionBoard />} />
+            <Route path="/discussions/create" element={<DiscussionFormPage />} />
+            <Route path="/discussions/:id/edit" element={<DiscussionFormPage />} />
+            <Route path="/discussions/:id" element={<DiscussionPage />} />
+            
+            {/* 학과 게시판 */}
+            <Route path="/departments" element={<DepartmentBoard />} />
+            <Route path="/departments/create" element={<DepartmentFormPage />} />
+            <Route path="/departments/:id/edit" element={<DepartmentFormPage />} />
+            <Route path="/departments/:id" element={<DepartmentPage />} />
+            
+            {/* 게시판 라우트 (레거시 경로 유지) */}
             <Route path="/boards/professor" element={<ProfessorBoard />} />
+            <Route path="/boards/professor/create" element={<ProfessorFormPage />} />
+            <Route path="/boards/professor/:id/edit" element={<ProfessorFormPage />} />
+            <Route path="/boards/professor/:id" element={<ProfessorPage />} />
+            
             <Route path="/boards/student" element={<StudentBoard />} />
+            <Route path="/boards/student/create" element={<StudentFormPage />} />
+            <Route path="/boards/student/:id/edit" element={<StudentFormPage />} />
+            <Route path="/boards/student/:id" element={<StudentPage />} />
+            
             <Route path="/boards/free" element={<FreeBoard />} />
             <Route path="/boards/question" element={<QuestionBoard />} />
             <Route path="/boards/discussion" element={<DiscussionBoard />} />

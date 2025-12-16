@@ -35,7 +35,7 @@ export const useBoard = (boardType) => {
       };
       
       if (search) {
-        params.title = search;
+        params.search = search; // title -> search로 변경
       }
       
       const response = await axiosInstance.get(

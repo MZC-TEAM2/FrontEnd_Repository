@@ -16,14 +16,14 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePostForm } from '../../hooks/usePostForm';
 import { useFileManager } from '../../hooks/useFileManager';
-import { useNotice } from '../../hooks/useNotice';
+import { useQuestion } from '../../hooks/useQuestion';
 import { usePostFormSubmit } from '../../hooks/usePostFormSubmit';
 import HashtagInput from '../common/HashtagInput';
 import FileAttachment from '../common/FileAttachment';
 import PostTypeSelector from '../common/PostTypeSelector';
 import PostFormActions from '../common/PostFormActions';
 
-const NoticeFormPage = () => {
+const QuestionFormPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -49,10 +49,10 @@ const NoticeFormPage = () => {
     loading,
     error,
     setError,
-    createNoticePost,
-    updateNoticePost,
-    loadNoticeForEdit,
-  } = useNotice();
+    createQuestionPost,
+    updateQuestionPost,
+    loadQuestionForEdit,
+  } = useQuestion();
 
   const {
     submitting,
@@ -63,12 +63,12 @@ const NoticeFormPage = () => {
   } = usePostFormSubmit({
     id,
     isEditMode,
-    basePath: '/notices',
-    categoryId: 1,
-    boardName: '공지사항',
-    createPostFn: createNoticePost,
-    updatePostFn: updateNoticePost,
-    loadForEditFn: loadNoticeForEdit,
+    basePath: '/questions',
+    categoryId: 3,
+    boardName: '질문 게시판',
+    createPostFn: createQuestionPost,
+    updatePostFn: updateQuestionPost,
+    loadForEditFn: loadQuestionForEdit,
     setFormData,
     setExistingFiles,
     validateForm,
@@ -105,11 +105,15 @@ const NoticeFormPage = () => {
       {/* 작성/수정 폼 */}
       <Paper sx={{ p: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
-          {isEditMode ? '공지사항 수정' : '공지사항 작성'}
+          {isEditMode ? '질문 게시판 수정' : '질문 게시판 작성'}
         </Typography>
 
         {/* 게시글 타입 */}
-        <PostTypeSelector boardType="NOTICE" value={formData.postType} onChange={handleInputChange} />
+        <PostTypeSelector
+          boardType="QUESTION"
+          value={formData.postType}
+          onChange={handleInputChange}
+        />
 
           {/* 제목 */}
           <TextField
@@ -138,10 +142,10 @@ const NoticeFormPage = () => {
           />
 
           {/* 해시태그 입력 */}
-          <HashtagInput 
-            hashtags={hashtags} 
-            onHashtagsChange={setHashtags} 
-            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 학사일정, 중요공지)" 
+          <HashtagInput
+            hashtags={hashtags}
+            onHashtagsChange={setHashtags}
+            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 자료구조, 알고리즘)"
           />
 
           {/* 파일 첨부 */}
@@ -154,14 +158,13 @@ const NoticeFormPage = () => {
             onExistingFileRemove={handleExistingFileRemove}
           />
 
-          {/* 익명 여부 (공지사항은 보통 익명 불가) */}
+          {/* 익명 여부 */}
           <FormControlLabel
             control={
               <Checkbox
                 name="isAnonymous"
                 checked={formData.isAnonymous}
                 onChange={handleInputChange}
-                disabled // 공지사항은 익명 불가
               />
             }
             label="익명으로 작성"
@@ -180,4 +183,4 @@ const NoticeFormPage = () => {
   );
 };
 
-export default NoticeFormPage;
+export default QuestionFormPage;
