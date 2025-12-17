@@ -77,6 +77,8 @@ import CareerBoard from './domains/board/components/career/CareerBoardPage';
 import CareerPage from './domains/board/components/career/CareerPage';
 import CareerFormPage from './domains/board/components/career/CareerFormPage';
 import AssignmentBoard from './domains/board/components/assignment/AssignmentBoardPage';
+import AssignmentDetailPage from './domains/board/components/assignment/AssignmentDetailPage';
+import AssignmentFormPage from './domains/board/components/assignment/AssignmentFormPage';
 import ExamBoard from './domains/board/components/exam/ExamBoardPage';
 import QuizBoard from './domains/board/components/quiz/QuizBoardPage';
 import StudyBoard from './domains/board/components/study/StudyRecruitmentBoardPage';
@@ -199,13 +201,20 @@ function App() {
             <Route path="/boards/career/create" element={<CareerFormPage />} />
             <Route path="/boards/career/:id/edit" element={<CareerFormPage />} />
             <Route path="/boards/career/:id" element={<CareerPage />} />
+            
             <Route path="/boards/assignment" element={<AssignmentBoard />} />
+            <Route path="/boards/assignment/create" element={<AssignmentFormPage />} />
+            <Route path="/boards/assignment/:id/edit" element={<AssignmentFormPage />} />
+            <Route path="/boards/assignment/:id" element={<AssignmentDetailPage />} />
+            
             <Route path="/boards/exam" element={<ExamBoard />} />
             <Route path="/boards/quiz" element={<QuizBoard />} />
             <Route path="/boards/study" element={<StudyBoard />} />
             
-            <Route path="/community/board" element={<Community />} />
-            <Route path="/community/qna" element={<Community />} />
+            {/* 커뮤니티 라우트 - 새 게시판 시스템 */}
+            <Route path="/community/notices" element={<NoticeBoard />} />
+            <Route path="/community/board" element={<FreeBoard />} />
+            <Route path="/community/qna" element={<QuestionBoard />} />
 
             {/* 학습자 관리 */}
             <Route path="/students" element={<TempPage title="학습자 관리" />} />
