@@ -25,6 +25,8 @@ import {
   EventNote as EventNoteIcon,
   Info as InfoIcon,
   OpenInNew as OpenInNewIcon,
+  ChatBubble as ChatBubbleIcon,
+  Reply as ReplyIcon,
 } from '@mui/icons-material';
 import notificationService from '../services/notificationService';
 
@@ -59,6 +61,8 @@ const NotificationDetailDialog = ({
       LECTURE: <SchoolIcon />,
       ATTENDANCE: <EventNoteIcon />,
       SYSTEM: <InfoIcon />,
+      COMMENT_CREATED: <ChatBubbleIcon />,
+      REPLY_CREATED: <ReplyIcon />,
     };
     return icons[type] || <InfoIcon />;
   };
@@ -73,6 +77,8 @@ const NotificationDetailDialog = ({
       LECTURE: 'secondary',
       ATTENDANCE: 'warning',
       SYSTEM: 'default',
+      COMMENT_CREATED: 'info',
+      REPLY_CREATED: 'info',
     };
     return colors[type] || 'default';
   };
