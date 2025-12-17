@@ -204,6 +204,13 @@ const professorMenuItems = [
     divider: true, // 구분선
   },
   {
+    title: '메시지',
+    path: '/messages',
+    icon: <MailIcon />,
+    description: '쪽지 보내기/받기',
+    hasBadge: true, // 동적 뱃지 표시 플래그
+  },
+  {
     title: '내 정보',
     path: '/profile',
     icon: <PersonIcon />,
