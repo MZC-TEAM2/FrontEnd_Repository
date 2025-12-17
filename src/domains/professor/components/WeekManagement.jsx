@@ -44,7 +44,9 @@ import {
   Description as DocumentIcon,
   Link as LinkIcon,
   Quiz as QuizIcon,
+  CloudUpload as UploadIcon,
 } from '@mui/icons-material';
+import VideoUploader from './VideoUploader';
 
 /**
  * WeekManagement 컴포넌트
@@ -53,9 +55,8 @@ import {
  * @param {Function} onCreateWeek - 주차 생성 핸들러
  * @param {Function} onUpdateWeek - 주차 수정 핸들러
  * @param {Function} onDeleteWeek - 주차 삭제 핸들러
- * @param {Function} onCreateContent - 콘텐츠 생성 핸들러
- * @param {Function} onUpdateContent - 콘텐츠 수정 핸들러
  * @param {Function} onDeleteContent - 콘텐츠 삭제 핸들러
+ * @param {Function} onRefreshWeeks - 주차 목록 새로고침 핸들러
  */
 const WeekManagement = ({
   courseId,
@@ -63,9 +64,8 @@ const WeekManagement = ({
   onCreateWeek,
   onUpdateWeek,
   onDeleteWeek,
-  onCreateContent,
-  onUpdateContent,
   onDeleteContent,
+  onRefreshWeeks,
 }) => {
   const [expandedWeek, setExpandedWeek] = useState(null);
   const [weekDialogOpen, setWeekDialogOpen] = useState(false);
@@ -362,15 +362,15 @@ const WeekManagement = ({
                 </Box>
               )}
 
-              {/* 콘텐츠 추가 버튼 */}
+              {/* 영상 업로드 버튼 */}
               <Box sx={{ mt: 2 }}>
                 <Button
                   fullWidth
                   variant="outlined"
-                  startIcon={<AddIcon />}
+                  startIcon={<UploadIcon />}
                   onClick={() => handleAddContentClick(week.id)}
                 >
-                  콘텐츠 추가
+                  영상 업로드
                 </Button>
               </Box>
             </AccordionDetails>
@@ -583,25 +583,34 @@ const WeekManagement = ({
         </DialogActions>
       </Dialog>
 
-      {/* 콘텐츠 추가 다이얼로그 */}
+      {/* 영상 업로드 다이얼로그 */}
       <Dialog
         open={contentDialogOpen}
         onClose={() => setContentDialogOpen(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>콘텐츠 추가</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <UploadIcon color="primary" />
+            영상 업로드
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              콘텐츠 추가 기능은 다음 단계에서 구현됩니다.
-            </Typography>
-            {/* TODO: 콘텐츠 추가 폼 구현 */}
+            <VideoUploader
+              courseId={courseId}
+              weekId={selectedWeekId}
+              onUploadComplete={() => {
+                setContentDialogOpen(false);
+                if (onRefreshWeeks) {
+                  onRefreshWeeks();
+                }
+              }}
+              onCancel={() => setContentDialogOpen(false)}
+            />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setContentDialogOpen(false)}>닫기</Button>
-        </DialogActions>
       </Dialog>
     </Box>
   );
