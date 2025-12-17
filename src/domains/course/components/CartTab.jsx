@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -11,6 +11,11 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { formatScheduleTime } from '../utils/scheduleUtils';
@@ -26,6 +31,35 @@ const CartTab = ({
   onClearAllCarts,
   onConfirmRegistration,
 }) => {
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
+
+  const handleClearClick = () => {
+    setClearDialogOpen(true);
+  };
+
+  const handleClearConfirm = () => {
+    onClearAllCarts();
+    setClearDialogOpen(false);
+  };
+
+  const handleClearClose = () => {
+    setClearDialogOpen(false);
+  };
+
+  const handleRegisterClick = () => {
+    setRegisterDialogOpen(true);
+  };
+
+  const handleRegisterConfirm = () => {
+    onConfirmRegistration();
+    setRegisterDialogOpen(false);
+  };
+
+  const handleRegisterClose = () => {
+    setRegisterDialogOpen(false);
+  };
+
   return (
     <Box sx={{ 
       height: '100%',
@@ -115,7 +149,7 @@ const CartTab = ({
               color="error"
               size="large"
               fullWidth
-              onClick={onClearAllCarts}
+              onClick={handleClearClick}
               sx={{ mt: 2 }}
             >
               장바구니 비우기
@@ -124,7 +158,7 @@ const CartTab = ({
               variant="contained"
               size="large"
               fullWidth
-              onClick={onConfirmRegistration}
+              onClick={handleRegisterClick}
               disabled={cartCredits === 0 || cartCredits + registeredCredits > 21}
               sx={{ mt: 2 }}
             >
@@ -139,6 +173,78 @@ const CartTab = ({
           </Box>
         </>
       )}
+
+      {/* 장바구니 비우기 확인 다이얼로그 */}
+      <Dialog
+        open={clearDialogOpen}
+        onClose={handleClearClose}
+        aria-labelledby="clear-dialog-title"
+        aria-describedby="clear-dialog-description"
+      >
+        <DialogTitle id="clear-dialog-title">
+          장바구니 비우기 확인
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="clear-dialog-description">
+            정말로 장바구니의 모든 항목을 비우시겠습니까?
+            <br />
+            <strong>{cart.length}개 과목 ({cartCredits}학점)</strong>이 삭제됩니다.
+            <br />
+            이 작업은 되돌릴 수 없습니다.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClearClose} color="inherit">
+            취소
+          </Button>
+          <Button onClick={handleClearConfirm} color="error" variant="contained" autoFocus>
+            비우기
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 장바구니 일괄 수강신청 확인 다이얼로그 */}
+      <Dialog
+        open={registerDialogOpen}
+        onClose={handleRegisterClose}
+        aria-labelledby="register-dialog-title"
+        aria-describedby="register-dialog-description"
+      >
+        <DialogTitle id="register-dialog-title">
+          장바구니 일괄 수강신청 확인
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="register-dialog-description">
+            장바구니에 있는 <strong>{cart.length}개 과목 ({cartCredits}학점)</strong>을 모두 수강신청하시겠습니까?
+            <br />
+            현재 신청 완료된 학점: <strong>{registeredCredits}학점</strong>
+            <br />
+            신청 후 총 학점: <strong>{cartCredits + registeredCredits}학점</strong>
+            {cartCredits + registeredCredits > 21 && (
+              <>
+                <br />
+                <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                  ⚠️ 최대 수강 가능 학점(21학점)을 초과합니다.
+                </Typography>
+              </>
+            )}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleRegisterClose} color="inherit">
+            취소
+          </Button>
+          <Button 
+            onClick={handleRegisterConfirm} 
+            variant="contained" 
+            color="primary"
+            autoFocus
+            disabled={cartCredits + registeredCredits > 21}
+          >
+            신청하기
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
