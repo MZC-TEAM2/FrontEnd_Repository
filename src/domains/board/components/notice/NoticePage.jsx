@@ -98,6 +98,7 @@ const NoticePage = () => {
   }
 
   const postType = getPostTypeLabel(notice.postType);
+  const isAuthor = currentUserId === notice.createdBy;
 
   return (
     <Box>
@@ -120,7 +121,8 @@ const NoticePage = () => {
           icon={<CampaignIcon sx={{ color: 'primary.main' }} />}
           postType={postType}
           title={notice.title}
-          authorName={notice.authorName}
+          authorName={notice.createdByName}
+          isAnonymous={notice.isAnonymous}
           createdAt={formatDateTime(notice.createdAt)}
           viewCount={notice.viewCount}
           likeCount={likeCount}
@@ -140,7 +142,15 @@ const NoticePage = () => {
         <Divider sx={{ my: 3 }} />
 
         {/* 액션 버튼 */}
-        <PostActions isLiked={isLiked} likeCount={likeCount} onLike={handleLike} />
+        <PostActions 
+          isLiked={isLiked} 
+          likeCount={likeCount} 
+          onLike={handleLike}
+          isAuthor={isAuthor}
+          onEdit={() => navigate(`/boards/notice/${id}/edit`)}
+          onDelete={() => handleDelete(id, handleBackToList)}
+          deleting={deleting}
+        />
       </Paper>
 
       {/* 댓글 영역 */}

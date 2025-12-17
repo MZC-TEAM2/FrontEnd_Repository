@@ -141,11 +141,8 @@ export const useBoard = (boardType) => {
 
   // 게시글 생성
   const createPost = async (formData, attachmentIds) => {
-    const currentUser = authService.getCurrentUser();
-    
     const requestData = {
       boardType,
-      authorId: currentUser?.userId,
       title: formData.title,
       content: formData.content,
       postType: formData.postType || 'NORMAL',

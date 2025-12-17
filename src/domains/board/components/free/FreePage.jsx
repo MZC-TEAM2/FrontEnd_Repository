@@ -98,6 +98,7 @@ const FreePage = () => {
   }
 
   const postType = getPostTypeLabel(post.postType);
+  const isAuthor = currentUserId === post.createdBy;
 
   return (
     <Box>
@@ -120,7 +121,8 @@ const FreePage = () => {
           icon={<ForumIcon sx={{ color: 'primary.main' }} />}
           postType={postType}
           title={post.title}
-          authorName={post.authorName}
+          authorName={post.createdByName}
+          isAnonymous={post.isAnonymous}
           createdAt={formatDateTime(post.createdAt)}
           viewCount={post.viewCount}
           likeCount={likeCount}
@@ -140,7 +142,15 @@ const FreePage = () => {
         <Divider sx={{ my: 3 }} />
 
         {/* 액션 버튼 */}
-        <PostActions isLiked={isLiked} likeCount={likeCount} onLike={handleLike} />
+        <PostActions 
+          isLiked={isLiked} 
+          likeCount={likeCount} 
+          onLike={handleLike}
+          isAuthor={isAuthor}
+          onEdit={() => navigate(`/boards/free/${id}/edit`)}
+          onDelete={() => handleDelete(id, handleBackToList)}
+          deleting={deleting}
+        />
       </Paper>
 
       {/* 댓글 영역 */}

@@ -116,7 +116,7 @@ const ProfessorPage = () => {
   }
 
   const postTypeInfo = getPostTypeLabel(post.postType);
-  const isAuthor = currentUserId === post.author?.id;
+  const isAuthor = currentUserId === post.createdBy;
 
   return (
     <Box>
@@ -133,7 +133,8 @@ const ProfessorPage = () => {
           icon={<SchoolIcon sx={{ color: 'primary.main' }} />}
           postType={postTypeInfo}
           title={post.title}
-          authorName={post.authorName}
+          authorName={post.createdByName}
+          isAnonymous={post.isAnonymous}
           createdAt={formatDateTime(post.createdAt)}
           viewCount={post.viewCount}
           likeCount={likeCount}

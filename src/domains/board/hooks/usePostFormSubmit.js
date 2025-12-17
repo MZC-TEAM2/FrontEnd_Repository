@@ -80,7 +80,6 @@ export const usePostFormSubmit = (config) => {
       if (isEditMode) {
         await updatePostFn(id, postData, attachmentIds, deletedFileIds);
         navigate(`${basePath}/${id}`, { replace: true });
-        window.location.reload();
       } else {
         const response = await createPostFn(postData, attachmentIds);
         navigate(`${basePath}/${response.id}`);
