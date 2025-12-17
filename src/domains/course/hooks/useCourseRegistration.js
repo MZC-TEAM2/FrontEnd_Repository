@@ -48,7 +48,7 @@ const useCourseRegistration = () => {
 
 
 
-  // 수강신청 기간 조회
+  // 수강신청 기간 조회 (학생용 - ENROLLMENT 타입만)
   useEffect(() => {
     const fetchEnrollmentPeriod = async () => {
       try {
@@ -57,13 +57,23 @@ const useCourseRegistration = () => {
         
         if (response.success && response.data?.currentPeriod) {
           const periodData = response.data.currentPeriod;
-          setenrollmentPeriodId(periodData.id);
+          
+          // periodType이 ENROLLMENT인지 확인
+          if (periodData.periodType?.typeCode === 'ENROLLMENT') {
+            setenrollmentPeriodId(periodData.id);
+          } else {
+            // 수강신청 기간이 아닌 경우
+            setError('현재 수강신청 기간이 아닙니다. 수강신청 기간에만 수강신청을 할 수 있습니다.');
+            setenrollmentPeriodId(null);
+          }
         } else {
           setError('수강신청 기간 정보를 불러올 수 없습니다.');
+          setenrollmentPeriodId(null);
         }
       } catch (err) {
         console.error('수강신청 기간 조회 실패:', err);
         setError(err.message || '수강신청 기간 정보를 불러오는 중 오류가 발생했습니다.');
+        setenrollmentPeriodId(null);
       } finally {
         setLoading(false);
       }
@@ -272,7 +282,7 @@ const useCourseRegistration = () => {
       // 에러 발생 시에도 빈 배열로 설정하여 UI가 정상 작동하도록
       setRegistered([]);
     }
-  }, []);
+  }, [enrollmentPeriodId]);
 
   // 장바구니에 추가
   // 주의: 장바구니 추가는 정원이 꽉 차도 가능 (정원 체크 제외)
@@ -280,6 +290,16 @@ const useCourseRegistration = () => {
   const addToCart = useCallback(async (course) => {
     try {
       console.log('[API 호출] addToCart', { course, timestamp: new Date().toISOString() });
+
+      // 수강신청 기간 체크
+      if (!enrollmentPeriodId) {
+        setToast({ 
+          open: true, 
+          message: '현재 수강신청 기간이 아닙니다. 수강신청 기간에만 장바구니에 추가할 수 있습니다.', 
+          severity: 'error' 
+        });
+        return;
+      }
 
       // 이미 신청 완료된 강의인지 확인
       if (registered.find((c) => c.id === course.id)) {
@@ -358,7 +378,7 @@ const useCourseRegistration = () => {
     } finally {
       setLoading(false);
     }
-  }, [cart, registered, fetchCarts]);
+  }, [cart, registered, enrollmentPeriodId, fetchCarts]);
 
   // 장바구니에서 제거
   const removeFromCart = useCallback(async (courseIdOrCartId) => {
@@ -429,6 +449,12 @@ const useCourseRegistration = () => {
   const confirmRegistration = useCallback(async () => {
     if (cart.length === 0) {
       setError('장바구니가 비어있습니다.');
+      return;
+    }
+
+    // 수강신청 기간 체크
+    if (!enrollmentPeriodId) {
+      setError('현재 수강신청 기간이 아닙니다. 수강신청 기간에만 수강신청을 할 수 있습니다.');
       return;
     }
 
@@ -503,6 +529,17 @@ const useCourseRegistration = () => {
   // 직접 수강신청 (개별 강의) - 실제 신청 처리
   const handleEnroll = useCallback(async (course) => {
     try {
+      // 수강신청 기간 체크
+      if (!enrollmentPeriodId) {
+        setToast({ 
+          open: true, 
+          message: '현재 수강신청 기간이 아닙니다. 수강신청 기간에만 수강신청을 할 수 있습니다.', 
+          severity: 'error' 
+        });
+        handleEnrollDialogClose();
+        return;
+      }
+
       // 이미 신청 완료된 강의인지 확인
       if (registered.find((c) => c.id === course.id)) {
         setToast({ open: true, message: '이미 수강신청이 완료된 강의입니다.', severity: 'warning' });
@@ -643,12 +680,7 @@ const useCourseRegistration = () => {
   );
 
   // pagination 객체 메모이제이션 (참조 안정화)
-  const memoizedPagination = useMemo(() => pagination, [
-    pagination.page,
-    pagination.size,
-    pagination.total,
-    pagination.totalPages,
-  ]);
+  const memoizedPagination = useMemo(() => pagination, [pagination]);
 
   // toast를 ref로 관리하여 리렌더링 방지
   const toastRef = useRef(toast);
