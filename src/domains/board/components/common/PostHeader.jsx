@@ -2,17 +2,8 @@ import React from 'react';
 import { Box, Typography, Chip, Divider, Avatar } from '@mui/material';
 import { Visibility as VisibilityIcon, ThumbUp as ThumbUpIcon } from '@mui/icons-material';
 
-/**
- * 게시글 헤더 (아이콘, 타입, 제목, 작성자, 날짜, 조회수, 좋아요)
- * @param {ReactElement} icon - 게시판 아이콘
- * @param {Object} postType - { label, color } 형식의 게시글 타입
- * @param {String} title - 게시글 제목
- * @param {String} authorName - 작성자 이름
- * @param {String} createdAt - 작성 날짜 (포맷된 문자열)
- * @param {Number} viewCount - 조회수
- * @param {Number} likeCount - 좋아요 수
- */
-const PostHeader = ({ icon, postType, title, authorName, createdAt, viewCount, likeCount }) => {
+const PostHeader = ({ icon, postType, title, authorName, isAnonymous, createdAt, viewCount, likeCount }) => {
+  const displayName = isAnonymous ? '익명' : (authorName || '익명');
   return (
     <Box sx={{ mb: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -24,9 +15,9 @@ const PostHeader = ({ icon, postType, title, authorName, createdAt, viewCount, l
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Avatar sx={{ width: 32, height: 32 }}>{authorName?.[0] || 'A'}</Avatar>
+          <Avatar sx={{ width: 32, height: 32 }}>{displayName?.[0] || 'A'}</Avatar>
           <Typography variant="body2" color="text.secondary">
-            {authorName || '익명'}
+            {displayName}
           </Typography>
         </Box>
         <Divider orientation="vertical" flexItem />

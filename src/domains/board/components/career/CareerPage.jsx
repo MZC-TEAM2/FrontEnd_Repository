@@ -9,13 +9,14 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
-  Groups as GroupsIcon,
+  Work as WorkIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePostLike } from '../../hooks/usePostLike';
 import { usePostDelete } from '../../hooks/usePostDelete';
 import { useComments } from '../../hooks/useComments';
 import { useFileManager } from '../../hooks/useFileManager';
+import { useCareer } from '../../hooks/useCareer';
 import { formatDateTime, getPostTypeLabel } from '../../../../utils/boardUtils';
 import CommentList from '../comments/CommentList';
 import authService from '../../../../services/authService';
@@ -25,21 +26,18 @@ import PostContent from '../common/PostContent';
 import PostHashtags from '../common/PostHashtags';
 import PostAttachments from '../common/PostAttachments';
 import PostActions from '../common/PostActions';
-import { getPost } from '../../../../api/postApi';
 
-/**
- * 학생 게시판 상세 페이지
- */
-const StudentPage = () => {
+const CareerPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const handleBackToList = () => navigate('/boards/student');
+  // useCareer 훅에서 공통 함수 가져오기
+  const { fetchCareerDetail, handleBackToList } = useCareer();
 
-  // 현재 로그인한 사용자 정보
+  // 현재 로그인한 사용자 정보 가져오기
   const currentUser = authService.getCurrentUser();
   const currentUserId = currentUser?.userId || null;
 
@@ -52,47 +50,45 @@ const StudentPage = () => {
     createReply,
     updateComment,
     deleteComment,
-    loading: commentsLoading,
-  } = useComments(id);
+  } = useComments(id, currentUserId);
   const { downloadFile } = useFileManager();
 
-  // 게시글 상세 조회
+  // 취업 게시판 상세 조회
   useEffect(() => {
-    const fetchPost = async () => {
+    const loadDetail = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        const data = await getPost('STUDENT', id);
+        const data = await fetchCareerDetail(id);
         setPost(data);
         setLikeCount(data.likeCount || 0);
+        
+        // 사용자의 좋아요 여부 조회
+        await fetchLikeStatus();
       } catch (err) {
-        console.error('게시글 조회 실패:', err);
-        setError(err.response?.data?.message || '게시글을 불러오는데 실패했습니다.');
+        console.error('취업 게시판 조회 실패:', err);
+        setError('게시글을 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
       }
     };
-
-    if (id) {
-      fetchPost();
-      fetchLikeStatus();
-    }
+    
+    loadDetail();
   }, [id]);
 
-  // 로딩 중
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
         <CircularProgress />
       </Box>
     );
   }
 
-  // 에러
-  if (error) {
+  if (error || !post) {
     return (
       <Box>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error || '게시글을 찾을 수 없습니다.'}
         </Alert>
         <Button startIcon={<ArrowBackIcon />} onClick={handleBackToList}>
           목록으로
@@ -101,37 +97,28 @@ const StudentPage = () => {
     );
   }
 
-  // 게시글 없음
-  if (!post) {
-    return (
-      <Box>
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          게시글을 찾을 수 없습니다.
-        </Alert>
-        <Button startIcon={<ArrowBackIcon />} onClick={handleBackToList}>
-          목록으로
-        </Button>
-      </Box>
-    );
-  }
-
-  const postTypeInfo = getPostTypeLabel(post.postType);
-  const isAuthor = currentUserId === post.author?.id;
+  const postType = getPostTypeLabel(post.postType);
 
   return (
     <Box>
-      {/* 네비게이션 */}
+      {/* 상단 네비게이션 */}
       <PostNavigation
-        icon={<GroupsIcon />}
-        title="학생 게시판"
         onBack={handleBackToList}
+        onEdit={() => navigate(`/boards/career/${id}/edit`)}
+        onDelete={() => handleDelete(id, {
+          confirmMessage: '정말 삭제하시겠습니까?',
+          successMessage: '게시글이 삭제되었습니다.',
+          redirectPath: '/boards/career',
+        })}
+        deleting={deleting}
       />
 
-      {/* 게시글 내용 */}
-      <Paper sx={{ p: 4, mb: 3 }}>
+      {/* 게시글 상세 */}
+      <Paper sx={{ p: 4 }}>
+        {/* 헤더 */}
         <PostHeader
-          icon={<SchoolIcon sx={{ color: 'primary.main' }} />}
-          postType={postTypeInfo}
+          icon={<WorkIcon sx={{ color: 'primary.main' }} />}
+          postType={postType}
           title={post.title}
           authorName={post.createdByName}
           isAnonymous={post.isAnonymous}
@@ -142,44 +129,43 @@ const StudentPage = () => {
 
         <Divider sx={{ my: 3 }} />
 
+        {/* 본문 */}
         <PostContent content={post.content} />
 
-        {post.hashtags && post.hashtags.length > 0 && (
-          <PostHashtags hashtags={post.hashtags} />
-        )}
+        {/* 해시태그 */}
+        <PostHashtags hashtags={post.hashtags} />
 
-        {post.attachments && post.attachments.length > 0 && (
-          <PostAttachments
-            attachments={post.attachments}
-            onDownload={downloadFile}
-          />
-        )}
+        {/* 첨부파일 */}
+        <PostAttachments attachments={post.attachments} onDownload={downloadFile} />
 
         <Divider sx={{ my: 3 }} />
 
-        <PostActions
-          isLiked={isLiked}
-          likeCount={likeCount}
-          viewCount={post.viewCount}
+        {/* 액션 버튼 */}
+        <PostActions 
+          isLiked={isLiked} 
+          likeCount={likeCount} 
           onLike={handleLike}
-          isAuthor={isAuthor}
-          onEdit={() => navigate(`/boards/student/${id}/edit`)}
+          isAuthor={currentUserId === post.createdBy}
+          onEdit={() => navigate(`/boards/career/${id}/edit`)}
           onDelete={() => handleDelete(id, handleBackToList)}
           deleting={deleting}
         />
       </Paper>
 
-      {/* 댓글 */}
-      <CommentList
-        comments={comments}
-        onCreateComment={createComment}
-        onCreateReply={createReply}
-        onUpdateComment={updateComment}
-        onDeleteComment={deleteComment}
-        loading={commentsLoading}
-      />
+      {/* 댓글 영역 */}
+      <Paper sx={{ p: 4, mt: 3 }}>
+        <CommentList
+          comments={comments}
+          currentUserId={currentUserId}
+          onSubmit={createComment}
+          onEdit={updateComment}
+          onDelete={deleteComment}
+          onReply={createReply}
+          allowComments={true}
+        />
+      </Paper>
     </Box>
   );
 };
 
-export default StudentPage;
+export default CareerPage;

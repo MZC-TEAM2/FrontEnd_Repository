@@ -55,10 +55,8 @@ export const usePostDetail = (config) => {
 
   // 게시글 생성 (폼용)
   const createPost = async (formData, attachmentIds) => {
-    const currentUser = authService.getCurrentUser();
     const requestData = {
       categoryId,
-      authorId: currentUser?.userId,
       title: formData.title,
       content: formData.content,
       postType: formData.postType,

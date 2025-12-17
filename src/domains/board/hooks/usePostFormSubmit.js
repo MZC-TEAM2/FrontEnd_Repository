@@ -53,7 +53,8 @@ export const usePostFormSubmit = (config) => {
         }
       });
     }
-  }, [id, isEditMode, loadForEditFn, setFormData, setExistingFiles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEditMode]);
 
   // 제출 처리
   const handleSubmit = async (e) => {
@@ -79,7 +80,6 @@ export const usePostFormSubmit = (config) => {
       if (isEditMode) {
         await updatePostFn(id, postData, attachmentIds, deletedFileIds);
         navigate(`${basePath}/${id}`, { replace: true });
-        window.location.reload();
       } else {
         const response = await createPostFn(postData, attachmentIds);
         navigate(`${basePath}/${response.id}`);
