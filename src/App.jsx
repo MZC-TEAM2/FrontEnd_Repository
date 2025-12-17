@@ -32,6 +32,9 @@ import CourseRegistration from './pages/CourseRegistration';
 import CourseDetail from './pages/CourseDetail';
 import CourseSchedule from './pages/CourseSchedule';
 import Grades from './pages/Grades';
+import ProfessorCourseManagement from './pages/ProfessorCourseManagement';
+import ProfessorMyCourses from './pages/ProfessorMyCourses';
+import ProfessorCourseDetail from './pages/ProfessorCourseDetail';
 
 // 인증 관련 페이지
 import Login from './pages/Login';
@@ -125,6 +128,11 @@ function App() {
 
             {/* 수강신청 */}
             <Route path="/registration" element={<CourseRegistration />} />
+
+            {/* 교수용 강의 관리 */}
+            <Route path="/professor/courses" element={<ProfessorCourseManagement />} />
+            <Route path="/professor/my-courses" element={<ProfessorMyCourses />} />
+            <Route path="/professor/course/:courseId/manage" element={<ProfessorCourseDetail />} />
 
             {/* 과제 */}
             <Route path="/assignments" element={<TempPage title="과제" />} />

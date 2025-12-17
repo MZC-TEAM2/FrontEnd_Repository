@@ -12,11 +12,17 @@ import axiosInstance from './axiosInstance';
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 /**
- * 현재 수강신청 기간 조회
- * @returns {Promise} 수강신청 기간 정보 (enrollmentPeriodId 포함)
+ * 현재 수강신청 기간 조회 (학생용 - ENROLLMENT 타입)
+ * @returns {Promise} 수강신청 기간 정보 (enrollmentPeriodId, periodType 포함)
  */
 export const getCurrentEnrollmentPeriod = async () => {
   const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
+
+  if (response.data?.success && response.data.data?.currentPeriod) {
+    const period = response.data.data.currentPeriod;
+    
+    console.log(period);
+  }
   return response.data;
 };
 
