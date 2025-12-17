@@ -9,6 +9,22 @@ const axiosInstance = axios.create({
   },
 });
 
+// 토큰 리프레시 상태 관리
+let isRefreshing = false;
+let failedQueue = [];
+
+// 대기 중인 요청들 처리
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Request 인터셉터
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -46,38 +62,60 @@ axiosInstance.interceptors.response.use(
 
     // 401 에러 처리 (토큰 만료)
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // 이미 리프레시 중이면 큐에 추가하고 대기
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       const refreshToken = localStorage.getItem('refreshToken');
 
-      if (refreshToken) {
-        try {
-          // 토큰 갱신 시도
-          const response = await axios.post(
-            `${import.meta.env.VITE_API_BASE_URL}/api/auth/refresh`,
-            { refreshToken }
-          );
-
-          const { accessToken, refreshToken: newRefreshToken } = response.data.data;
-
-          // 새 토큰 저장
-          localStorage.setItem('accessToken', accessToken);
-          localStorage.setItem('refreshToken', newRefreshToken);
-
-          // 원래 요청 재시도
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return axiosInstance(originalRequest);
-        } catch (refreshError) {
-          // 토큰 갱신 실패 시 로그인 페이지로 이동
-          console.error('[Token Refresh Failed]', refreshError);
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
-          return Promise.reject(refreshError);
-        }
-      } else {
-        // 리프레시 토큰이 없는 경우 로그인 페이지로 이동
+      if (!refreshToken) {
+        isRefreshing = false;
         window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      try {
+        // 토큰 갱신 시도
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/auth/refresh`,
+          { refreshToken }
+        );
+
+        // 응답 구조에 따라 토큰 추출
+        const tokenData = response.data.data || response.data;
+        const { accessToken, refreshToken: newRefreshToken } = tokenData;
+
+        // 새 토큰 저장
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
+
+        // 대기 중인 요청들에게 새 토큰 전달
+        processQueue(null, accessToken);
+
+        // 원래 요청 재시도
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        // 토큰 갱신 실패 시 대기 중인 요청들도 실패 처리
+        processQueue(refreshError, null);
+        console.error('[Token Refresh Failed]', refreshError);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
