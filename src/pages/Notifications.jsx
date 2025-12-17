@@ -39,6 +39,8 @@ import {
   DoneAll as DoneAllIcon,
   DeleteSweep as DeleteSweepIcon,
   Refresh as RefreshIcon,
+  ChatBubble as ChatBubbleIcon,
+  Reply as ReplyIcon,
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import notificationService from '../services/notificationService';
@@ -70,6 +72,8 @@ const Notifications = () => {
       LECTURE: <SchoolIcon />,
       ATTENDANCE: <EventNoteIcon />,
       SYSTEM: <InfoIcon />,
+      COMMENT_CREATED: <ChatBubbleIcon />,
+      REPLY_CREATED: <ReplyIcon />,
     };
     return icons[type] || <NotificationsIcon />;
   };
@@ -84,6 +88,8 @@ const Notifications = () => {
       LECTURE: 'secondary',
       ATTENDANCE: 'warning',
       SYSTEM: 'default',
+      COMMENT_CREATED: 'info',
+      REPLY_CREATED: 'info',
     };
     return colors[type] || 'default';
   };
