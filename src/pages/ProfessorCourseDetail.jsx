@@ -35,12 +35,14 @@ import {
   School as SchoolIcon,
   People as PeopleIcon,
   Quiz as QuizIcon,
+  FactCheck as FactCheckIcon,
 } from '@mui/icons-material';
 
 // 컴포넌트
 import WeekManagement from '../domains/professor/components/WeekManagement';
 import CourseCreateDialog from '../domains/professor/components/CourseCreateDialog';
 import ExamManagement from '../domains/professor/components/ExamManagement';
+import QuizManagement from '../domains/professor/components/QuizManagement';
 
 // API
 import {
@@ -364,7 +366,8 @@ const ProfessorCourseDetail = () => {
           <Tab icon={<CalendarMonthIcon />} label="주차 관리" />
           <Tab icon={<NotificationsIcon />} label="공지사항" />
           <Tab icon={<AssignmentIcon />} label="과제" />
-          <Tab icon={<QuizIcon />} label="시험" />
+          <Tab icon={<QuizIcon />} label="퀴즈" />
+          <Tab icon={<FactCheckIcon />} label="시험" />
           <Tab icon={<AssessmentIcon />} label="성적" />
         </Tabs>
       </Paper>
@@ -407,9 +410,11 @@ const ProfessorCourseDetail = () => {
         </Paper>
       )}
 
-      {currentTab === 3 && <ExamManagement />}
+      {currentTab === 3 && <QuizManagement />}
 
-      {currentTab === 4 && (
+      {currentTab === 4 && <ExamManagement />}
+
+      {currentTab === 5 && (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <AssessmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
