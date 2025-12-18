@@ -166,18 +166,9 @@ const ProfessorPage = () => {
           onEdit={() => navigate(`/boards/professor/${id}/edit`)}
           onDelete={() => handleDelete(id, handleBackToList)}
           deleting={deleting}
+          showLike={false}
         />
       </Paper>
-
-      {/* 댓글 */}
-      <CommentList
-        comments={comments}
-        onCreateComment={createComment}
-        onCreateReply={createReply}
-        onUpdateComment={updateComment}
-        onDeleteComment={deleteComment}
-        loading={commentsLoading}
-      />
     </Box>
   );
 };

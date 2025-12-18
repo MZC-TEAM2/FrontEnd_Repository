@@ -16,6 +16,7 @@ const NoticeBoard = () => {
       basePath="/notices"
       createPath="/notices/create"
       createButtonText="공지 작성"
+      showLikeCount={false}
     />
   );
 };

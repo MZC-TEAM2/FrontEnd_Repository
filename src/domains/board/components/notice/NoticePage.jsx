@@ -150,19 +150,7 @@ const NoticePage = () => {
           onEdit={() => navigate(`/boards/notice/${id}/edit`)}
           onDelete={() => handleDelete(id, handleBackToList)}
           deleting={deleting}
-        />
-      </Paper>
-
-      {/* 댓글 영역 */}
-      <Paper sx={{ p: 4, mt: 3 }}>
-        <CommentList
-          comments={comments}
-          currentUserId={currentUserId}
-          onSubmit={createComment}
-          onEdit={updateComment}
-          onDelete={deleteComment}
-          onReply={createReply}
-          allowComments={true}
+          showLike={false}
         />
       </Paper>
     </Box>

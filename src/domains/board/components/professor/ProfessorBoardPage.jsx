@@ -16,6 +16,7 @@ const ProfessorBoardPage = () => {
       basePath="/boards/professor"
       createPath="/boards/professor/create"
       createButtonText="교수 글 작성"
+      showLikeCount={false}
     />
   );
 };
