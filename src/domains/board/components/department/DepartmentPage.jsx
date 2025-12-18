@@ -149,6 +149,7 @@ const DepartmentPage = () => {
           onEdit={() => navigate(`/boards/department/${id}/edit`)}
           onDelete={() => handleDelete(id, handleBackToList)}
           deleting={deleting}
+          showLike={false}
         />
       </Paper>
 
