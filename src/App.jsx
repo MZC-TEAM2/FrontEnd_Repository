@@ -35,6 +35,7 @@ import Grades from './pages/Grades';
 import ProfessorCourseManagement from './pages/ProfessorCourseManagement';
 import ProfessorMyCourses from './pages/ProfessorMyCourses';
 import ProfessorCourseDetail from './pages/ProfessorCourseDetail';
+import ProfessorSchedule from './pages/ProfessorSchedule';
 
 // 인증 관련 페이지
 import Login from './pages/Login';
@@ -138,6 +139,7 @@ function App() {
             {/* 교수용 강의 관리 */}
             <Route path="/professor/courses" element={<ProfessorCourseManagement />} />
             <Route path="/professor/my-courses" element={<ProfessorMyCourses />} />
+            <Route path="/professor/schedule" element={<ProfessorSchedule />} />
             <Route path="/professor/course/:courseId/manage" element={<ProfessorCourseDetail />} />
 
             {/* 과제 */}

@@ -22,6 +22,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import profileService from '../services/profileService';
+import messageService from '../services/messageService';
+import { getCurrentEnrollmentPeriod } from '../api/courseApi';
+import { getCurrentCourseRegistrationPeriod } from '../api/professorApi';
+
+// 읽지 않은 메시지 폴링 주기 (10초)
+const UNREAD_COUNT_POLLING_INTERVAL = 10000;
 import {
   Drawer,
   List,
@@ -83,7 +89,6 @@ const studentMenuItems = [
     icon: <SchoolIcon />,
     description: '이번 학기 수강 과목',
     children: [
-      { title: '전체 과목', path: '/courses/all', icon: <MenuBookIcon /> },
       { title: '수강 중', path: '/courses/my', icon: <VideoLibraryIcon /> },
       { title: '시간표', path: '/courses/schedule', icon: <CalendarMonthIcon /> },
     ],
@@ -163,6 +168,12 @@ const professorMenuItems = [
     description: '담당 강의 목록',
   },
   {
+    title: '시간표',
+    path: '/professor/schedule',
+    icon: <CalendarMonthIcon />,
+    description: '담당 강의 시간표',
+  },
+  {
     title: '강의 등록',
     path: '/professor/courses',
     icon: <ClassIcon />,
@@ -238,6 +249,12 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
   const [openSubmenu, setOpenSubmenu] = useState({});
   const [profile, setProfile] = useState(null);
 
+  // 기간 기반 메뉴 노출 제어
+  // - STUDENT: ENROLLMENT 기간이 아닐 때 '/registration' 숨김
+  // - PROFESSOR: COURSE_REGISTRATION 기간이 아닐 때 '/professor/courses' 숨김
+  const [isStudentEnrollmentPeriodActive, setIsStudentEnrollmentPeriodActive] = useState(null); // null=unknown
+  const [isProfessorCourseRegPeriodActive, setIsProfessorCourseRegPeriodActive] = useState(null); // null=unknown
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (authService.isAuthenticated()) {
@@ -251,6 +268,92 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
     };
     fetchProfile();
   }, []);
+
+  // 현재 기간 조회해서 메뉴 노출 제어
+  useEffect(() => {
+    if (!authService.isAuthenticated()) return;
+
+    const userType = profile?.userType || authService.getCurrentUser()?.userType;
+    if (!userType) return;
+
+    let cancelled = false;
+
+    const fetchPeriodFlags = async () => {
+      try {
+        if (userType === 'PROFESSOR') {
+          const res = await getCurrentCourseRegistrationPeriod();
+          // professorApi는 기간이 아니면 success:false로 내려줌
+          const active = !!(res?.success && res?.data?.currentPeriod);
+          if (!cancelled) setIsProfessorCourseRegPeriodActive(active);
+        } else {
+          const res = await getCurrentEnrollmentPeriod('ENROLLMENT');
+          // 스펙 기준: currentPeriod.periodType.typeCode === ENROLLMENT
+          const active = !!(
+            res?.success &&
+            res?.data?.currentPeriod &&
+            res.data.currentPeriod?.periodType?.typeCode === 'ENROLLMENT'
+          );
+          if (!cancelled) setIsStudentEnrollmentPeriodActive(active);
+        }
+      } catch (err) {
+        // 기간 조회 실패 시에는 UX 상 메뉴를 숨기지 않음(일시 장애로 메뉴 소실 방지)
+        console.error('기간 조회 실패(사이드 메뉴 노출 제어):', err);
+        if (!cancelled) {
+          if (userType === 'PROFESSOR') setIsProfessorCourseRegPeriodActive(null);
+          else setIsStudentEnrollmentPeriodActive(null);
+        }
+      }
+    };
+
+    fetchPeriodFlags();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile]);
+
+  // 화면 포커스 감지
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // 읽지 않은 메시지 수 초기 로드
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          const count = await messageService.getUnreadCount();
+          setUnreadCount(count || 0);
+        } catch (err) {
+          console.error('읽지 않은 메시지 수 조회 실패:', err);
+        }
+      }
+    };
+    fetchUnreadCount();
+  }, []);
+
+  // 읽지 않은 메시지 수 폴링 (10초 주기)
+  useEffect(() => {
+    if (!isPageVisible || !authService.isAuthenticated()) return;
+
+    const pollUnreadCount = setInterval(async () => {
+      try {
+        const count = await messageService.getUnreadCount();
+        setUnreadCount(count || 0);
+      } catch (err) {
+        console.error('읽지 않은 메시지 수 폴링 실패:', err);
+      }
+    }, UNREAD_COUNT_POLLING_INTERVAL);
+
+    return () => clearInterval(pollUnreadCount);
+  }, [isPageVisible]);
 
   /**
    * 메뉴 클릭 핸들러
@@ -289,7 +392,37 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
    */
   const getMenuItems = () => {
     const userType = profile?.userType || authService.getCurrentUser()?.userType;
-    return userType === 'PROFESSOR' ? professorMenuItems : studentMenuItems;
+    const items = userType === 'PROFESSOR' ? professorMenuItems : studentMenuItems;
+
+    const filtered = items.filter((item) => {
+      // divider는 후처리에서 정리
+      if (item.divider) return true;
+
+      // 학생: 수강신청 기간이 "확실히" 아닐 때만 숨김
+      if (userType !== 'PROFESSOR' && item.path === '/registration') {
+        return isStudentEnrollmentPeriodActive !== false;
+      }
+
+      // 교수: 강의 등록 기간이 "확실히" 아닐 때만 숨김
+      if (userType === 'PROFESSOR' && item.path === '/professor/courses') {
+        return isProfessorCourseRegPeriodActive !== false;
+      }
+
+      return true;
+    });
+
+    // divider 정리: 첫/마지막 divider 제거, 연속 divider 제거
+    const cleaned = [];
+    for (const it of filtered) {
+      if (it.divider) {
+        if (cleaned.length === 0) continue;
+        if (cleaned[cleaned.length - 1].divider) continue;
+      }
+      cleaned.push(it);
+    }
+    while (cleaned.length && cleaned[cleaned.length - 1].divider) cleaned.pop();
+
+    return cleaned;
   };
 
   const menuItems = getMenuItems();

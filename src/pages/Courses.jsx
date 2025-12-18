@@ -17,110 +17,25 @@ import {
   Grid,
   Card,
   CardContent,
-  CardMedia,
   Typography,
   Button,
   Chip,
   LinearProgress,
   CardActionArea,
+  Alert,
+  Skeleton,
 } from '@mui/material';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import SchoolIcon from '@mui/icons-material/School';
+import useMyCourses from '../domains/course/hooks/useMyCourses';
+import { formatScheduleTime } from '../domains/course/utils/scheduleUtils';
 
 const Courses = () => {
   const navigate = useNavigate();
-
-  // MZC 대학교 수강 과목 데이터
-  // 실제로는 API에서 가져옴
-  const courses = [
-    {
-      id: 'CS301',
-      title: '데이터베이스',
-      instructor: '김교수',
-      progress: 50,
-      schedule: '월/수 10:30-12:00',
-      classroom: '공학관 301호',
-      students: 45,
-      credits: 3,
-      type: '전공필수',
-      currentWeek: 8,
-      totalWeeks: 16,
-      image: 'https://via.placeholder.com/300x150/6FA3EB/FFFFFF?text=Database',
-    },
-    {
-      id: 'CS302',
-      title: '알고리즘',
-      instructor: '이교수',
-      progress: 50,
-      schedule: '화/목 14:00-15:30',
-      classroom: '공학관 302호',
-      students: 42,
-      credits: 3,
-      type: '전공필수',
-      currentWeek: 8,
-      totalWeeks: 16,
-      image: 'https://via.placeholder.com/300x150/A5C9EA/FFFFFF?text=Algorithm',
-    },
-    {
-      id: 'CS401',
-      title: '운영체제',
-      instructor: '박교수',
-      progress: 50,
-      schedule: '월/수 14:00-15:30',
-      classroom: '공학관 401호',
-      students: 38,
-      credits: 3,
-      type: '전공선택',
-      currentWeek: 8,
-      totalWeeks: 16,
-      image: 'https://via.placeholder.com/300x150/9CC0F5/FFFFFF?text=OS',
-    },
-    {
-      id: 'CS402',
-      title: '소프트웨어공학',
-      instructor: '최교수',
-      progress: 50,
-      schedule: '화/목 10:30-12:00',
-      classroom: '공학관 402호',
-      students: 40,
-      credits: 3,
-      type: '전공선택',
-      currentWeek: 8,
-      totalWeeks: 16,
-      image: 'https://via.placeholder.com/300x150/81C784/FFFFFF?text=SW+Engineering',
-    },
-    {
-      id: 'CS403',
-      title: '캡스톤디자인',
-      instructor: '정교수',
-      progress: 50,
-      schedule: '금 14:00-17:00',
-      classroom: '공학관 501호',
-      students: 35,
-      credits: 3,
-      type: '전공필수',
-      currentWeek: 8,
-      totalWeeks: 16,
-      image: 'https://via.placeholder.com/300x150/FFD54F/FFFFFF?text=Capstone',
-    },
-    {
-      id: 'GE201',
-      title: '기술과 창업',
-      instructor: '강교수',
-      progress: 50,
-      schedule: '목 16:00-18:00',
-      classroom: '창업관 201호',
-      students: 60,
-      credits: 3,
-      type: '교양선택',
-      currentWeek: 8,
-      totalWeeks: 16,
-      image: 'https://via.placeholder.com/300x150/EF9A9A/FFFFFF?text=Startup',
-    },
-  ];
+  const { loading, error, courses, reload, summary } = useMyCourses();
 
   /**
    * 과목 상세 페이지로 이동
@@ -154,8 +69,48 @@ const Courses = () => {
         수강 과목
       </Typography>
 
+      {summary && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {summary.totalCourses ?? courses.length}과목 · 총 {summary.totalCredits ?? 0}학점
+        </Typography>
+      )}
+
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={reload}>
+              다시 시도
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      )}
+
+      {!loading && !error && courses.length === 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          현재 수강 중인 과목이 없습니다.
+        </Alert>
+      )}
+
       <Grid container spacing={3}>
-        {courses.map((course) => (
+        {loading
+          ? Array.from({ length: 6 }).map((_, idx) => (
+              <Grid item xs={12} sm={6} md={4} key={`skeleton-${idx}`}>
+                <Card sx={{ height: '100%' }}>
+                  <Box sx={{ p: 2 }}>
+                    <Skeleton variant="rectangular" height={24} sx={{ mb: 2, borderRadius: 1 }} />
+                    <Skeleton variant="text" height={32} />
+                    <Skeleton variant="text" />
+                    <Skeleton variant="text" />
+                    <Skeleton variant="rectangular" height={36} sx={{ mt: 2, borderRadius: 2 }} />
+                  </Box>
+                </Card>
+              </Grid>
+            ))
+          : courses.map((course) => (
           <Grid item xs={12} sm={6} md={4} key={course.id}>
             <Card
               sx={{
@@ -170,68 +125,76 @@ const Courses = () => {
               }}
             >
               <CardActionArea onClick={() => handleCourseClick(course.id)}>
-                <CardMedia
-                  component="img"
-                  height="140"
-                  image={course.image}
-                  alt={course.title}
-                />
+                <Box
+                  sx={{
+                    height: 72,
+                    px: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'linear-gradient(90deg, rgba(25,118,210,0.12), rgba(25,118,210,0.04))',
+                  }}
+                >
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {course.subjectCode}
+                  </Typography>
+                </Box>
                 <CardContent>
                   <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                     <Chip
-                      label={course.id}
+                      label={course.subjectCode}
                       size="small"
                       variant="outlined"
                     />
                     <Chip
-                      label={course.type}
+                      label={course.courseType || '이수구분'}
                       size="small"
-                      color={getCourseTypeColor(course.type)}
+                      color={getCourseTypeColor(course.courseType)}
                     />
                     <Chip
-                      label={`${course.credits}학점`}
+                      label={`${course.credits || 0}학점`}
                       size="small"
                       variant="outlined"
                     />
                   </Box>
 
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                    {course.title}
+                    {course.subjectName}
                   </Typography>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <PersonIcon fontSize="small" color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      {course.instructor}
+                      {course.professor || '-'}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <AccessTimeIcon fontSize="small" color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      {course.schedule}
+                      {course.schedule?.length ? course.schedule.map(formatScheduleTime).join(', ') : '-'}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <SchoolIcon fontSize="small" color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      {course.classroom}
+                      {course.classroom || course.schedule?.[0]?.classroom || '-'}
                     </Typography>
                   </Box>
 
+                  {/* 진도는 현재 API 스펙에 없어서 placeholder로만 표시 */}
                   <Box sx={{ mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Typography variant="caption" color="text.secondary">
                         학습 진도
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {course.currentWeek}/{course.totalWeeks}주차 ({course.progress}%)
+                        준비 중
                       </Typography>
                     </Box>
                     <LinearProgress
                       variant="determinate"
-                      value={course.progress}
+                      value={0}
                       sx={{
                         height: 6,
                         borderRadius: 3,
@@ -246,7 +209,7 @@ const Courses = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <GroupIcon fontSize="small" color="action" />
                     <Typography variant="caption" color="text.secondary">
-                      수강생 {course.students}명
+                      정원 {course.currentStudents ?? '-'} / {course.maxStudents ?? '-'}
                     </Typography>
                   </Box>
                 </CardContent>

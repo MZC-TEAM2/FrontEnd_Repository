@@ -10,6 +10,7 @@ import {
   getMyEnrollments,
   cancelEnrollments,
 } from '../../../api/courseApi';
+import { invalidateMyCoursesCache } from './useMyCourses';
 import { checkScheduleConflict } from '../utils/scheduleUtils';
 import { isCreditLimitExceeded, calculateTotalCredits } from '../utils/creditUtils';
 import { courseTypeMap } from '../constants/courseTypes';
@@ -488,6 +489,8 @@ const useCourseRegistration = () => {
           await fetchCarts(); // 장바구니 다시 조회
           await fetchEnrollments(enrollmentPeriodId); // 수강신청 목록 다시 조회
           await fetchCourses(currentPage); // 강의 목록 다시 조회 (현재 페이지 유지)
+          // 학생 '수강중/시간표' 화면 캐시 무효화 (새로고침 없이 반영)
+          invalidateMyCoursesCache();
         }
 
         // 결과 메시지 표시
@@ -610,6 +613,8 @@ const useCourseRegistration = () => {
           await fetchCarts(); // 장바구니 다시 조회 (서버에서 자동 제거됨)
           await fetchEnrollments(enrollmentPeriodId); // 수강신청 목록 다시 조회
           await fetchCourses(currentPage); // 강의 목록 다시 조회 (현재 페이지 유지)
+          // 학생 '수강중/시간표' 화면 캐시 무효화 (새로고침 없이 반영)
+          invalidateMyCoursesCache();
           setToast({ open: true, message: `${course.subjectName} 수강신청이 완료되었습니다.`, severity: 'success' });
         }
       } else {
@@ -657,6 +662,8 @@ const useCourseRegistration = () => {
           // 취소 성공 시 목록 다시 조회
           await fetchEnrollments(enrollmentPeriodId);
           await fetchCourses(currentPage);
+          // 학생 '수강중/시간표' 화면 캐시 무효화 (새로고침 없이 반영)
+          invalidateMyCoursesCache();
         }
       } else {
         setToast({ open: true, message: response.message || '수강신청 취소 중 오류가 발생했습니다.', severity: 'error' });
