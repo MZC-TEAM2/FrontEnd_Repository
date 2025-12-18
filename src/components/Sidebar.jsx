@@ -65,6 +65,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import WorkIcon from '@mui/icons-material/Work';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import DescriptionIcon from '@mui/icons-material/Description';
+import MailIcon from '@mui/icons-material/Mail';
 
 /**
  * 학생용 메뉴 아이템
@@ -188,7 +189,7 @@ const professorMenuItems = [
       { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
       { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
     ],
-  },,
+  },
   {
     title: '학사 일정',
     path: '/calendar',
