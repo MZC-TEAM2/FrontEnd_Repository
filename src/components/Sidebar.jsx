@@ -254,6 +254,8 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
   // - PROFESSOR: COURSE_REGISTRATION 기간이 아닐 때 '/professor/courses' 숨김
   const [isStudentEnrollmentPeriodActive, setIsStudentEnrollmentPeriodActive] = useState(null); // null=unknown
   const [isProfessorCourseRegPeriodActive, setIsProfessorCourseRegPeriodActive] = useState(null); // null=unknown
+  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchProfile = async () => {
