@@ -90,8 +90,6 @@ export const useComments = (postId, currentUserId) => {
         attachmentIds: attachmentIds,
       });
       
-      console.log('댓글 작성 성공:', response);
-      
       // 댓글 목록 다시 조회
       await fetchComments();
       
@@ -119,8 +117,6 @@ export const useComments = (postId, currentUserId) => {
         parentCommentId: parentCommentId,
         attachmentIds: attachmentIds,
       });
-      
-      console.log('대댓글 작성 성공:', response);
       
       // 댓글 목록 다시 조회
       await fetchComments();
@@ -159,8 +155,6 @@ export const useComments = (postId, currentUserId) => {
 
       await commentApi.updateComment(commentId, updateData);
       
-      console.log('댓글 수정 성공:', { commentId, newContent, newAttachmentIds, removedAttachmentIds });
-      
       // 댓글 목록 다시 조회
       await fetchComments();
     } catch (error) {
@@ -173,8 +167,6 @@ export const useComments = (postId, currentUserId) => {
   const deleteComment = async (commentId) => {
     try {
       await commentApi.deleteComment(commentId);
-      
-      console.log('댓글 삭제 성공:', { commentId });
       
       // 댓글 목록 다시 조회
       await fetchComments();
