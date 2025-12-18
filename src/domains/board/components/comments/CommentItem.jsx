@@ -196,7 +196,13 @@ const CommentItem = ({
 
       {/* 대댓글 목록 */}
       {replies.length > 0 && (
-        <Box sx={{ ml: 6, mt: 1 }}>
+        <Box sx={{ 
+          ml: { xs: 3, sm: 4, md: 6 }, 
+          mt: 1,
+          pl: 2,
+          borderLeft: '3px solid',
+          borderColor: 'divider',
+        }}>
           {replies.map((reply) => (
             <Box key={reply.id} sx={{ mb: 1 }}>
               <CommentItem
