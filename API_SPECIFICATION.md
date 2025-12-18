@@ -652,10 +652,33 @@ Authorization: Bearer {accessToken}
 
 ## 9. 수강신청 API 
 
-### 9.1 수강신청 기간 조회
+### 9.1 활성화된 기간 조회
 ```http
-GET /api/v1/enrollment/periods/current
+GET /api/v1/enrollments/periods/current?type={typeCode}
 Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+- `type` (optional): 기간 타입 코드
+  - 생략 시: 현재 활성화된 기간 중 하나를 반환 (가장 먼저 시작한 기간)
+  - `ENROLLMENT`: 수강신청 기간
+  - `COURSE_REGISTRATION`: 강의등록 기간
+  - `ADJUSTMENT`: 정정 기간
+  - `CANCELLATION`: 수강철회 기간
+
+**Examples**
+```http
+# 현재 활성화된 기간 조회 (타입 무관, 가장 먼저 시작한 기간)
+GET /api/v1/enrollments/periods/current
+
+# 수강신청 기간 조회
+GET /api/v1/enrollments/periods/current?type=ENROLLMENT
+
+# 강의등록 기간 조회
+GET /api/v1/enrollments/periods/current?type=COURSE_REGISTRATION
+
+# 정정 기간 조회
+GET /api/v1/enrollments/periods/current?type=ADJUSTMENT
 ```
 
 **Response**
@@ -672,6 +695,12 @@ Authorization: Bearer {accessToken}
         "termName": "2025학년도 2학기"
       },
       "periodName": "1차 수강신청",
+      "periodType": {
+        "id": 1,
+        "typeCode": "ENROLLMENT",
+        "typeName": "수강신청",
+        "description": "학생이 수강신청을 할 수 있는 기간"
+      },
       "startDatetime": "2025-08-15T10:00:00Z",
       "endDatetime": "2025-08-17T18:00:00Z",
       "targetYear": null,
@@ -686,27 +715,33 @@ Authorization: Bearer {accessToken}
 }
 ```
 
+**periodType 필드 설명:**
+- `id`: 기간 타입 식별자
+- `typeCode`: 타입 코드 (ENROLLMENT: 수강신청, COURSE_REGISTRATION: 강의등록, ADJUSTMENT: 정정, CANCELLATION: 수강철회)
+- `typeName`: 타입명 (수강신청, 강의등록, 정정, 수강철회)
+- `description`: 타입 설명
+
 ### 9.2 수강신청 기간 중 강의 목록 조회
 
 ### 강의 목록 조회 (검색 및 필터링)
 ```http
-GET /api/v1/enrollment/courses
+GET /api/v1/enrollments/courses
 Authorization: Bearer {accessToken}
 ```
 
 **Query Parameters**
 - `page`: 페이지 번호 (기본값: 0)
-- `size`: 페이지 크기 (기본값: 20)
+- `size`: 페이지 크기 (기본값: 10)
 - `keyword`: 검색어 (과목명, 과목코드, 교수명 통합 검색)
 - `departmentId`: 학과 ID (전체: null)
 - `courseType`: 이수구분 (전체: null, 값: MAJOR_REQ, MAJOR_ELEC, GEN_REQ, GEN_ELEC)
 - `credits`: 학점 (전체: null, 값: 1, 2, 3, 4)
-- `termId`: 학기 ID (필수)
+- `enrollmentPeriodId`: 학기 ID (필수)
 - `sort`: 정렬 (기본값: courseCode,asc)
 
 **Request Example**
 ```
-GET /api/v1/enrollment/courses?page=0&size=20&keyword=데이터베이스&departmentId=1&courseType=MAJOR_REQ&credits=3&termId=10&sort=courseCode,asc
+GET /api/v1/enrollments/courses?page=0&size=10&keyword=데이터베이스&departmentId=1&courseType=MAJOR_REQ&credits=3&enrollmentPeriodId=10&sort=courseCode,asc
 ```
 
 **Response**
@@ -754,8 +789,7 @@ GET /api/v1/enrollment/courses?page=0&size=20&keyword=데이터베이스&departm
         "enrollment": {
           "current": 35,
           "max": 40,
-          "isFull": false,
-          "availableSeats": 5
+          "isFull": false
         },
         "isInCart": false,
         "isEnrolled": false,
@@ -769,7 +803,7 @@ GET /api/v1/enrollment/courses?page=0&size=20&keyword=데이터베이스&departm
 
 ### 9.3 수강신청 장바구니 조회
 ```http
-GET /api/v1/cart
+GET /api/v1/carts
 Authorization: Bearer {accessToken}
 ```
 **Response**
@@ -788,7 +822,9 @@ Authorization: Bearer {accessToken}
           "name": "데이터베이스",
           "section": "01",
           "credits": 3,
-          "courseType": "전공필수"
+          "courseType": "전공필수",
+          "currentStudents": 25,
+          "maxStudents": 30,
         },
         "professor": {
           "id": 10,
@@ -822,7 +858,7 @@ Authorization: Bearer {accessToken}
 
 ## 9.4 수강신청 장바구니에 강의 추가
 ```http
-POST /api/v1/cart/bulk
+POST /api/v1/carts/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -881,7 +917,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.5 장바구니에서 강의 제거
 ```http
-DELETE /api/v1/cart/bulk
+DELETE /api/v1/carts/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -902,6 +938,7 @@ Authorization: Bearer {accessToken}
     "removedCourses": [
       {
         "cartId": 1,
+        "courseId": 104,
         "courseCode": "CS301",
         "courseName": "데이터베이스",
         "credits": 3
@@ -921,7 +958,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.6 장바구니 전체 제거
 ```http
-DELETE /api/v1/cart
+DELETE /api/v1/carts
 Authorization: Bearer {accessToken}
 ```
 **Response**
@@ -947,7 +984,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.6 수강신청 
 ```http
-POST /api/v1/enrollment/cart
+POST /api/v1/enrollments/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -987,11 +1024,7 @@ Authorization: Bearer {accessToken}
         "courseName": "데이터베이스",
         "section": "01",
         "errorCode": "COURSE_FULL",
-        "message": "수강 정원이 마감되었습니다",
-        "enrollment": {
-          "current": 45,
-          "max": 45
-        }
+        "message": "수강 정원이 마감되었습니다"
       }
     ]
   },
@@ -1044,7 +1077,7 @@ Authorization: Bearer {accessToken}
 
 ### 9.7 수강신청 취소
 ```http
-DELETE /api/v1/enrollment/bulk
+DELETE /api/v1/enrollments/bulk
 Authorization: Bearer {accessToken}
 ```
 
@@ -1094,11 +1127,11 @@ Authorization: Bearer {accessToken}
 
 ### 9.8 수강신청 목록 조회
 ```http
-GET /api/v1/enrollment/my
+GET /api/v1/enrollments/my
 Authorization: Bearer {accessToken}
 ```
 **Query Parameters**
-- `termId`: 학기 ID (선택, 미입력시 현재 학기)
+- `enrollmentPeriodId`: 학기 ID (선택, 미입력시 현재 학기)
 
 **Response**
 ```json
@@ -1126,6 +1159,8 @@ Authorization: Bearer {accessToken}
           "courseName": "알고리즘",
           "section": "01",
           "credits": 3,
+          "currentStudents": 25,
+          "maxStudents": 30,
           "courseType": {
             "code": "MAJOR_REQ",
             "name": "전공필수"
@@ -1152,9 +1187,9 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-### 9.9 수강신청 상세 조회
+### 9.9 강의 상세 조회
 ```http
-GET /api/v1/enrollment/{enrollmentId}
+GET /api/v1/courses/{enrollmentId}
 Authorization: Bearer {accessToken}
 ```
 
@@ -1202,9 +1237,900 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-## 10. 공지사항 API
+## 10. 과목(Subject) API
 
-### 10.1 공지사항 목록
+### 10.1 과목 목록 조회
+```http
+GET /api/v1/subjects
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR, STUDENT
+
+**기본 동작**:
+- **PROFESSOR**: 소속 학과 과목만 조회 (실수 방지)
+- **STUDENT**: 전체 과목 조회 가능
+
+**Query Parameters**
+- `page`: 페이지 번호 (기본값: 0)
+- `size`: 페이지 크기 (기본값: 20)
+- `keyword`: 과목명 또는 과목코드 검색
+- `departmentId`: 학과 필터 (교수는 자기 학과가 기본, 학생은 전체가 기본)
+- `showAllDepartments`: 전체 학과 보기 (교수만 해당, 기본값: false)
+- `courseType`: 이수구분 필터 (MAJOR_REQ, MAJOR_ELEC, GEN_REQ, GEN_ELEC)
+- `credits`: 학점 필터 (1, 2, 3, 4)
+- `isActive`: 활성 과목만 조회 (기본값: true)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "id": 15,
+        "subjectCode": "CS301",
+        "subjectName": "데이터베이스",
+        "englishName": "Database Systems",
+        "credits": 3,
+        "courseType": {
+          "code": "MAJOR_REQ",
+          "name": "전공필수",
+          "color": "#FFB4C8"
+        },
+        "department": {
+          "id": 1,
+          "name": "컴퓨터공학과",
+          "college": "공과대학"
+        },
+        "description": "데이터베이스의 기본 개념과 SQL을 학습합니다.",
+        "prerequisites": [
+          {
+            "id": 12,
+            "subjectCode": "CS201",
+            "subjectName": "자료구조"
+          }
+        ],
+        "currentTermSections": 3,
+        "isActive": true,
+        "createdAt": "2024-03-01T10:00:00Z"
+      }
+    ],
+    "totalElements": 156,
+    "totalPages": 8,
+    "size": 20,
+    "number": 0,
+    "first": true,
+    "last": false,
+    "numberOfElements": 20,
+    "empty": false
+  }
+}
+```
+
+### 10.2 과목 상세 조회
+```http
+GET /api/v1/subjects/{subjectId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR, STUDENT
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 15,
+    "subjectCode": "CS301",
+    "subjectName": "데이터베이스",
+    "englishName": "Database Systems",
+    "credits": 3,
+    "courseType": {
+      "code": "MAJOR_REQ",
+      "name": "전공필수",
+      "color": "#FFB4C8"
+    },
+    "department": {
+      "id": 1,
+      "name": "컴퓨터공학과",
+      "college": "공과대학"
+    },
+    "description": "데이터베이스의 기본 개념, 설계, SQL, 트랜잭션 관리 등을 학습합니다.",
+    "objectives": [
+      "데이터베이스 설계 능력 함양",
+      "SQL 작성 및 최적화",
+      "트랜잭션 이해"
+    ],
+    "prerequisites": [
+      {
+        "id": 12,
+        "subjectCode": "CS201",
+        "subjectName": "자료구조",
+        "credits": 3
+      }
+    ],
+    "courses": [
+      {
+        "id": 101,
+        "section": "01",
+        "professor": {
+          "id": 10,
+          "name": "김교수"
+        },
+        "term": {
+          "year": 2024,
+          "termType": "2"
+        },
+        "currentStudents": 35,
+        "maxStudents": 40
+      },
+      {
+        "id": 102,
+        "section": "02",
+        "professor": {
+          "id": 11,
+          "name": "이교수"
+        },
+        "term": {
+          "year": 2024,
+          "termType": "2"
+        },
+        "currentStudents": 30,
+        "maxStudents": 40
+      }
+    ],
+    "isActive": true,
+    "createdAt": "2024-03-01T10:00:00Z"
+  }
+}
+```
+
+### 10.3 과목 검색 
+```http
+GET /api/v1/subjects/search
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR
+
+**용도**: 교수가 강의 등록 시 과목 검색 (페이징 지원)
+
+**Query Parameters**
+- `q`: 검색어 (과목명 또는 과목코드, 최소 2글자) - 필수
+- `page`: 페이지 번호 (기본값: 0)
+- `size`: 페이지 크기 (기본값: 20, 최대: 50)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "id": 15,
+        "subjectCode": "CS301",
+        "subjectName": "데이터베이스",
+        "credits": 3,
+        "courseType": "전공필수",
+        "department": "컴퓨터공학과"
+      },
+      {
+        "id": 18,
+        "subjectCode": "CS305",
+        "subjectName": "데이터베이스 설계",
+        "credits": 3,
+        "courseType": "전공선택",
+        "department": "컴퓨터공학과"
+      }
+    ],
+    "totalElements": 45,
+    "totalPages": 3,
+    "size": 20,
+    "number": 0,
+    "first": true,
+    "last": false,
+    "numberOfElements": 20,
+    "empty": false
+  }
+}
+```
+
+**Response 필드 설명 (Spring Page 표준)**
+- `content`: 과목 목록
+- `totalElements`: 전체 요소 수
+- `totalPages`: 전체 페이지 수
+- `size`: 페이지 크기
+- `number`: 현재 페이지 번호 (0부터 시작)
+- `first`: 첫 페이지 여부
+- `last`: 마지막 페이지 여부
+- `numberOfElements`: 현재 페이지의 요소 수
+- `empty`: 비어있는지 여부
+
+---
+
+## 11. 교수 강의 관리
+
+### 11.1 교수 강의 목록 조회
+```http
+GET /api/v1/professor/courses
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR
+
+**Query Parameters**
+- `year`: 학년도 (예: 2024)
+- `term`: 학기 (1, 2, SUMMER, WINTER)
+- `status`: 강의 상태 (DRAFT, PUBLISHED, CLOSED)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 101,
+      "courseCode": "CS301",
+      "courseName": "데이터베이스",
+      "section": "01",
+      "department": {
+        "id": 1,
+        "name": "컴퓨터공학과"
+      },
+      "credits": 3,
+      "courseType": {
+        "code": "MAJOR_REQ",
+        "name": "전공필수"
+      },
+      "maxStudents": 40,
+      "currentStudents": 35,
+      "description": "데이터베이스 기본 개념과 SQL을 학습합니다.",
+      "schedule": [
+        {
+          "dayOfWeek": 1,
+          "dayName": "월",
+          "startTime": "09:00",
+          "endTime": "10:30",
+          "classroom": "공학관 401호"
+        },
+        {
+          "dayOfWeek": 3,
+          "dayName": "수",
+          "startTime": "09:00",
+          "endTime": "10:30",
+          "classroom": "공학관 401호"
+        }
+      ],
+      "status": "PUBLISHED",
+      "createdAt": "2024-08-01T10:00:00Z"
+    }
+  ]
+}
+```
+
+### 11.2 교수 강의 등록
+```http
+POST /api/v1/professor/courses
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR
+
+**Request Body - 방법 A: 기존 과목 선택**
+```json
+{
+  "enrollmentPeriodId": 10,
+  "subjectId": 15,
+  "section": "01",
+  "maxStudents": 40,
+  "description": "이번 학기는 MySQL 중심으로 실습을 진행합니다.",
+  "schedule": [
+    {
+      "dayOfWeek": 1,
+      "startTime": "09:00",
+      "endTime": "10:30",
+      "classroom": "공학관 401호"
+    },
+    {
+      "dayOfWeek": 3,
+      "startTime": "09:00",
+      "endTime": "10:30",
+      "classroom": "공학관 401호"
+    }
+  ],
+  "syllabus": {
+    "objectives": ["데이터베이스 설계", "SQL 작성", "트랜잭션 이해"],
+    "textbook": "데이터베이스 시스템 (7판)",
+    "grading": {
+      "midterm": 30,
+      "final": 30,
+      "assignment": 20,
+      "attendance": 10,
+      "participation": 10
+    }
+  },
+  "totalWeeks": 16
+}
+```
+
+**Request Body - 방법 B: 새 과목 생성하면서 강의 등록**
+```json
+{
+  "enrollmentPeriodId": 10,
+  "subject": {
+    "subjectCode": "CS401",
+    "subjectName": "인공지능",
+    "englishName": "Artificial Intelligence",
+    "credits": 3,
+    "courseType": "MAJOR_ELEC",
+    "departmentId": 1,
+    "description": "인공지능의 기본 개념과 머신러닝 알고리즘을 학습합니다.",
+    "prerequisiteSubjectIds": [15, 20]
+  },
+  "section": "01",
+  "maxStudents": 40,
+  "schedule": [
+    {
+      "dayOfWeek": 2,
+      "startTime": "13:00",
+      "endTime": "14:30",
+      "classroom": "공학관 501호"
+    }
+  ],
+  "syllabus": {
+    "objectives": ["AI 기본 이해", "머신러닝 알고리즘 구현"],
+    "textbook": "인공지능 개론 (3판)",
+    "grading": {
+      "midterm": 30,
+      "final": 30,
+      "assignment": 25,
+      "attendance": 10,
+      "participation": 5
+    }
+  },
+  "totalWeeks": 16
+}
+```
+
+**Request Body 필드 설명**
+- `enrollmentPeriodId`: 학기 ID (필수)
+- `subjectId`: 기존 과목 ID (방법 A, subjectId 또는 subject 중 하나 필수)
+- `subject`: 새 과목 정보 (방법 B)
+  - `subjectCode`: 과목코드 (필수, 학과 내 고유)
+  - `subjectName`: 과목명 (필수)
+  - `englishName`: 영문 과목명 (선택)
+  - `credits`: 학점 (필수, 1-4)
+  - `courseType`: 이수구분 (필수, MAJOR_REQ/MAJOR_ELEC/GEN_REQ/GEN_ELEC)
+  - `departmentId`: 학과 ID (필수)
+  - `description`: 과목 설명 (선택)
+  - `prerequisiteSubjectIds`: 선수과목 ID 배열 (선택)
+- `section`: 분반 (필수, "01", "02" 등)
+- `maxStudents`: 최대 수강인원 (필수)
+- `description`: 강의 설명 (선택, 분반별로 다른 설명 가능)
+- `schedule`: 시간표 배열 (필수)
+- `syllabus`: 강의계획서 (필수)
+- `totalWeeks`: 총 주차 수 (필수, 보통 16)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "course": {
+      "id": 101,
+      "courseCode": "CS301",
+      "courseName": "데이터베이스",
+      "section": "01",
+      "credits": 3,
+      "maxStudents": 40,
+      "description": "이번 학기는 MySQL 중심으로 실습을 진행합니다.",
+      "status": "DRAFT",
+      "createdAt": "2024-08-15T10:00:00Z"
+    },
+    "subject": {
+      "id": 15,
+      "isNewlyCreated": false
+    }
+  },
+  "message": "강의가 등록되었습니다"
+}
+```
+
+**검증 순서**
+1. 수강신청 기간 존재 여부 체크
+2. `subjectId` 또는 `subject` 중 하나만 제공되었는지 체크
+3. **방법 A (subjectId 사용)**:
+   - Subject 존재 여부 체크
+   - 같은 학기, 같은 subject, 같은 section 중복 체크
+4. **방법 B (새 subject 생성)**:
+   - SubjectCode 중복 체크 (같은 학과 내)
+   - Prerequisite subjects 존재 여부 체크
+   - Subject 생성 후 Course 생성
+5. 교수 시간표 충돌 체크
+6. 강의 생성
+
+**Error Codes**
+| 코드 | 설명 | HTTP Status |
+|------|------|-------------|
+| `PROFESSOR_001` | 교수 권한이 없음 | 403 |
+| `SUBJECT_001` | 과목을 찾을 수 없음 | 404 |
+| `SUBJECT_002` | 중복된 과목코드 (같은 학과 내) | 400 |
+| `SUBJECT_003` | 선수과목을 찾을 수 없음 | 400 |
+| `SUBJECT_004` | subjectId와 subject 둘 다 제공되거나 둘 다 누락 | 400 |
+| `COURSE_003` | 본인의 강의가 아님 | 403 |
+| `COURSE_004` | 수강신청 시작 후 수정 불가 | 400 |
+| `COURSE_007` | 같은 학기/과목/분반 중복 | 400 |
+| `TIME_CONFLICT` | 교수 시간표 충돌 | 400 |
+| `ENROLLMENT_PERIOD_NOT_FOUND` | 수강신청 기간을 찾을 수 없음 | 404 |
+
+### 11.3 교수 강의 수정
+```http
+PUT /api/v1/professor/courses/{courseId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Request Body**
+```json
+{
+  "courseName": "데이터베이스 시스템",
+  "maxStudents": 45,
+  "description": "수정된 강의 설명",
+  "schedule": [
+    {
+      "dayOfWeek": 1,
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "classroom": "공학관 402호"
+    }
+  ]
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 101,
+    "courseCode": "CS301",
+    "courseName": "데이터베이스 시스템",
+    "maxStudents": 45,
+    "updatedAt": "2024-08-16T14:30:00Z"
+  },
+  "message": "강의가 수정되었습니다"
+}
+```
+
+### 11.4 교수 강의 삭제
+```http
+DELETE /api/v1/professor/courses/{courseId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만, 수강신청 시작 전에만 가능)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "courseId": 101,
+    "courseCode": "CS301",
+    "courseName": "데이터베이스",
+    "deletedAt": "2024-08-16T15:00:00Z"
+  },
+  "message": "강의가 삭제되었습니다"
+}
+```
+
+**Error Codes**
+| 코드 | 설명 | HTTP Status |
+|------|------|-------------|
+| `COURSE_004` | 수강신청 시작 후 삭제 불가 | 400 |
+| `COURSE_006` | 수강생이 있어 삭제 불가 | 400 |
+
+### 11.5 교수 강의 상세 조회
+```http
+GET /api/v1/professor/courses/{courseId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 101,
+    "courseCode": "CS301",
+    "courseName": "데이터베이스",
+    "section": "01",
+    "department": {
+      "id": 1,
+      "name": "컴퓨터공학과"
+    },
+    "credits": 3,
+    "courseType": {
+      "code": "MAJOR_REQ",
+      "name": "전공필수"
+    },
+    "maxStudents": 40,
+    "currentStudents": 35,
+    "description": "데이터베이스 기본 개념과 SQL을 학습합니다.",
+    "schedule": [
+      {
+        "dayOfWeek": 1,
+        "dayName": "월",
+        "startTime": "09:00",
+        "endTime": "10:30",
+        "classroom": "공학관 401호"
+      }
+    ],
+    "syllabus": {
+      "objectives": ["데이터베이스 설계", "SQL 작성"],
+      "textbook": "데이터베이스 시스템 (7판)",
+      "grading": {
+        "midterm": 30,
+        "final": 30,
+        "assignment": 20,
+        "attendance": 10,
+        "participation": 10
+      }
+    },
+    "statistics": {
+      "attendanceRate": 95.5,
+      "assignmentSubmissionRate": 88.2,
+      "averageScore": 82.5
+    },
+    "students": [
+      {
+        "studentId": 1,
+        "name": "김학생",
+        "studentNumber": "202012345",
+        "email": "202012345@mzc.ac.kr"
+      }
+    ],
+    "status": "PUBLISHED",
+    "createdAt": "2024-08-01T10:00:00Z"
+  }
+}
+```
+
+---
+
+## 12. 강의 주차 관리
+
+### 12.1 강의 주차 목록 조회 (교수용)
+```http
+GET /api/v1/professor/courses/{courseId}/weeks
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1001,
+      "weekNumber": 1,
+      "weekTitle": "1주차: 데이터베이스 개요",
+      "contents": [
+        {
+          "id": 2001,
+          "contentType": "VIDEO",
+          "title": "데이터베이스 시스템의 개념",
+          "contentUrl": "https://video.mzc.ac.kr/courses/101/week1/lecture1.mp4",
+          "duration": "45:23",
+          "order": 1,
+          "createdAt": "2024-09-01T10:00:00Z"
+        },
+        {
+          "id": 2002,
+          "contentType": "DOCUMENT",
+          "title": "강의노트 - 1주차",
+          "contentUrl": "https://files.mzc.ac.kr/courses/101/week1/notes.pdf",
+          "order": 2,
+          "createdAt": "2024-09-01T10:05:00Z"
+        }
+      ],
+      "createdAt": "2024-09-01T09:00:00Z"
+    },
+    {
+      "id": 1002,
+      "weekNumber": 2,
+      "weekTitle": "2주차: ER 다이어그램",
+      "contents": [],
+      "createdAt": "2024-09-05T14:00:00Z"
+    }
+  ]
+}
+```
+
+### 12.2 강의 주차 등록
+```http
+POST /api/v1/professor/courses/{courseId}/weeks
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Request Body**
+```json
+{
+  "weekNumber": 2,
+  "weekTitle": "2주차: ER 다이어그램",
+  "contents": [
+    {
+      "contentType": "VIDEO",
+      "title": "ER 다이어그램 작성법",
+      "contentUrl": "https://video.mzc.ac.kr/courses/101/week2/lecture1.mp4",
+      "duration": "42:30",
+      "order": 1
+    },
+    {
+      "contentType": "DOCUMENT",
+      "title": "강의노트 - 2주차",
+      "contentUrl": "https://files.mzc.ac.kr/courses/101/week2/notes.pdf",
+      "order": 2
+    }
+  ]
+}
+```
+
+**Request Body 필드 설명**
+- `weekNumber`: 주차 번호 (필수)
+- `weekTitle`: 주차 제목 (필수)
+- `contents`: 콘텐츠 배열 (선택)
+  - `contentType`: 콘텐츠 유형 (VIDEO, DOCUMENT, LINK, QUIZ) - 필수
+  - `title`: 콘텐츠 제목 - 필수
+  - `contentUrl`: 콘텐츠 URL - 필수
+  - `duration`: 재생 시간 (VIDEO인 경우, 형식: "HH:MM:SS" 또는 "MM:SS") - 선택
+  - `order`: 콘텐츠 순서 (선택, 기본값: 마지막 순서)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1002,
+    "weekNumber": 2,
+    "weekTitle": "2주차: ER 다이어그램",
+    "contents": [
+      {
+        "id": 2003,
+        "contentType": "VIDEO",
+        "title": "ER 다이어그램 작성법",
+        "contentUrl": "https://video.mzc.ac.kr/courses/101/week2/lecture1.mp4",
+        "duration": "42:30",
+        "order": 1,
+        "createdAt": "2024-09-05T14:00:00Z"
+      },
+      {
+        "id": 2004,
+        "contentType": "DOCUMENT",
+        "title": "강의노트 - 2주차",
+        "contentUrl": "https://files.mzc.ac.kr/courses/101/week2/notes.pdf",
+        "order": 2,
+        "createdAt": "2024-09-05T14:01:00Z"
+      }
+    ],
+    "createdAt": "2024-09-05T14:00:00Z"
+  },
+  "message": "주차가 생성되었습니다"
+}
+```
+
+**Error Codes**
+| 코드 | 설명 | HTTP Status |
+|------|------|-------------|
+| `WEEK_001` | 중복된 주차 번호 | 400 |
+| `WEEK_002` | 주차 번호가 유효하지 않음 | 400 |
+| `COURSE_003` | 본인의 강의가 아님 | 403 |
+| `CONTENT_001` | 지원하지 않는 콘텐츠 타입 | 400 |
+| `CONTENT_004` | 필수 필드 누락 (contentType, title, contentUrl) | 400 |
+| `CONTENT_005` | 콘텐츠 순서 중복 | 400 |
+
+### 12.3 강의 주차 수정
+```http
+PUT /api/v1/professor/courses/{courseId}/weeks/{weekId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Request Body**
+```json
+{
+  "weekTitle": "2주차: ER 모델링과 다이어그램"
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1002,
+    "weekNumber": 2,
+    "weekTitle": "2주차: ER 모델링과 다이어그램",
+    "updatedAt": "2024-09-06T10:00:00Z"
+  },
+  "message": "주차가 수정되었습니다"
+}
+```
+
+### 12.4 강의 주차 삭제
+```http
+DELETE /api/v1/professor/courses/{courseId}/weeks/{weekId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "weekId": 1002,
+    "weekNumber": 2,
+    "weekTitle": "2주차: ER 다이어그램",
+    "deletedAt": "2024-09-06T15:00:00Z"
+  },
+  "message": "주차가 삭제되었습니다"
+}
+```
+
+**Error Codes**
+| 코드 | 설명 | HTTP Status |
+|------|------|-------------|
+| `WEEK_003` | 콘텐츠가 있어 삭제 불가 | 400 |
+| `WEEK_004` | 이미 공개된 주차는 삭제 불가 | 400 |
+
+### 12.5 주차별 콘텐츠 추가
+```http
+POST /api/v1/professor/courses/{courseId}/weeks/{weekId}/contents
+Authorization: Bearer {accessToken}
+Content-Type: multipart/form-data
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Request Body (Form Data)**
+- `contentType`: 콘텐츠 유형 (VIDEO, DOCUMENT, LINK, QUIZ) - 필수
+- `title`: 콘텐츠 제목 - 필수
+- `description`: 설명 (선택)
+- `file`: 파일 (VIDEO, DOCUMENT인 경우)
+- `contentUrl`: 외부 링크 (LINK인 경우)
+- `duration`: 재생 시간 (VIDEO인 경우, 형식: "HH:MM:SS" 또는 "MM:SS")
+- `order`: 콘텐츠 순서 (기본값: 마지막 순서)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2003,
+    "contentType": "VIDEO",
+    "title": "ER 다이어그램 작성법",
+    "contentUrl": "https://video.mzc.ac.kr/courses/101/week2/lecture1.mp4",
+    "duration": "42:30",
+    "order": 1,
+    "createdAt": "2024-09-06T10:00:00Z"
+  },
+  "message": "콘텐츠가 추가되었습니다"
+}
+```
+
+**Error Codes**
+| 코드 | 설명 | HTTP Status |
+|------|------|-------------|
+| `CONTENT_001` | 지원하지 않는 콘텐츠 타입 | 400 |
+| `CONTENT_002` | 파일 크기 초과 (최대 500MB) | 400 |
+| `CONTENT_003` | 허용되지 않는 파일 형식 | 400 |
+| `CONTENT_004` | 필수 필드 누락 | 400 |
+
+### 12.6 콘텐츠 수정
+```http
+PUT /api/v1/professor/contents/{contentId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Request Body**
+```json
+{
+  "title": "ER 다이어그램 작성법 (수정)",
+  "description": "수정된 설명",
+  "order": 2
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2003,
+    "title": "ER 다이어그램 작성법 (수정)",
+    "order": 2,
+    "updatedAt": "2024-09-07T10:00:00Z"
+  },
+  "message": "콘텐츠가 수정되었습니다"
+}
+```
+
+### 12.7 콘텐츠 삭제
+```http
+DELETE /api/v1/professor/contents/{contentId}
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "contentId": 2003,
+    "title": "ER 다이어그램 작성법",
+    "deletedAt": "2024-09-07T15:00:00Z"
+  },
+  "message": "콘텐츠가 삭제되었습니다"
+}
+```
+
+### 12.8 콘텐츠 순서 변경
+```http
+PUT /api/v1/professor/courses/{courseId}/weeks/{weekId}/contents/reorder
+Authorization: Bearer {accessToken}
+```
+
+**권한**: PROFESSOR (본인 강의만)
+
+**Request Body**
+```json
+{
+  "contentOrders": [
+    { "contentId": 2001, "order": 1 },
+    { "contentId": 2002, "order": 2 },
+    { "contentId": 2003, "order": 3 }
+  ]
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "weekId": 1001,
+    "reorderedContents": [
+      { "contentId": 2001, "order": 1 },
+      { "contentId": 2002, "order": 2 },
+      { "contentId": 2003, "order": 3 }
+    ]
+  },
+  "message": "콘텐츠 순서가 변경되었습니다"
+}
+```
+
+---
+
+
+
+## 13. 공지사항 API
+
+### 13.1 공지사항 목록
 ```http
 GET /notices
 Authorization: Bearer {accessToken}
@@ -1235,7 +2161,7 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-### 10.2 공지사항 상세 조회
+### 13.2 공지사항 상세 조회
 ```http
 GET /notices/{noticeId}
 Authorization: Bearer {accessToken}
@@ -1243,9 +2169,9 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 11. 시간표 API
+## 14. 시간표 API
 
-### 11.1 내 시간표 조회
+### 14.1 내 시간표 조회
 ```http
 GET /schedule
 Authorization: Bearer {accessToken}
@@ -1297,9 +2223,9 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 12. 학사 일정 API
+## 15. 학사 일정 API
 
-### 12.1 학사 일정 조회
+### 15.1 학사 일정 조회
 ```http
 GET /academic-calendar
 Authorization: Bearer {accessToken}
@@ -1336,9 +2262,9 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 13. 대시보드 통계 API
+## 16. 대시보드 통계 API
 
-### 13.1 대시보드 요약 정보
+### 16.1 대시보드 요약 정보
 ```http
 GET /dashboard/summary
 Authorization: Bearer {accessToken}
@@ -1392,8 +2318,26 @@ Authorization: Bearer {accessToken}
 | `AUTH_003` | 권한이 없음 |
 | `USER_001` | 사용자를 찾을 수 없음 |
 | `USER_002` | 잘못된 비밀번호 |
-| `COURSE_001` | 과목을 찾을 수 없음 |
+| `SUBJECT_001` | 과목(Subject)을 찾을 수 없음 |
+| `SUBJECT_002` | 중복된 과목코드 (같은 학과 내) |
+| `SUBJECT_003` | 선수과목을 찾을 수 없음 |
+| `SUBJECT_004` | subjectId와 subject 둘 다 제공되거나 둘 다 누락 |
+| `COURSE_001` | 강의(Course)를 찾을 수 없음 |
 | `COURSE_002` | 수강신청되지 않은 과목 |
+| `COURSE_003` | 본인의 강의가 아님 |
+| `COURSE_004` | 수강신청 시작 후 수정/삭제 불가 |
+| `COURSE_005` | 중복된 과목코드/분반 |
+| `COURSE_006` | 수강생이 있어 삭제 불가 |
+| `COURSE_007` | 같은 학기/과목/분반 중복 |
+| `PROFESSOR_001` | 교수 권한이 없음 |
+| `WEEK_001` | 중복된 주차 번호 |
+| `WEEK_002` | 주차 번호가 유효하지 않음 |
+| `WEEK_003` | 콘텐츠가 있어 삭제 불가 |
+| `WEEK_004` | 이미 공개된 주차는 삭제 불가 |
+| `CONTENT_001` | 지원하지 않는 콘텐츠 타입 |
+| `CONTENT_002` | 파일 크기 초과 |
+| `CONTENT_003` | 허용되지 않는 파일 형식 |
+| `CONTENT_004` | 필수 필드 누락 |
 | `ASSIGNMENT_001` | 과제를 찾을 수 없음 |
 | `ASSIGNMENT_002` | 제출 기한이 지남 |
 | `ASSIGNMENT_003` | 이미 제출됨 |

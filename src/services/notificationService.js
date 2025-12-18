@@ -96,6 +96,8 @@ const notificationService = {
       LECTURE: '강의',
       ATTENDANCE: '출석',
       SYSTEM: '시스템',
+      COMMENT_CREATED: '댓글',
+      REPLY_CREATED: '답글',
     };
     return typeLabels[type] || '알림';
   },

@@ -32,6 +32,9 @@ import CourseRegistration from './pages/CourseRegistration';
 import CourseDetail from './pages/CourseDetail';
 import CourseSchedule from './pages/CourseSchedule';
 import Grades from './pages/Grades';
+import ProfessorCourseManagement from './pages/ProfessorCourseManagement';
+import ProfessorMyCourses from './pages/ProfessorMyCourses';
+import ProfessorCourseDetail from './pages/ProfessorCourseDetail';
 
 // 인증 관련 페이지
 import Login from './pages/Login';
@@ -40,9 +43,45 @@ import ForgotPassword from './pages/ForgotPassword';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Messages from './pages/Messages';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
 import { Box, Typography, Paper } from '@mui/material';
+
+// 게시판 컴포넌트
+import NoticeBoard from './domains/board/components/notice/NoticeBoard';
+import Notice from './domains/board/components/notice/NoticePage';
+import NoticeFormPage from './domains/board/components/notice/NoticeFormPage';
+import ProfessorBoard from './domains/board/components/professor/ProfessorBoardPage';
+import ProfessorPage from './domains/board/components/professor/ProfessorPage';
+import ProfessorFormPage from './domains/board/components/professor/ProfessorFormPage';
+import StudentBoard from './domains/board/components/student/StudentBoardPage';
+import StudentPage from './domains/board/components/student/StudentPage';
+import StudentFormPage from './domains/board/components/student/StudentFormPage';
+import FreeBoard from './domains/board/components/free/FreeBoardPage';
+import FreePage from './domains/board/components/free/FreePage';
+import FreeFormPage from './domains/board/components/free/FreeFormPage';
+import QuestionBoard from './domains/board/components/question/QuestionBoardPage';
+import QuestionPage from './domains/board/components/question/QuestionPage';
+import QuestionFormPage from './domains/board/components/question/QuestionFormPage';
+import DiscussionBoard from './domains/board/components/discussion/DiscussionBoardPage';
+import DiscussionPage from './domains/board/components/discussion/DiscussionPage';
+import DiscussionFormPage from './domains/board/components/discussion/DiscussionFormPage';
+import DepartmentBoard from './domains/board/components/department/DepartmentBoardPage';
+import DepartmentPage from './domains/board/components/department/DepartmentPage';
+import DepartmentFormPage from './domains/board/components/department/DepartmentFormPage';
+import ContestBoard from './domains/board/components/contest/ContestBoardPage';
+import ContestPage from './domains/board/components/contest/ContestPage';
+import ContestFormPage from './domains/board/components/contest/ContestFormPage';
+import CareerBoard from './domains/board/components/career/CareerBoardPage';
+import CareerPage from './domains/board/components/career/CareerPage';
+import CareerFormPage from './domains/board/components/career/CareerFormPage';
+import AssignmentBoard from './domains/board/components/assignment/AssignmentBoardPage';
+import AssignmentDetailPage from './domains/board/components/assignment/AssignmentDetailPage';
+import AssignmentFormPage from './domains/board/components/assignment/AssignmentFormPage';
+import ExamBoard from './domains/board/components/exam/ExamBoardPage';
+import QuizBoard from './domains/board/components/quiz/QuizBoardPage';
+import StudyBoard from './domains/board/components/study/StudyRecruitmentBoardPage';
 
 /**
  * 임시 페이지 컴포넌트
@@ -96,6 +135,11 @@ function App() {
             {/* 수강신청 */}
             <Route path="/registration" element={<CourseRegistration />} />
 
+            {/* 교수용 강의 관리 */}
+            <Route path="/professor/courses" element={<ProfessorCourseManagement />} />
+            <Route path="/professor/my-courses" element={<ProfessorMyCourses />} />
+            <Route path="/professor/course/:courseId/manage" element={<ProfessorCourseDetail />} />
+
             {/* 과제 */}
             <Route path="/assignments" element={<TempPage title="과제" />} />
 
@@ -103,10 +147,74 @@ function App() {
             <Route path="/exams" element={<TempPage title="퀴즈/시험" />} />
 
             {/* 커뮤니티 관련 라우트 */}
-            <Route path="/community" element={<Community />} />
-            <Route path="/community/notices" element={<Community />} />
-            <Route path="/community/board" element={<Community />} />
-            <Route path="/community/qna" element={<Community />} />
+            <Route path="/notices" element={<NoticeBoard />} />
+            <Route path="/notices/create" element={<NoticeFormPage />} />
+            <Route path="/notices/:id/edit" element={<NoticeFormPage />} />
+            <Route path="/notices/:id" element={<Notice />} />
+            
+            {/* 자유 게시판 */}
+            <Route path="/free" element={<FreeBoard />} />
+            <Route path="/free/create" element={<FreeFormPage />} />
+            <Route path="/free/:id/edit" element={<FreeFormPage />} />
+            <Route path="/free/:id" element={<FreePage />} />
+            
+            {/* 질문 게시판 */}
+            <Route path="/questions" element={<QuestionBoard />} />
+            <Route path="/questions/create" element={<QuestionFormPage />} />
+            <Route path="/questions/:id/edit" element={<QuestionFormPage />} />
+            <Route path="/questions/:id" element={<QuestionPage />} />
+            
+            {/* 토론 게시판 */}
+            <Route path="/discussions" element={<DiscussionBoard />} />
+            <Route path="/discussions/create" element={<DiscussionFormPage />} />
+            <Route path="/discussions/:id/edit" element={<DiscussionFormPage />} />
+            <Route path="/discussions/:id" element={<DiscussionPage />} />
+            
+            {/* 학과 게시판 */}
+            <Route path="/departments" element={<DepartmentBoard />} />
+            <Route path="/departments/create" element={<DepartmentFormPage />} />
+            <Route path="/departments/:id/edit" element={<DepartmentFormPage />} />
+            <Route path="/departments/:id" element={<DepartmentPage />} />
+            
+            {/* 게시판 라우트 (레거시 경로 유지) */}
+            <Route path="/boards/professor" element={<ProfessorBoard />} />
+            <Route path="/boards/professor/create" element={<ProfessorFormPage />} />
+            <Route path="/boards/professor/:id/edit" element={<ProfessorFormPage />} />
+            <Route path="/boards/professor/:id" element={<ProfessorPage />} />
+            
+            <Route path="/boards/student" element={<StudentBoard />} />
+            <Route path="/boards/student/create" element={<StudentFormPage />} />
+            <Route path="/boards/student/:id/edit" element={<StudentFormPage />} />
+            <Route path="/boards/student/:id" element={<StudentPage />} />
+            
+            <Route path="/boards/free" element={<FreeBoard />} />
+            <Route path="/boards/question" element={<QuestionBoard />} />
+            <Route path="/boards/discussion" element={<DiscussionBoard />} />
+            <Route path="/boards/department" element={<DepartmentBoard />} />
+            
+            <Route path="/boards/contest" element={<ContestBoard />} />
+            <Route path="/boards/contest/create" element={<ContestFormPage />} />
+            <Route path="/boards/contest/:id/edit" element={<ContestFormPage />} />
+            <Route path="/boards/contest/:id" element={<ContestPage />} />
+            
+            <Route path="/boards/career" element={<CareerBoard />} />
+            <Route path="/boards/career/create" element={<CareerFormPage />} />
+            <Route path="/boards/career/:id/edit" element={<CareerFormPage />} />
+            <Route path="/boards/career/:id" element={<CareerPage />} />
+            
+            <Route path="/boards/assignment" element={<AssignmentBoard />} />
+            <Route path="/boards/assignment/create" element={<AssignmentFormPage />} />
+            <Route path="/boards/assignment/:id/edit" element={<AssignmentFormPage />} />
+            <Route path="/boards/assignment/:id" element={<AssignmentDetailPage />} />
+            
+            <Route path="/boards/exam" element={<ExamBoard />} />
+            <Route path="/boards/quiz" element={<QuizBoard />} />
+            <Route path="/boards/study" element={<StudyBoard />} />
+            
+            {/* 커뮤니티 라우트 - 새 게시판 시스템 */}
+            <Route path="/community/notices" element={<NoticeBoard />} />
+            <Route path="/community/board" element={<FreeBoard />} />
+            <Route path="/community/qna" element={<QuestionBoard />} />
 
             {/* 학습자 관리 */}
             <Route path="/students" element={<TempPage title="학습자 관리" />} />
@@ -116,6 +224,9 @@ function App() {
 
             {/* 알림 */}
             <Route path="/notifications" element={<Notifications />} />
+
+            {/* 메시지 */}
+            <Route path="/messages" element={<Messages />} />
 
             {/* 프로필 */}
             <Route path="/profile" element={<Profile />} />

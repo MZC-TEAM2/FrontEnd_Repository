@@ -59,6 +59,7 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import authService from '../services/authService';
 import notificationService from '../services/notificationService';
+import messageService from '../services/messageService';
 import { useThemeContext } from '../contexts/ThemeContext';
 
 /**
@@ -132,6 +133,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   // 상태 관리
   const [anchorEl, setAnchorEl] = useState(null); // 사용자 메뉴
   const [notificationAnchor, setNotificationAnchor] = useState(null); // 알림 메뉴
+  const [messageAnchor, setMessageAnchor] = useState(null); // 메시지 메뉴
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null); // 모바일 메뉴
   const [notifications, setNotifications] = useState([]); // 알림 목록
   const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
@@ -140,20 +142,25 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const [selectedNotification, setSelectedNotification] = useState(null); // 선택된 알림 (상세보기)
   const [detailDialogOpen, setDetailDialogOpen] = useState(false); // 상세보기 다이얼로그 열림 상태
 
-  // 알림 데이터 및 사용자 정보 가져오기
+  // 메시지 관련 상태
+  const [recentMessages, setRecentMessages] = useState([]); // 최근 메시지 목록
+  const [messageUnreadCount, setMessageUnreadCount] = useState(0); // 안읽은 메시지 수
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
+  // 알림/메시지 데이터 및 사용자 정보 가져오기
   useEffect(() => {
-    // 인증된 사용자인 경우에만 알림 가져오기
     if (authService.isAuthenticated()) {
-      // 사용자 정보 가져오기
       const user = authService.getCurrentUser();
       setCurrentUser(user);
 
       fetchNotifications();
       fetchUnreadCount();
+      fetchMessageUnreadCount();
 
-      // 30초마다 알림 새로고침
+      // 30초마다 알림/메시지 새로고침
       const interval = setInterval(() => {
         fetchUnreadCount();
+        fetchMessageUnreadCount();
       }, 30000);
 
       return () => clearInterval(interval);
@@ -203,8 +210,40 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
       setUnreadCount(response.unreadCount || 0);
     } catch (error) {
       console.error('읽지 않은 알림 개수 조회 실패:', error);
-      // API 연동 전까지는 더미 데이터 사용
       setUnreadCount(3);
+    }
+  };
+
+  /**
+   * 최근 메시지 대화방 목록 가져오기
+   */
+  const fetchRecentMessages = async () => {
+    setIsLoadingMessages(true);
+    try {
+      const conversations = await messageService.getConversations();
+      // 안읽은 메시지가 있는 대화방 최대 5개
+      const unreadConversations = (conversations || [])
+        .filter(conv => conv.unreadCount > 0)
+        .slice(0, 5);
+      setRecentMessages(unreadConversations);
+    } catch (error) {
+      console.error('메시지 목록 조회 실패:', error);
+      setRecentMessages([]);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  /**
+   * 안읽은 메시지 수 가져오기
+   */
+  const fetchMessageUnreadCount = async () => {
+    try {
+      const count = await messageService.getUnreadCount();
+      setMessageUnreadCount(typeof count === 'number' ? count : 0);
+    } catch (error) {
+      console.error('안읽은 메시지 수 조회 실패:', error);
+      setMessageUnreadCount(0);
     }
   };
 
@@ -252,9 +291,18 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
    */
   const handleNotificationMenuOpen = (event) => {
     setNotificationAnchor(event.currentTarget);
-    // 알림 메뉴를 열 때 최신 알림 가져오기
     if (authService.isAuthenticated()) {
       fetchNotifications();
+    }
+  };
+
+  /**
+   * 메시지 메뉴 열기
+   */
+  const handleMessageMenuOpen = (event) => {
+    setMessageAnchor(event.currentTarget);
+    if (authService.isAuthenticated()) {
+      fetchRecentMessages();
     }
   };
 
@@ -271,6 +319,7 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setNotificationAnchor(null);
+    setMessageAnchor(null);
     setMobileMenuAnchor(null);
   };
 
@@ -362,8 +411,8 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
 
             {/* 메시지 아이콘 */}
             <Tooltip title="메시지">
-              <IconButton color="inherit">
-                <Badge badgeContent={2} color="error">
+              <IconButton color="inherit" onClick={handleMessageMenuOpen}>
+                <Badge badgeContent={messageUnreadCount} color="error">
                   <MailIcon />
                 </Badge>
               </IconButton>
@@ -572,6 +621,107 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
         </MenuItem>
       </Menu>
 
+      {/* 메시지 메뉴 */}
+      <Menu
+        anchorEl={messageAnchor}
+        open={Boolean(messageAnchor)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 3,
+          sx: {
+            mt: 1.5,
+            minWidth: 320,
+            maxHeight: 400,
+          },
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            메시지
+          </Typography>
+        </Box>
+        <Divider />
+
+        {/* 메시지 리스트 */}
+        {recentMessages.length > 0 ? (
+          recentMessages.map((conversation) => (
+            <MenuItem
+              key={conversation.conversationId}
+              onClick={() => {
+                handleMenuClose();
+                navigate(`/messages?id=${conversation.conversationId}`);
+              }}
+              sx={{
+                backgroundColor: alpha(theme.palette.primary.main, 0.05),
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                <Avatar
+                  src={conversation.otherUserThumbnailUrl || undefined}
+                  sx={{ width: 40, height: 40 }}
+                >
+                  {conversation.otherUserName?.charAt(0) || 'U'}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {conversation.otherUserId ? `${conversation.otherUserId} / ${conversation.otherUserName}` : conversation.otherUserName}
+                    </Typography>
+                    <Badge badgeContent={conversation.unreadCount} color="error" sx={{ ml: 1 }} />
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        color: conversation.isLastMessageMine ? 'primary.main' : 'text.secondary',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {conversation.isLastMessageMine ? '나: ' : `${conversation.otherUserName}: `}
+                    </Box>
+                    {messageService.truncateContent(conversation.lastMessageContent, 20)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {messageService.formatMessageTime(conversation.lastMessageAt)}
+                  </Typography>
+                </Box>
+              </Box>
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled>
+            <Typography variant="body2" color="text.secondary">
+              {isLoadingMessages ? '메시지를 불러오는 중...' : '새로운 메시지가 없습니다'}
+            </Typography>
+          </MenuItem>
+        )}
+
+        <Divider />
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          navigate('/messages');
+        }}>
+          <Typography
+            variant="body2"
+            color="primary"
+            sx={{ width: '100%', textAlign: 'center' }}
+          >
+            전체 메시지 보기
+          </Typography>
+        </MenuItem>
+      </Menu>
+
       {/* 모바일 메뉴 */}
       <Menu
         anchorEl={mobileMenuAnchor}
@@ -589,9 +739,9 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
           <ListItemText>테마 변경</ListItemText>
         </MenuItem>
 
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={handleMessageMenuOpen}>
           <ListItemIcon>
-            <Badge badgeContent={2} color="error">
+            <Badge badgeContent={messageUnreadCount} color="error">
               <MailIcon />
             </Badge>
           </ListItemIcon>

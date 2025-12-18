@@ -55,19 +55,22 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import QuizIcon from '@mui/icons-material/Quiz';
+import ClassIcon from '@mui/icons-material/Class';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import GroupsIcon from '@mui/icons-material/Groups';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import WorkIcon from '@mui/icons-material/Work';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import DescriptionIcon from '@mui/icons-material/Description';
+import MailIcon from '@mui/icons-material/Mail';
 
 /**
- * 메뉴 아이템 설정
- *
- * MZC 대학교 학생용 메뉴 구조
- * title: 메뉴 이름
- * path: 이동할 경로
- * icon: 표시할 아이콘
- * badge: 알림 뱃지 (선택사항)
- * children: 하위 메뉴 (선택사항)
- * divider: 구분선 표시 여부 (선택사항)
+ * 학생용 메뉴 아이템
  */
-const menuItems = [
+const studentMenuItems = [
   {
     title: '학습 홈',
     path: '/dashboard',
@@ -100,10 +103,18 @@ const menuItems = [
     icon: <ForumIcon />,
     description: '학교 커뮤니티',
     children: [
-      { title: '학사 공지', path: '/community/notices', icon: <NotificationsIcon /> },
-      { title: '자유게시판', path: '/community/board', icon: <ForumIcon /> },
-      { title: '스터디 모집', path: '/community/study', icon: <GroupIcon /> },
-      { title: '질문/답변', path: '/community/qna', icon: <QuizIcon /> },
+      { title: '학사 공지', path: '/notices', icon: <CampaignIcon /> },
+      { title: '자유게시판', path: '/boards/free', icon: <ForumIcon /> },
+      { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
+      { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
+      { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
+      { title: '학생 게시판', path: '/boards/student', icon: <GroupsIcon />, requiredRole: 'STUDENT' },
+      { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
+      { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
+      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
+      { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
+      { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
+      { title: '스터디 모집', path: '/boards/study', icon: <GroupIcon /> },
     ],
   },
   {
@@ -126,6 +137,80 @@ const menuItems = [
     path: '/profile',
     icon: <PersonIcon />,
     description: '학생 정보 관리',
+  },
+  {
+    title: '설정',
+    path: '/settings',
+    icon: <SettingsIcon />,
+    description: '알림 설정',
+  },
+];
+
+/**
+ * 교수용 메뉴 아이템
+ */
+const professorMenuItems = [
+  {
+    title: '대시보드',
+    path: '/dashboard',
+    icon: <DashboardIcon />,
+    description: '강의 현황',
+  },
+  {
+    title: '강의 관리',
+    path: '/professor/my-courses',
+    icon: <SchoolIcon />,
+    description: '담당 강의 목록',
+  },
+  {
+    title: '강의 등록',
+    path: '/professor/courses',
+    icon: <ClassIcon />,
+    description: '강의 개설 및 삭제',
+  },
+  {
+    divider: true, // 구분선
+  },
+  {
+    title: '커뮤니티',
+    path: '/community',
+    icon: <ForumIcon />,
+    description: '학교 커뮤니티',
+    children: [
+      { title: '학사 공지', path: '/notices', icon: <CampaignIcon /> },
+      { title: '자유게시판', path: '/boards/free', icon: <ForumIcon /> },
+      { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
+      { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
+      { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
+      { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon />, requiredRole: 'PROFESSOR' },
+      { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
+      { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
+      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
+      { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
+      { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
+    ],
+  },
+  {
+    title: '학사 일정',
+    path: '/calendar',
+    icon: <CalendarMonthIcon />,
+    description: '학사 일정 확인',
+  },
+  {
+    divider: true, // 구분선
+  },
+  {
+    title: '메시지',
+    path: '/messages',
+    icon: <MailIcon />,
+    description: '쪽지 보내기/받기',
+    hasBadge: true, // 동적 뱃지 표시 플래그
+  },
+  {
+    title: '내 정보',
+    path: '/profile',
+    icon: <PersonIcon />,
+    description: '교수 정보 관리',
   },
   {
     title: '설정',
@@ -198,6 +283,16 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
+
+  /**
+   * 사용자 타입에 따른 메뉴 아이템 반환
+   */
+  const getMenuItems = () => {
+    const userType = profile?.userType || authService.getCurrentUser()?.userType;
+    return userType === 'PROFESSOR' ? professorMenuItems : studentMenuItems;
+  };
+
+  const menuItems = getMenuItems();
 
   /**
    * 사이드바 콘텐츠 렌더링
