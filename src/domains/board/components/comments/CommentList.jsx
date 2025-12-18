@@ -13,16 +13,46 @@ const CommentList = ({
   onReply,
   allowComments = true,
 }) => {
-  // 최상위 댓글만 필터링 (depth === 0)
-  const topLevelComments = comments.filter(comment => comment.depth === 0);
-
-  // 각 댓글의 대댓글 가져오기
-  const getReplies = (parentCommentId) => {
-    return comments.filter(
-      comment => comment.parentCommentId === parentCommentId && comment.depth === 1
-    );
+  // 중첩된 childComments를 평면 배열로 변환
+  const flattenComments = (commentsList) => {
+    const result = [];
+    const flatten = (comment) => {
+      result.push(comment);
+      if (comment.childComments && comment.childComments.length > 0) {
+        comment.childComments.forEach(child => flatten(child));
+      }
+    };
+    commentsList.forEach(comment => flatten(comment));
+    return result;
   };
 
+  // 백엔드에서 중첩 구조로 오는 경우 평면화
+  const allComments = flattenComments(comments);
+
+  // 최상위 댓글만 필터링 (depth === 0)
+  const topLevelComments = allComments.filter(comment => comment.depth === 0);
+
+  // 각 최상위 댓글의 다음에 나오는 depth === 1 댓글들을 대댓글로 처리
+  const getSequentialReplies = (topLevelIndex) => {
+    const replies = [];
+    // 현재 최상위 댓글의 인덱스 찾기
+    const startIdx = allComments.findIndex(c => c.id === topLevelComments[topLevelIndex].id);
+    
+    // 다음 최상위 댓글의 인덱스 찾기 (없으면 끝까지)
+    const nextTopLevelIdx = topLevelComments[topLevelIndex + 1] 
+      ? allComments.findIndex(c => c.id === topLevelComments[topLevelIndex + 1].id)
+      : allComments.length;
+    
+    // 그 사이의 depth === 1 댓글들 수집
+    for (let i = startIdx + 1; i < nextTopLevelIdx; i++) {
+      if (allComments[i].depth === 1) {
+        replies.push(allComments[i]);
+      }
+    }
+    
+    return replies;
+  };
+  
   return (
     <Box>
       {/* 댓글 작성 폼 */}
@@ -40,7 +70,7 @@ const CommentList = ({
       {/* 댓글 목록 */}
       <Box>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          댓글 {comments.length}개
+          댓글 {allComments.length}개
         </Typography>
 
         {topLevelComments.length === 0 ? (
@@ -48,11 +78,11 @@ const CommentList = ({
             첫 번째 댓글을 작성해보세요!
           </Typography>
         ) : (
-          topLevelComments.map((comment) => (
+          topLevelComments.map((comment, index) => (
             <Box key={comment.id} sx={{ mb: 2 }}>
               <CommentItem
                 comment={comment}
-                replies={getReplies(comment.id)}
+                replies={getSequentialReplies(index)}
                 currentUserId={currentUserId}
                 onEdit={onEdit}
                 onDelete={onDelete}

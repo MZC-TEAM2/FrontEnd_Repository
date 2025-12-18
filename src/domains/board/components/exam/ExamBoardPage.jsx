@@ -16,6 +16,8 @@ const ExamBoardPage = () => {
       basePath="/boards/exam"
       createPath="/boards/exam/create"
       createButtonText="시험 정보 등록"
+      showViewCount={false}
+      showLikeCount={false}
     />
   );
 };

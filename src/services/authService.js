@@ -65,7 +65,7 @@ const authService = {
 
     // 토큰 저장 - 백엔드는 데이터를 직접 반환 (data 래핑 없음)
     if (response.data) {
-      const { accessToken, refreshToken, userType, userNumber, name, email: userEmail, userId, thumbnailUrl } = response.data;
+      const { accessToken, refreshToken, userType, userNumber, name, email: userEmail, userId, thumbnailUrl, departmentId, departmentName } = response.data;
 
       // 토큰 저장
       localStorage.setItem('accessToken', accessToken);
@@ -78,7 +78,9 @@ const authService = {
         name,
         email: userEmail,
         userId,
-        thumbnailUrl
+        thumbnailUrl,
+        departmentId,
+        departmentName
       };
       localStorage.setItem('user', JSON.stringify(user));
 

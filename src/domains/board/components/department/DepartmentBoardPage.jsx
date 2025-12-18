@@ -20,6 +20,7 @@ const DepartmentBoardPage = () => {
       createButtonText="글 작성"
       hashtags={DEPARTMENT_HASHTAGS}
       showHashtagsInTable={true}
+      showLikeCount={false}
     />
   );
 };

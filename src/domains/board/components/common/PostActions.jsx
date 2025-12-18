@@ -7,18 +7,20 @@ import {
   Delete 
 } from '@mui/icons-material';
 
-const PostActions = ({ isLiked, likeCount, onLike, isAuthor, onEdit, onDelete, deleting }) => {
+const PostActions = ({ isLiked, likeCount, onLike, isAuthor, onEdit, onDelete, deleting, showLike = true }) => {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       {/* 좋아요 버튼 */}
-      <Button
-        variant={isLiked ? 'contained' : 'outlined'}
-        startIcon={isLiked ? <ThumbUp /> : <ThumbUpOutlined />}
-        onClick={onLike}
-        sx={{ minWidth: 120 }}
-      >
-        좋아요 {likeCount}
-      </Button>
+      {showLike && (
+        <Button
+          variant={isLiked ? 'contained' : 'outlined'}
+          startIcon={isLiked ? <ThumbUp /> : <ThumbUpOutlined />}
+          onClick={onLike}
+          sx={{ minWidth: 120 }}
+        >
+          좋아요 {likeCount}
+        </Button>
+      )}
 
       {/* 작성자만 보이는 수정/삭제 버튼 */}
       {isAuthor && (

@@ -16,6 +16,8 @@ const QuizBoardPage = () => {
       basePath="/boards/quiz"
       createPath="/boards/quiz/create"
       createButtonText="퀴즈 등록"
+      showViewCount={false}
+      showLikeCount={false}
     />
   );
 };

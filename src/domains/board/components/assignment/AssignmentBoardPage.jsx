@@ -16,6 +16,8 @@ const AssignmentBoardPage = () => {
       basePath="/boards/assignment"
       createPath="/boards/assignment/create"
       createButtonText="과제 등록"
+      showViewCount={false}
+      showLikeCount={false}
     />
   );
 };
