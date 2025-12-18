@@ -339,6 +339,7 @@ const ProfessorCourseDetail = () => {
           onCreateWeek={handleCreateWeek}
           onUpdateWeek={handleUpdateWeek}
           onDeleteWeek={handleDeleteWeek}
+          onRefreshWeeks={fetchWeeks}
         />
       )}
 
