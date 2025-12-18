@@ -7,7 +7,7 @@
  * - 콘텐츠 관리
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -34,11 +34,13 @@ import {
   Assessment as AssessmentIcon,
   School as SchoolIcon,
   People as PeopleIcon,
+  Quiz as QuizIcon,
 } from '@mui/icons-material';
 
 // 컴포넌트
 import WeekManagement from '../domains/professor/components/WeekManagement';
 import CourseCreateDialog from '../domains/professor/components/CourseCreateDialog';
+import ExamManagement from '../domains/professor/components/ExamManagement';
 
 // API
 import {
@@ -48,6 +50,8 @@ import {
   createWeek,
   updateWeek,
   deleteWeek,
+  createContent,
+  deleteContent,
   getCurrentCourseRegistrationPeriod,
 } from '../api/professorApi';
 
@@ -63,13 +67,7 @@ const ProfessorCourseDetail = () => {
   const [weeks, setWeeks] = useState([]);
   const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
 
-  useEffect(() => {
-    fetchCourse();
-    fetchWeeks();
-    fetchEnrollmentPeriods();
-  }, [courseId]);
-
-  const fetchCourse = async () => {
+  const fetchCourse = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -90,9 +88,9 @@ const ProfessorCourseDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId]);
 
-  const fetchWeeks = async () => {
+  const fetchWeeks = useCallback(async () => {
     console.log('=== 주차 목록 조회 시작 ===');
     console.log('강의 ID:', courseId);
     
@@ -120,9 +118,9 @@ const ProfessorCourseDetail = () => {
     }
     
     console.log('=== 주차 목록 조회 종료 ===');
-  };
+  }, [courseId]);
 
-  const fetchEnrollmentPeriods = async () => {
+  const fetchEnrollmentPeriods = useCallback(async () => {
     try {
       const response = await getCurrentCourseRegistrationPeriod();
       if (response && response.success && response.data?.currentPeriod) {
@@ -134,7 +132,13 @@ const ProfessorCourseDetail = () => {
       console.error('강의 등록 기간 조회 실패:', err);
       setEnrollmentPeriods([]);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCourse();
+    fetchWeeks();
+    fetchEnrollmentPeriods();
+  }, [fetchCourse, fetchWeeks, fetchEnrollmentPeriods]);
 
   const handleUpdateCourse = async (courseData) => {
     try {
@@ -237,6 +241,39 @@ const ProfessorCourseDetail = () => {
     console.log('=== 주차 삭제 종료 ===');
   };
 
+  const handleCreateContent = async (weekId, contentData) => {
+    try {
+      const response = await createContent(courseId, weekId, contentData);
+      if (response?.success) {
+        await fetchWeeks();
+        return response;
+      } else {
+        const msg = response?.error?.message || response?.message || '콘텐츠 추가에 실패했습니다.';
+        setError(msg);
+        throw new Error(msg);
+      }
+    } catch (err) {
+      console.error('❌ 콘텐츠 추가 실패:', err);
+      const msg = err?.message || '콘텐츠 추가에 실패했습니다.';
+      setError(msg);
+      throw err;
+    }
+  };
+
+  const handleDeleteContent = async (contentId) => {
+    try {
+      const response = await deleteContent(contentId);
+      if (response?.success) {
+        await fetchWeeks();
+      } else {
+        setError(response?.error?.message || response?.message || '콘텐츠 삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('❌ 콘텐츠 삭제 실패:', err);
+      setError(err?.message || '콘텐츠 삭제에 실패했습니다.');
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -327,6 +364,7 @@ const ProfessorCourseDetail = () => {
           <Tab icon={<CalendarMonthIcon />} label="주차 관리" />
           <Tab icon={<NotificationsIcon />} label="공지사항" />
           <Tab icon={<AssignmentIcon />} label="과제" />
+          <Tab icon={<QuizIcon />} label="시험" />
           <Tab icon={<AssessmentIcon />} label="성적" />
         </Tabs>
       </Paper>
@@ -339,6 +377,8 @@ const ProfessorCourseDetail = () => {
           onCreateWeek={handleCreateWeek}
           onUpdateWeek={handleUpdateWeek}
           onDeleteWeek={handleDeleteWeek}
+          onCreateContent={handleCreateContent}
+          onDeleteContent={handleDeleteContent}
           onRefreshWeeks={fetchWeeks}
         />
       )}
@@ -367,7 +407,9 @@ const ProfessorCourseDetail = () => {
         </Paper>
       )}
 
-      {currentTab === 3 && (
+      {currentTab === 3 && <ExamManagement />}
+
+      {currentTab === 4 && (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <AssessmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
