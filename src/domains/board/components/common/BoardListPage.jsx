@@ -29,20 +29,6 @@ import { useBoard } from '../../hooks/useBoard';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
 import { useNavigate } from 'react-router-dom';
 
-/**
- * 범용 게시판 목록 컴포넌트
- * 모든 게시판 타입에서 재사용 가능
- * 
- * @param {string} boardType - 게시판 타입 (NOTICE, PROFESSOR, STUDENT, FREE, etc.)
- * @param {string} title - 게시판 제목
- * @param {React.ReactNode} icon - 헤더 아이콘
- * @param {string} basePath - 기본 경로 (예: /boards/professor)
- * @param {string} createPath - 작성 페이지 경로 (예: /boards/professor/create)
- * @param {boolean} showCreateButton - 작성 버튼 표시 여부 (기본: true)
- * @param {string} createButtonText - 작성 버튼 텍스트 (기본: "글 작성")
- * @param {Array} hashtags - 필터링할 해시태그 목록 (선택사항)
- * @param {boolean} showHashtagsInTable - 테이블에 해시태그 표시 여부 (기본: false)
- */
 const BoardListPage = ({
   boardType,
   title,
@@ -53,6 +39,9 @@ const BoardListPage = ({
   createButtonText = '글 작성',
   hashtags = [],
   showHashtagsInTable = false,
+  showAuthor = true,
+  showViewCount = true,
+  showLikeCount = true,
 }) => {
   const [selectedHashtag, setSelectedHashtag] = useState(null);
   const {
@@ -78,6 +67,9 @@ const BoardListPage = ({
         post.hashtags?.some(tag => tag.tagName === selectedHashtag)
       )
     : posts;
+
+  // 동적 컬럼 수 계산
+  const totalColumns = 4 + (showAuthor ? 1 : 0) + (showViewCount ? 1 : 0) + (showLikeCount ? 1 : 0);
 
   return (
     <Box>
@@ -170,34 +162,43 @@ const BoardListPage = ({
                 <TableCell width="10%" align="center">
                   구분
                 </TableCell>
-                <TableCell width="45%">제목</TableCell>
+                <TableCell width={showAuthor ? "35%" : "45%"}>제목</TableCell>
+                {showAuthor && (
+                  <TableCell width="10%" align="center">
+                    작성자
+                  </TableCell>
+                )}
                 <TableCell width="15%" align="center">
                   작성일
                 </TableCell>
-                <TableCell width="10%" align="center">
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                    <VisibilityIcon fontSize="small" />
-                    조회
-                  </Box>
-                </TableCell>
-                <TableCell width="10%" align="center">
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                    <ThumbUpIcon fontSize="small" />
-                    좋아요
-                  </Box>
-                </TableCell>
+                {showViewCount && (
+                  <TableCell width="10%" align="center">
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                      <VisibilityIcon fontSize="small" />
+                      조회
+                    </Box>
+                  </TableCell>
+                )}
+                {showLikeCount && (
+                  <TableCell width="10%" align="center">
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                      <ThumbUpIcon fontSize="small" />
+                      좋아요
+                    </Box>
+                  </TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={totalColumns} align="center" sx={{ py: 5 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredPosts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={totalColumns} align="center" sx={{ py: 5 }}>
                     <Typography color="text.secondary">
                       {selectedHashtag ? `"${selectedHashtag}" 주제의 게시글이 없습니다.` : '게시글이 없습니다.'}
                     </Typography>
@@ -243,21 +244,32 @@ const BoardListPage = ({
                           )}
                         </Box>
                       </TableCell>
+                      {showAuthor && (
+                        <TableCell align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            {post.isAnonymous ? '익명' : (post.createdByName || '알 수 없음')}
+                          </Typography>
+                        </TableCell>
+                      )}
                       <TableCell align="center">
                         <Typography variant="body2" color="text.secondary">
                           {formatDate(post.createdAt)}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" color="text.secondary">
-                          {post.viewCount || 0}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" color="text.secondary">
-                          {post.likeCount || 0}
-                        </Typography>
-                      </TableCell>
+                      {showViewCount && (
+                        <TableCell align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            {post.viewCount || 0}
+                          </Typography>
+                        </TableCell>
+                      )}
+                      {showLikeCount && (
+                        <TableCell align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            {post.likeCount || 0}
+                          </Typography>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })
@@ -302,6 +314,9 @@ BoardListPage.propTypes = {
     })
   ),
   showHashtagsInTable: PropTypes.bool,
+  showAuthor: PropTypes.bool,
+  showViewCount: PropTypes.bool,
+  showLikeCount: PropTypes.bool,
 };
 
 export default BoardListPage;

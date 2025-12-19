@@ -50,6 +50,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import useStudentCourseDetail from '../domains/course/hooks/useStudentCourseDetail';
 import { formatScheduleTime } from '../domains/course/utils/scheduleUtils';
+import authService from '../services/authService';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -81,9 +82,20 @@ export default function CourseDetail() {
 
   const description = detail?.description || '';
 
-  const handleOpenContent = (url) => {
+  const handleOpenContent = (content) => {
+    const url = content?.contentUrl;
     if (!url) return;
-    window.open(url, '_blank', 'noopener,noreferrer');
+
+    // VIDEO 타입일 때 userId 파라미터 추가
+    if (content.contentType === 'VIDEO') {
+      const user = authService.getCurrentUser();
+      const userId = user?.userId || user?.userNumber || '';
+      const separator = url.includes('?') ? '&' : '?';
+      const videoUrl = `${url}${separator}userId=${userId}`;
+      window.open(videoUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleWeekExpand = (weekKey) => (_event, isExpanded) => {
@@ -214,7 +226,7 @@ export default function CourseDetail() {
                               secondaryAction={
                                 <IconButton
                                   edge="end"
-                                  onClick={() => handleOpenContent(content.contentUrl)}
+                                  onClick={() => handleOpenContent(content)}
                                   title="보기"
                                 >
                                   <VisibilityIcon />

@@ -10,6 +10,7 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   Groups as GroupsIcon,
+  School as SchoolIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePostLike } from '../../hooks/usePostLike';

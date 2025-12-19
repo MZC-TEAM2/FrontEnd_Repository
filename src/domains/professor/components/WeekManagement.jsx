@@ -52,6 +52,7 @@ import {
   CloudUpload as UploadIcon,
   OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
+import VideoUploader from './VideoUploader';
 
 /**
  * WeekManagement 컴포넌트
@@ -319,7 +320,9 @@ const WeekManagement = ({
       case 'DOCUMENT':
         return '자료';
       case 'LINK':
-        return '강의 링크';
+        return '강의 영상';
+      case 'VIDEO':
+        return '강의 영상';
       default:
         return contentType;
     }
@@ -548,26 +551,13 @@ const WeekManagement = ({
                 </Typography>
                 
                 <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>콘텐츠 유형</InputLabel>
-                    <Select
-                      value={contentFormData.contentType}
-                      label="콘텐츠 유형"
-                      onChange={(e) =>
-                        setContentFormData({
-                          ...contentFormData,
-                          contentType: e.target.value,
-                        })
-                      }
-                    >
-                      <MenuItem value="DOCUMENT">자료</MenuItem>
-                      <MenuItem value="LINK">강의 링크</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    강의 영상은 주차 생성 후 "콘텐츠 추가" 버튼으로 업로드해주세요.
+                  </Alert>
 
                   <TextField
                     fullWidth
-                    label="콘텐츠 제목"
+                    label="자료 제목"
                     value={contentFormData.title}
                     onChange={(e) =>
                       setContentFormData({
@@ -580,7 +570,7 @@ const WeekManagement = ({
 
                   <TextField
                     fullWidth
-                    label="콘텐츠 URL"
+                    label="자료 URL"
                     value={contentFormData.contentUrl}
                     onChange={(e) =>
                       setContentFormData({
@@ -588,7 +578,7 @@ const WeekManagement = ({
                         contentUrl: e.target.value,
                       })
                     }
-                    placeholder={contentFormData.contentType === 'LINK' ? '강의 링크 URL (https://...)' : '자료 URL (https://...)'}
+                    placeholder="자료 URL (https://...)"
                     sx={{ mb: 2 }}
                   />
 
@@ -599,7 +589,7 @@ const WeekManagement = ({
                       onClick={handleAddContentToWeekForm}
                       disabled={!contentFormData.title.trim() || !contentFormData.contentUrl.trim()}
                     >
-                      콘텐츠 추가
+                      자료 추가
                     </Button>
                   </Box>
                 </Box>
@@ -714,76 +704,92 @@ const WeekManagement = ({
               </ToggleButton>
               <ToggleButton value="LINK">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <LinkIcon fontSize="small" />
-                  강의 링크
+                  <VideoIcon fontSize="small" />
+                  강의 영상
                 </Box>
               </ToggleButton>
             </ToggleButtonGroup>
 
-            <TextField
-              fullWidth
-              label="제목"
-              value={contentUploadForm.title}
-              onChange={(e) => setContentUploadForm((prev) => ({ ...prev, title: e.target.value }))}
-              sx={{ mb: 2 }}
-              disabled={contentSubmitLoading}
-            />
+            {/* LINK(강의 영상) 타입: VideoUploader 표시 */}
+            {contentUploadForm.contentType === 'LINK' ? (
+              <VideoUploader
+                courseId={courseId}
+                weekId={selectedWeekId}
+                onUploadComplete={() => {
+                  setContentDialogOpen(false);
+                  if (onRefreshWeeks) {
+                    onRefreshWeeks();
+                  }
+                }}
+                onCancel={() => setContentDialogOpen(false)}
+              />
+            ) : (
+              <>
+                <TextField
+                  fullWidth
+                  label="제목"
+                  value={contentUploadForm.title}
+                  onChange={(e) => setContentUploadForm((prev) => ({ ...prev, title: e.target.value }))}
+                  sx={{ mb: 2 }}
+                  disabled={contentSubmitLoading}
+                />
 
-            <TextField
-              fullWidth
-              label="설명 (선택)"
-              value={contentUploadForm.description}
-              onChange={(e) => setContentUploadForm((prev) => ({ ...prev, description: e.target.value }))}
-              sx={{ mb: 2 }}
-              multiline
-              minRows={2}
-              disabled={contentSubmitLoading}
-            />
+                <TextField
+                  fullWidth
+                  label="설명 (선택)"
+                  value={contentUploadForm.description}
+                  onChange={(e) => setContentUploadForm((prev) => ({ ...prev, description: e.target.value }))}
+                  sx={{ mb: 2 }}
+                  multiline
+                  minRows={2}
+                  disabled={contentSubmitLoading}
+                />
 
-            <TextField
-              fullWidth
-              label={contentUploadForm.contentType === 'LINK' ? '강의 링크 URL' : '자료 URL'}
-              value={contentUploadForm.contentUrl}
-              onChange={(e) => setContentUploadForm((prev) => ({ ...prev, contentUrl: e.target.value }))}
-              sx={{ mb: 2 }}
-              placeholder="https://..."
-              disabled={contentSubmitLoading}
-              error={!!contentUploadForm.contentUrl && !isValidUrl(contentUploadForm.contentUrl.trim())}
-              helperText={
-                contentUploadForm.contentType === 'LINK'
-                  ? '수강생이 클릭해서 열 수 있는 강의 링크를 입력하세요.'
-                  : '파일 업로드가 아닌 “자료 URL”을 입력하세요.'
-              }
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      size="small"
-                      disabled={!isValidUrl(contentUploadForm.contentUrl.trim())}
-                      onClick={() => window.open(contentUploadForm.contentUrl.trim(), '_blank', 'noopener,noreferrer')}
-                      title="미리 열기"
-                    >
-                      <OpenInNewIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+                <TextField
+                  fullWidth
+                  label="자료 URL"
+                  value={contentUploadForm.contentUrl}
+                  onChange={(e) => setContentUploadForm((prev) => ({ ...prev, contentUrl: e.target.value }))}
+                  sx={{ mb: 2 }}
+                  placeholder="https://..."
+                  disabled={contentSubmitLoading}
+                  error={!!contentUploadForm.contentUrl && !isValidUrl(contentUploadForm.contentUrl.trim())}
+                  helperText="파일 업로드가 아닌 자료 URL을 입력하세요."
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          disabled={!isValidUrl(contentUploadForm.contentUrl.trim())}
+                          onClick={() => window.open(contentUploadForm.contentUrl.trim(), '_blank', 'noopener,noreferrer')}
+                          title="미리 열기"
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </>
+            )}
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setContentDialogOpen(false)} disabled={contentSubmitLoading}>
-            취소
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmitCreateContent}
-            disabled={!canSubmitContent() || contentSubmitLoading}
-            startIcon={contentSubmitLoading ? <CircularProgress size={16} color="inherit" /> : null}
-          >
-            {contentSubmitLoading ? '추가 중...' : '추가'}
-          </Button>
-        </DialogActions>
+        {/* DOCUMENT 타입일 때만 하단 버튼 표시 (LINK는 VideoUploader 자체 버튼 사용) */}
+        {contentUploadForm.contentType === 'DOCUMENT' && (
+          <DialogActions>
+            <Button onClick={() => setContentDialogOpen(false)} disabled={contentSubmitLoading}>
+              취소
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmitCreateContent}
+              disabled={!canSubmitContent() || contentSubmitLoading}
+              startIcon={contentSubmitLoading ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              {contentSubmitLoading ? '추가 중...' : '추가'}
+            </Button>
+          </DialogActions>
+        )}
       </Dialog>
     </Box>
   );

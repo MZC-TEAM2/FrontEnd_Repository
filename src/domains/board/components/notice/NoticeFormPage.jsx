@@ -32,7 +32,7 @@ const NoticeFormPage = () => {
   const { formData, setFormData, handleInputChange, validateForm } = usePostForm({
     title: '',
     content: '',
-    postType: 'NORMAL',
+    postType: 'NOTICE',
     isAnonymous: false,
   });
   const {

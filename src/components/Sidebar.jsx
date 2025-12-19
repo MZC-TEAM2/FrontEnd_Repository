@@ -63,11 +63,11 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import QuizIcon from '@mui/icons-material/Quiz';
 import ClassIcon from '@mui/icons-material/Class';
 import CampaignIcon from '@mui/icons-material/Campaign';
-import GroupsIcon from '@mui/icons-material/Groups';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import GroupsIcon from '@mui/icons-material/Groups';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import WorkIcon from '@mui/icons-material/Work';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -113,7 +113,6 @@ const studentMenuItems = [
       { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
       { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
       { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
-      { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon />, requiredRole: 'PROFESSOR' },
       { title: '학생 게시판', path: '/boards/student', icon: <GroupsIcon />, requiredRole: 'STUDENT' },
       { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
       { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
@@ -137,13 +136,6 @@ const studentMenuItems = [
   },
   {
     divider: true, // 구분선
-  },
-  {
-    title: '메시지',
-    path: '/messages',
-    icon: <MailIcon />,
-    description: '쪽지 보내기/받기',
-    hasBadge: true, // 동적 뱃지 표시 플래그
   },
   {
     title: '내 정보',
@@ -196,9 +188,17 @@ const professorMenuItems = [
     icon: <ForumIcon />,
     description: '학교 커뮤니티',
     children: [
-      { title: '학사 공지', path: '/community/notices', icon: <NotificationsIcon /> },
-      { title: '자유게시판', path: '/community/board', icon: <ForumIcon /> },
-      { title: '질문/답변', path: '/community/qna', icon: <QuizIcon /> },
+      { title: '학사 공지', path: '/notices', icon: <CampaignIcon /> },
+      { title: '자유게시판', path: '/boards/free', icon: <ForumIcon /> },
+      { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
+      { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
+      { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
+      { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon />, requiredRole: 'PROFESSOR' },
+      { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
+      { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
+      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
+      { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
+      { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
     ],
   },
   {
@@ -248,14 +248,14 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
   // 서브메뉴 열림/닫힘 상태 관리
   const [openSubmenu, setOpenSubmenu] = useState({});
   const [profile, setProfile] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
 
   // 기간 기반 메뉴 노출 제어
   // - STUDENT: ENROLLMENT 기간이 아닐 때 '/registration' 숨김
   // - PROFESSOR: COURSE_REGISTRATION 기간이 아닐 때 '/professor/courses' 숨김
   const [isStudentEnrollmentPeriodActive, setIsStudentEnrollmentPeriodActive] = useState(null); // null=unknown
   const [isProfessorCourseRegPeriodActive, setIsProfessorCourseRegPeriodActive] = useState(null); // null=unknown
+  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -525,16 +525,7 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
                 {/* 하위 메뉴 */}
                 <Collapse in={openSubmenu[item.title]} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding>
-                    {item.children
-                      .filter(child => {
-                        // requiredRole이 없으면 모두에게 표시
-                        if (!child.requiredRole) return true;
-                        
-                        // 현재 사용자의 userType 확인
-                        const user = authService.getCurrentUser();
-                        return user?.userType === child.requiredRole;
-                      })
-                      .map((child) => (
+                    {item.children.map((child) => (
                       <ListItemButton
                         key={child.title}
                         onClick={() => handleMenuClick(child.path)}
@@ -564,9 +555,6 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
           }
 
           // 일반 메뉴 아이템
-          // 동적 뱃지 값 (메시지의 경우 unreadCount 사용)
-          const badgeValue = item.hasBadge ? unreadCount : item.badge;
-
           return (
             <ListItemButton
               key={item.title}
@@ -589,9 +577,9 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
                 primary={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <span>{item.title}</span>
-                    {badgeValue > 0 && (
+                    {item.badge && (
                       <Chip
-                        label={badgeValue > 99 ? '99+' : badgeValue}
+                        label={item.badge}
                         size="small"
                         color="error"
                         sx={{ height: 20, fontSize: '0.75rem' }}
