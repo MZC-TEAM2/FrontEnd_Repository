@@ -45,8 +45,10 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 import useStudentCourseDetail from '../domains/course/hooks/useStudentCourseDetail';
+import AttendanceTab from '../components/attendance/AttendanceTab';
 import { formatScheduleTime } from '../domains/course/utils/scheduleUtils';
 import authService from '../services/authService';
 
@@ -163,6 +165,7 @@ export default function CourseDetail() {
           textColor="primary"
         >
           <Tab icon={<PlayCircleOutlineIcon />} label="주차별 강의" iconPosition="start" />
+          <Tab icon={<EventAvailableIcon />} label="출석" iconPosition="start" />
           <Tab icon={<NotificationsIcon />} label="공지사항" iconPosition="start" />
           <Tab icon={<AssignmentIcon />} label="과제" iconPosition="start" />
           <Tab icon={<QuizIcon />} label="시험" iconPosition="start" />
@@ -254,11 +257,16 @@ export default function CourseDetail() {
         )}
       </TabPanel>
 
+      {/* 출석 탭 */}
+      <TabPanel value={currentTab} index={1}>
+        <AttendanceTab courseId={courseId} />
+      </TabPanel>
+
       {[
-        { index: 1, icon: <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '공지사항' },
-        { index: 2, icon: <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '과제' },
-        { index: 3, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '시험' },
-        { index: 4, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '성적' },
+        { index: 2, icon: <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '공지사항' },
+        { index: 3, icon: <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '과제' },
+        { index: 4, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '시험' },
+        { index: 5, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '성적' },
       ].map((t) => (
         <TabPanel key={t.index} value={currentTab} index={t.index}>
           <Paper sx={{ p: 4, textAlign: 'center' }}>

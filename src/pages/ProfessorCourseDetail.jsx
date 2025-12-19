@@ -36,6 +36,7 @@ import {
   People as PeopleIcon,
   Quiz as QuizIcon,
   FactCheck as FactCheckIcon,
+  EventAvailable as EventAvailableIcon,
 } from '@mui/icons-material';
 
 // 컴포넌트
@@ -43,6 +44,7 @@ import WeekManagement from '../domains/professor/components/WeekManagement';
 import CourseCreateDialog from '../domains/professor/components/CourseCreateDialog';
 import ExamManagement from '../domains/professor/components/ExamManagement';
 import QuizManagement from '../domains/professor/components/QuizManagement';
+import AttendanceManagement from '../components/attendance/AttendanceManagement';
 
 // API
 import {
@@ -364,6 +366,7 @@ const ProfessorCourseDetail = () => {
       <Paper sx={{ mb: 3 }}>
         <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)}>
           <Tab icon={<CalendarMonthIcon />} label="주차 관리" />
+          <Tab icon={<EventAvailableIcon />} label="출석 관리" />
           <Tab icon={<NotificationsIcon />} label="공지사항" />
           <Tab icon={<AssignmentIcon />} label="과제" />
           <Tab icon={<QuizIcon />} label="퀴즈" />
@@ -387,6 +390,10 @@ const ProfessorCourseDetail = () => {
       )}
 
       {currentTab === 1 && (
+        <AttendanceManagement courseId={courseId} />
+      )}
+
+      {currentTab === 2 && (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
@@ -398,7 +405,7 @@ const ProfessorCourseDetail = () => {
         </Paper>
       )}
 
-      {currentTab === 2 && (
+      {currentTab === 3 && (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
@@ -410,11 +417,11 @@ const ProfessorCourseDetail = () => {
         </Paper>
       )}
 
-      {currentTab === 3 && <QuizManagement />}
+      {currentTab === 4 && <QuizManagement />}
 
-      {currentTab === 4 && <ExamManagement />}
+      {currentTab === 5 && <ExamManagement />}
 
-      {currentTab === 5 && (
+      {currentTab === 6 && (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <AssessmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
