@@ -28,7 +28,6 @@ import {
   Toolbar,
   IconButton,
   Typography,
-  InputBase,
   Badge,
   Box,
   Avatar,
@@ -38,15 +37,13 @@ import {
   ListItemIcon,
   ListItemText,
   Tooltip,
-  Paper,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { styled, alpha } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles';
 
 // 아이콘 임포트
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MailIcon from '@mui/icons-material/Mail';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -61,60 +58,6 @@ import authService from '../services/authService';
 import notificationService from '../services/notificationService';
 import messageService from '../services/messageService';
 import { useThemeContext } from '../contexts/ThemeContext';
-
-/**
- * 검색창 컨테이너 스타일 컴포넌트
- * Material UI의 스타일드 컴포넌트를 사용하여
- * 커스텀 검색창을 구성합니다.
- */
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius * 2, // 더 둥근 모서리
-  backgroundColor: alpha(theme.palette.primary.main, 0.08),
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.12),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: '100%',
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(3),
-    width: 'auto',
-  },
-}));
-
-/**
- * 검색 아이콘 래퍼 스타일 컴포넌트
- */
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: theme.palette.primary.main,
-}));
-
-/**
- * 검색 입력 필드 스타일 컴포넌트
- */
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  width: '100%',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-      '&:focus': {
-        width: '30ch', // 포커스 시 확장
-      },
-    },
-  },
-}));
 
 /**
  * Header 컴포넌트
@@ -384,17 +327,6 @@ const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
             MZC 대학교 LMS
           </Typography>
         )}
-
-        {/* 검색창 */}
-        <Search>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase
-            placeholder="검색..."
-            inputProps={{ 'aria-label': 'search' }}
-          />
-        </Search>
 
         {/* 여백 채우기 */}
         <Box sx={{ flexGrow: 1 }} />

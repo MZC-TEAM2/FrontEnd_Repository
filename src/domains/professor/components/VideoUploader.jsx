@@ -130,12 +130,9 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
 
     const upload = new tus.Upload(file, {
       endpoint: TUS_ENDPOINT,
-      retryDelays: [0, 3000, 5000, 10000, 20000],
+      retryDelays: null, // 자동 재시도 비활성화 (POST 중복 방지)
       chunkSize: 5 * 1024 * 1024, // 5MB 청크
       metadata: {
-        filename: file.name,
-        filetype: file.type,
-        courseId: String(courseId),
         weekId: String(weekId),
         title: title.trim() || file.name.replace(/\.[^/.]+$/, ''),
         duration: duration.trim() || '',
@@ -143,9 +140,10 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
       },
+      removeFingerprintOnSuccess: true, // 성공 시 fingerprint 제거
       onError: (err) => {
         console.error('Upload error:', err);
-        setError(`업로드 실패: ${err.message || '알 수 없는 오류'}`);
+        setError(`업로드 실패: ${err.message || '알 수 없는 오류'}. 다시 시도해주세요.`);
         setUploading(false);
       },
       onProgress: (bytesUploaded, bytesTotal) => {

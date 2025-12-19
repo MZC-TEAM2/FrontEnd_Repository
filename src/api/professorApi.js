@@ -201,18 +201,17 @@ export const deleteWeek = async (courseId, weekId) => {
  * 주차별 콘텐츠 추가
  * @param {number} courseId - 강의 ID
  * @param {number} weekId - 주차 ID
- * @param {FormData} formData - 콘텐츠 정보 (multipart/form-data)
+ * @param {Object} contentData - 콘텐츠 정보 (application/json)
+ * @param {string} contentData.contentType - 콘텐츠 유형 (DOCUMENT, LINK, ...)
+ * @param {string} contentData.title - 제목
+ * @param {string} [contentData.description] - 설명(선택)
+ * @param {string} contentData.contentUrl - 자료/강의 링크 URL
  * @returns {Promise} 생성된 콘텐츠 정보
  */
-export const createContent = async (courseId, weekId, formData) => {
+export const createContent = async (courseId, weekId, contentData) => {
   const response = await axiosInstance.post(
     `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}/contents`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
+    contentData
   );
   return response.data;
 };
@@ -220,19 +219,13 @@ export const createContent = async (courseId, weekId, formData) => {
 /**
  * 콘텐츠 수정
  * @param {number} contentId - 콘텐츠 ID
- * @param {Object|FormData} contentData - 수정할 콘텐츠 정보
+ * @param {Object} contentData - 수정할 콘텐츠 정보
  * @returns {Promise} 수정된 콘텐츠 정보
  */
 export const updateContent = async (contentId, contentData) => {
-  const isFormData = contentData instanceof FormData;
-  const headers = isFormData 
-    ? { 'Content-Type': 'multipart/form-data' }
-    : { 'Content-Type': 'application/json' };
-    
   const response = await axiosInstance.put(
     `${BASE_URL}/api/v1/professor/contents/${contentId}`,
-    contentData,
-    { headers }
+    contentData
   );
   return response.data;
 };
@@ -245,21 +238,6 @@ export const updateContent = async (contentId, contentData) => {
 export const deleteContent = async (contentId) => {
   const response = await axiosInstance.delete(
     `${BASE_URL}/api/v1/professor/contents/${contentId}`
-  );
-  return response.data;
-};
-
-/**
- * 콘텐츠 순서 변경
- * @param {number} courseId - 강의 ID
- * @param {number} weekId - 주차 ID
- * @param {Array} contentOrders - 콘텐츠 순서 배열 [{contentId, order}, ...]
- * @returns {Promise} 변경 결과
- */
-export const reorderContents = async (courseId, weekId, contentOrders) => {
-  const response = await axiosInstance.put(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}/contents/reorder`,
-    { contentOrders }
   );
   return response.data;
 };

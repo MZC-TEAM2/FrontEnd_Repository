@@ -13,10 +13,15 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 /**
  * 현재 수강신청 기간 조회 (학생용 - ENROLLMENT 타입)
+ * @param {string|null} typeCode - 기간 타입(예: ENROLLMENT). 미지정 시 백엔드 기본값 사용
  * @returns {Promise} 수강신청 기간 정보 (enrollmentPeriodId, periodType 포함)
  */
-export const getCurrentEnrollmentPeriod = async () => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
+export const getCurrentEnrollmentPeriod = async (typeCode = null) => {
+  const url = typeCode
+    ? `${BASE_URL}/api/v1/enrollments/periods/current?type=${encodeURIComponent(typeCode)}`
+    : `${BASE_URL}/api/v1/enrollments/periods/current`;
+
+  const response = await axiosInstance.get(url);
 
   if (response.data?.success && response.data.data?.currentPeriod) {
     const period = response.data.data.currentPeriod;
@@ -94,8 +99,47 @@ export const getCourses = async (params = {}) => {
  * @returns {Promise} 강의 상세 정보
  */
 export const getCourseDetail = async (courseId) => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}`);
-  return response.data;
+  try {
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}`);
+    return response.data;
+  } catch (err) {
+    // fallback: 스펙에 맞춘 prefix 없는 경로
+    if (err?.status === 404) {
+      const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}`);
+      return response.data;
+    }
+    throw err;
+  }
+};
+
+/**
+ * 주차 목록 조회 (학생용)
+ * API_SPECIFICATION.md: GET /courses/{courseId}/weeks
+ *
+ * 백엔드 라우팅이 /api/v1 prefix를 사용하는 경우가 있어 1회 fallback을 둠.
+ */
+export const getCourseWeeks = async (courseId) => {
+  try {
+    // 최신 스펙(12.1): 교수/수강중 학생 공통 엔드포인트
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`);
+    return response.data;
+  } catch (err) {
+    // fallback 1: 학생 수강 과목 API(구버전/대안)
+    if (err?.status === 404) {
+      try {
+        const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}/weeks`);
+        return response.data;
+      } catch (err2) {
+        // fallback 2: 스펙에 맞춘 prefix 없는 경로
+        if (err2?.status === 404) {
+          const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}/weeks`);
+          return response.data;
+        }
+        throw err2;
+      }
+    }
+    throw err;
+  }
 };
 
 /**
@@ -182,6 +226,31 @@ export const getMyEnrollments = async (enrollmentPeriodId = null) => {
     ? `${BASE_URL}/api/v1/enrollments/my?${queryParams.toString()}`
     : `${BASE_URL}/api/v1/enrollments/my`;
     
+  const response = await axiosInstance.get(url);
+  return response.data;
+};
+
+/**
+ * 내 시간표 조회
+ * API_SPECIFICATION.md: GET /schedule?year={year}&term={term}
+ * NOTE: 일부 환경에서 /api/v1 prefix가 필요할 수 있어, 백엔드 라우팅에 맞게 조정 필요.
+ *
+ * @param {Object} params
+ * @param {number} params.year - 학년도
+ * @param {string|number} params.term - 학기 (termType)
+ * @returns {Promise} 시간표 데이터
+ */
+export const getMySchedule = async (params = {}) => {
+  const { year, term } = params;
+  const queryParams = new URLSearchParams();
+
+  if (year !== undefined && year !== null && year !== '') queryParams.append('year', year);
+  if (term !== undefined && term !== null && term !== '') queryParams.append('term', term);
+
+  const url = queryParams.toString()
+    ? `${BASE_URL}/schedule?${queryParams.toString()}`
+    : `${BASE_URL}/schedule`;
+
   const response = await axiosInstance.get(url);
   return response.data;
 };

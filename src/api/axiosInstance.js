@@ -34,6 +34,20 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // FormData 전송 시 Content-Type을 강제 지정하면 boundary가 누락되어 415가 날 수 있음
+    // -> 브라우저/axios가 boundary 포함해서 자동 설정하도록 Content-Type 제거
+    if (config.data instanceof FormData) {
+      // axios는 headers가 object or AxiosHeaders일 수 있음
+      try {
+        // eslint-disable-next-line no-param-reassign
+        delete config.headers['Content-Type'];
+        // eslint-disable-next-line no-param-reassign
+        delete config.headers['content-type'];
+      } catch {
+        // ignore
+      }
+    }
+
     // 개발 환경에서 요청 로깅
     if (import.meta.env.VITE_ENV === 'development') {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);

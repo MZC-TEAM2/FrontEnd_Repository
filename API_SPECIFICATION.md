@@ -1804,13 +1804,15 @@ Authorization: Bearer {accessToken}
 
 ## 12. 강의 주차 관리
 
-### 12.1 강의 주차 목록 조회 (교수용)
+### 12.1 강의 주차 목록 조회 (교수/수강중 학생)
 ```http
 GET /api/v1/professor/courses/{courseId}/weeks
 Authorization: Bearer {accessToken}
 ```
 
-**권한**: PROFESSOR (본인 강의만)
+**권한**
+- PROFESSOR: 본인 강의
+- STUDENT: 해당 강의를 수강신청(수강중)한 학생
 
 **Response**
 ```json
@@ -1998,19 +2000,28 @@ Authorization: Bearer {accessToken}
 ```http
 POST /api/v1/professor/courses/{courseId}/weeks/{weekId}/contents
 Authorization: Bearer {accessToken}
-Content-Type: multipart/form-data
+Content-Type: application/json
 ```
 
 **권한**: PROFESSOR (본인 강의만)
 
-**Request Body (Form Data)**
-- `contentType`: 콘텐츠 유형 (VIDEO, DOCUMENT, LINK, QUIZ) - 필수
+**Request Body**
+```json
+{
+  "contentType": "LINK",
+  "title": "ER 다이어그램 작성법",
+  "contentUrl": "https://video.mzc.ac.kr/courses/101/week2/lecture1.mp4"
+}
+```
+
+**필드 설명**
+- `contentType`: 콘텐츠 유형 (DOCUMENT, LINK) - 필수
 - `title`: 콘텐츠 제목 - 필수
-- `description`: 설명 (선택)
-- `file`: 파일 (VIDEO, DOCUMENT인 경우)
-- `contentUrl`: 외부 링크 (LINK인 경우)
-- `duration`: 재생 시간 (VIDEO인 경우, 형식: "HH:MM:SS" 또는 "MM:SS")
-- `order`: 콘텐츠 순서 (기본값: 마지막 순서)
+- `contentUrl`: 콘텐츠 URL - 필수
+
+**정렬 규칙**
+- 주차/콘텐츠 조회 응답에서 `contents`는 **LINK 타입이 항상 먼저** 오도록 정렬됩니다.
+- 동일 타입 내 정렬은 서버 내부 순서(displayOrder) 기준입니다. (클라이언트가 순서를 변경하는 API는 제공하지 않습니다.)
 
 **Response**
 ```json
@@ -2033,8 +2044,6 @@ Content-Type: multipart/form-data
 | 코드 | 설명 | HTTP Status |
 |------|------|-------------|
 | `CONTENT_001` | 지원하지 않는 콘텐츠 타입 | 400 |
-| `CONTENT_002` | 파일 크기 초과 (최대 500MB) | 400 |
-| `CONTENT_003` | 허용되지 않는 파일 형식 | 400 |
 | `CONTENT_004` | 필수 필드 누락 | 400 |
 
 ### 12.6 콘텐츠 수정
@@ -2049,8 +2058,8 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "title": "ER 다이어그램 작성법 (수정)",
-  "description": "수정된 설명",
-  "order": 2
+  "contentUrl": "https://video.mzc.ac.kr/courses/101/week2/lecture1.mp4",
+  "duration": "42:30"
 }
 ```
 
@@ -2060,9 +2069,12 @@ Authorization: Bearer {accessToken}
   "success": true,
   "data": {
     "id": 2003,
+    "contentType": "VIDEO",
     "title": "ER 다이어그램 작성법 (수정)",
-    "order": 2,
-    "updatedAt": "2024-09-07T10:00:00Z"
+    "contentUrl": "https://video.mzc.ac.kr/courses/101/week2/lecture1.mp4",
+    "duration": "42:30",
+    "order": 1,
+    "createdAt": "2024-09-06T10:00:00Z"
   },
   "message": "콘텐츠가 수정되었습니다"
 }
@@ -2080,47 +2092,8 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "data": {
-    "contentId": 2003,
-    "title": "ER 다이어그램 작성법",
-    "deletedAt": "2024-09-07T15:00:00Z"
-  },
+  "data": null,
   "message": "콘텐츠가 삭제되었습니다"
-}
-```
-
-### 12.8 콘텐츠 순서 변경
-```http
-PUT /api/v1/professor/courses/{courseId}/weeks/{weekId}/contents/reorder
-Authorization: Bearer {accessToken}
-```
-
-**권한**: PROFESSOR (본인 강의만)
-
-**Request Body**
-```json
-{
-  "contentOrders": [
-    { "contentId": 2001, "order": 1 },
-    { "contentId": 2002, "order": 2 },
-    { "contentId": 2003, "order": 3 }
-  ]
-}
-```
-
-**Response**
-```json
-{
-  "success": true,
-  "data": {
-    "weekId": 1001,
-    "reorderedContents": [
-      { "contentId": 2001, "order": 1 },
-      { "contentId": 2002, "order": 2 },
-      { "contentId": 2003, "order": 3 }
-    ]
-  },
-  "message": "콘텐츠 순서가 변경되었습니다"
 }
 ```
 

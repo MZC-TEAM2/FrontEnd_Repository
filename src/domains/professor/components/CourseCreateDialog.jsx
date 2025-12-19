@@ -82,6 +82,97 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
   const [subjectSearchOpen, setSubjectSearchOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
 
+  const getScheduleRowError = (schedule) => {
+    if (!schedule?.startTime || !schedule?.endTime) return '시작 시간과 종료 시간을 모두 입력해주세요';
+    const startMinutes = timeToMinutes(schedule.startTime);
+    const endMinutes = timeToMinutes(schedule.endTime);
+    if (endMinutes <= startMinutes) return '종료 시간은 시작 시간보다 늦어야 합니다';
+    return null;
+  };
+
+  const setStepErrors = (step, stepErrors) => {
+    setErrors((prev) => {
+      const next = { ...prev };
+
+      // 해당 step에서만 쓰는 에러 키는 먼저 제거 후, 이번 step의 에러만 덮어쓴다.
+      if (step === 0) {
+        delete next.enrollmentPeriodId;
+        delete next.subjectId;
+        delete next.section;
+        delete next.maxStudents;
+      }
+      if (step === 1) {
+        delete next.schedule;
+        delete next.creditsScheduleMismatch;
+        Object.keys(next).forEach((k) => {
+          if (/^schedule_\d+$/.test(k)) delete next[k];
+        });
+      }
+      if (step === 2) {
+        delete next.grading;
+      }
+
+      return { ...next, ...stepErrors };
+    });
+  };
+
+  const getStepValidationErrors = (step) => {
+    const stepErrors = {};
+
+    if (step === 0) {
+      if (disabled || enrollmentPeriods.length === 0) {
+        stepErrors.enrollmentPeriodId = '현재 강의 등록 기간이 아닙니다.';
+      } else if (!formData.enrollmentPeriodId) {
+        stepErrors.enrollmentPeriodId = '수강신청 기간을 선택해주세요';
+      }
+      if (!formData.subjectId) stepErrors.subjectId = '과목을 선택해주세요';
+
+      if (!formData.section) {
+        stepErrors.section = '분반을 입력해주세요';
+      } else {
+        const sectionPattern = /^\d{2}$/;
+        if (!sectionPattern.test(formData.section)) {
+          stepErrors.section = '분반은 2자리 숫자로 입력해주세요 (예: 01, 02)';
+        }
+      }
+
+      if (!formData.maxStudents || formData.maxStudents < 1) {
+        stepErrors.maxStudents = '수강 정원을 입력해주세요';
+      }
+    }
+
+    if (step === 1) {
+      if (formData.schedule.length === 0) {
+        stepErrors.schedule = '최소 1개 이상의 수업 시간을 입력해주세요';
+      } else {
+        formData.schedule.forEach((schedule, index) => {
+          const msg = getScheduleRowError(schedule);
+          if (msg) stepErrors[`schedule_${index}`] = msg;
+        });
+      }
+
+      // 학점-주당 수업시간 일치(현재 validate()와 동일 기준)
+      const weekly = calculateWeeklyHours();
+      const credits = formData.credits || 0;
+      if (weekly > 0 && credits > 0) {
+        const difference = Math.abs(weekly - credits);
+        if (difference > 0.5) {
+          stepErrors.creditsScheduleMismatch = `학점(${credits}학점)과 주당 수업 시간(${weekly}시간)이 일치하지 않습니다. 일반적으로 1학점은 주당 1시간 수업입니다.`;
+        }
+      }
+    }
+
+    if (step === 2) {
+      if (gradingTotal !== 100) {
+        stepErrors.grading = '평가 비율의 합계가 100%가 되어야 합니다';
+      }
+    }
+
+    return stepErrors;
+  };
+
+  const canProceedFromStep = () => Object.keys(getStepValidationErrors(activeStep)).length === 0;
+
   // 다이얼로그 열릴 때 폼 초기화
   useEffect(() => {
     if (open) {
@@ -164,6 +255,27 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
       }
     }
   }, [formData.schedule, formData.credits, errors.creditsScheduleMismatch]);
+
+  // 수업 시간(시작/종료) 유효성: 실시간으로 schedule_* 에러를 세팅/해제한다.
+  // (특히 종료 시간이 "오전으로 돌아가서" 시작 시간보다 앞서게 되는 케이스를 즉시 차단/표시)
+  useEffect(() => {
+    setErrors((prev) => {
+      const next = { ...prev };
+
+      // schedule 관련 에러는 모두 재계산
+      Object.keys(next).forEach((k) => {
+        if (/^schedule_\d+$/.test(k)) delete next[k];
+      });
+      if (formData.schedule.length > 0 && next.schedule) delete next.schedule;
+
+      formData.schedule.forEach((s, i) => {
+        const msg = getScheduleRowError(s);
+        if (msg) next[`schedule_${i}`] = msg;
+      });
+
+      return next;
+    });
+  }, [formData.schedule]);
 
   const handleChange = (field, value) => {
     if (field.includes('.')) {
@@ -455,7 +567,12 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
   const steps = ['기본 정보', '수업 시간', '강의계획서'];
 
   const handleNext = () => {
-    if (activeStep < steps.length - 1) {
+    if (activeStep >= steps.length - 1) return;
+
+    const stepErrors = getStepValidationErrors(activeStep);
+    setStepErrors(activeStep, stepErrors);
+
+    if (Object.keys(stepErrors).length === 0) {
       setActiveStep(activeStep + 1);
     }
   };
@@ -1543,6 +1660,7 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
           <Button 
             onClick={handleNext}
             variant="contained"
+            disabled={!canProceedFromStep()}
             sx={{ 
               borderRadius: 2.5,
               ml: 'auto',
@@ -1572,7 +1690,7 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
               handleSubmit();
             }} 
             variant="contained"
-            disabled={disabled || enrollmentPeriods.length === 0}
+            disabled={disabled || enrollmentPeriods.length === 0 || !canProceedFromStep()}
             startIcon={<CheckCircleIcon />}
             sx={{ 
               borderRadius: 2.5,
