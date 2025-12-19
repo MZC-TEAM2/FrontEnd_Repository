@@ -30,7 +30,7 @@ import {
   Replay as ReplayIcon,
 } from '@mui/icons-material';
 import { getSubmissions, getAssignment, allowResubmission } from '../../../../api/assignmentApi';
-import { useFileManager } from '../../hooks/useFileManager';
+import { useFileManager } from '../../../board/hooks/useFileManager';
 import AssignmentGradeDialog from './AssignmentGradeDialog';
 
 const AssignmentSubmissionsPage = () => {
@@ -83,7 +83,7 @@ const AssignmentSubmissionsPage = () => {
   };
 
   const handleBack = () => {
-    navigate(`/boards/assignment/${id}`);
+    navigate(`/assignment/${id}`);
   };
 
   const handleAllowResubmission = async (submissionId) => {

@@ -56,8 +56,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -116,7 +114,6 @@ const studentMenuItems = [
       { title: '학생 게시판', path: '/boards/student', icon: <GroupsIcon />, requiredRole: 'STUDENT' },
       { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
       { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
-      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
       { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
       { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
       { title: '스터디 모집', path: '/boards/study', icon: <GroupIcon /> },
@@ -203,7 +200,6 @@ const professorMenuItems = [
       { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon />, requiredRole: 'PROFESSOR' },
       { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
       { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
-      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
       { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
       { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
     ],
