@@ -47,8 +47,10 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 import useStudentCourseDetail from '../domains/course/hooks/useStudentCourseDetail';
+import AttendanceTab from '../components/attendance/AttendanceTab';
 import { formatScheduleTime } from '../domains/course/utils/scheduleUtils';
 import authService from '../services/authService';
 
@@ -165,6 +167,7 @@ export default function CourseDetail() {
           textColor="primary"
         >
           <Tab icon={<PlayCircleOutlineIcon />} label="주차별 강의" iconPosition="start" />
+          <Tab icon={<EventAvailableIcon />} label="출석" iconPosition="start" />
           <Tab icon={<NotificationsIcon />} label="공지사항" iconPosition="start" />
           <Tab icon={<AssignmentIcon />} label="과제" iconPosition="start" />
           <Tab icon={<QuizIcon />} label="퀴즈" iconPosition="start" />
@@ -255,6 +258,11 @@ export default function CourseDetail() {
             );
           })
         )}
+      </TabPanel>
+
+      {/* 출석 탭 */}
+      <TabPanel value={currentTab} index={1}>
+        <AttendanceTab courseId={courseId} />
       </TabPanel>
 
       {[
