@@ -8,6 +8,10 @@ import {
   CircularProgress,
   Alert,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -29,7 +33,7 @@ const AssignmentFormPage = () => {
     content: '',
     dueDate: new Date(),
     maxScore: 100,
-    submissionMethod: 'ONLINE',
+    submissionMethod: 'FILE_UPLOAD',
     attachmentUrls: [],
   });
   const [loading, setLoading] = React.useState(false);
@@ -55,7 +59,7 @@ const AssignmentFormPage = () => {
             content: data.post.content,
             dueDate: new Date(data.dueDate),
             maxScore: data.maxScore,
-            submissionMethod: data.submissionMethod || 'ONLINE',
+            submissionMethod: data.submissionMethod,
             attachmentUrls: data.attachmentUrls || [],
           });
         } catch (err) {
@@ -234,6 +238,23 @@ const AssignmentFormPage = () => {
                 required
                 inputProps={{ min: 1 }}
               />
+            </Grid>
+
+            {/* 제출 방법 */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel>제출 방법</InputLabel>
+                <Select
+                  name="submissionMethod"
+                  value={formData.submissionMethod}
+                  onChange={handleInputChange}
+                  label="제출 방법"
+                >
+                  <MenuItem value="FILE_UPLOAD">파일 업로드</MenuItem>
+                  <MenuItem value="TEXT_INPUT">텍스트 입력</MenuItem>
+                  <MenuItem value="BOTH">파일 + 텍스트</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
 
             {/* TODO: 첨부파일 업로드 기능 추가 */}

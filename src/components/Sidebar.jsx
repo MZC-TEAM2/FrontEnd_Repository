@@ -65,6 +65,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import WorkIcon from '@mui/icons-material/Work';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import DescriptionIcon from '@mui/icons-material/Description';
+import MailIcon from '@mui/icons-material/Mail';
 
 /**
  * 학생용 메뉴 아이템
@@ -130,6 +131,13 @@ const studentMenuItems = [
   },
   {
     divider: true, // 구분선
+  },
+  {
+    title: '메시지',
+    path: '/messages',
+    icon: <MailIcon />,
+    description: '쪽지 보내기/받기',
+    hasBadge: true, // 동적 뱃지 표시 플래그
   },
   {
     title: '내 정보',
