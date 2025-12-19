@@ -10,7 +10,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -54,6 +54,7 @@ import { formatScheduleTime } from '../domains/course/utils/scheduleUtils';
 import authService from '../services/authService';
 import attendanceService from '../services/attendanceService';
 import LinearProgress from '@mui/material/LinearProgress';
+import AssignmentBoard from '../domains/course/components/assignment/AssignmentBoard';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -72,7 +73,10 @@ function TabPanel({ children, value, index, ...other }) {
 export default function CourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // URL에서 tab 파라미터 읽어서 초기화 (기본값 0)
+  const tabFromUrl = parseInt(searchParams.get('tab') || '0', 10);
+  const [currentTab, setCurrentTab] = useState(tabFromUrl);
   const [expandedWeek, setExpandedWeek] = useState(false);
 
   const { loading, error, courseMeta, detail, weeks, weeksNotFound, attendance, reload } = useStudentCourseDetail(courseId);
@@ -102,6 +106,12 @@ export default function CourseDetail() {
     });
     return map;
   }, [attendance]);
+
+  // 탭 변경 핸들러 - state와 URL 모두 업데이트
+  const handleTabChange = (e, newValue) => {
+    setCurrentTab(newValue);
+    setSearchParams({ tab: newValue });
+  };
 
   const headerTitle = useMemo(() => {
     if (courseMeta) return `${courseMeta.subjectCode} - ${courseMeta.subjectName}`;
@@ -188,7 +198,7 @@ export default function CourseDetail() {
       <Paper sx={{ mb: 3 }}>
         <Tabs
           value={currentTab}
-          onChange={(_e, v) => setCurrentTab(v)}
+          onChange={handleTabChange}
           variant="fullWidth"
           indicatorColor="primary"
           textColor="primary"
@@ -332,9 +342,25 @@ export default function CourseDetail() {
         )}
       </TabPanel>
 
+      {/* 공지사항 */}
+      <TabPanel value={currentTab} index={1}>
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
+            공지사항
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            (보기 전용) API 연동 예정
+          </Typography>
+        </Paper>
+      </TabPanel>
+
+      {/* 과제 */}
+      <TabPanel value={currentTab} index={2}>
+        <AssignmentBoard courseId={courseId} isEmbedded={true} />
+      </TabPanel>
+
       {[
-        { index: 1, icon: <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '공지사항' },
-        { index: 2, icon: <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '과제' },
         { index: 3, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '퀴즈' },
         { index: 4, icon: <FactCheckIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '시험' },
         { index: 5, icon: <AssessmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '성적' },

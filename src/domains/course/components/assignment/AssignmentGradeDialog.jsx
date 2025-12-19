@@ -31,7 +31,7 @@ import {
 } from '@mui/icons-material';
 import { gradeSubmission } from '../../../../api/assignmentApi';
 import attachmentApi from '../../../../api/attachmentApi';
-import { useFileManager } from '../../hooks/useFileManager';
+import { useFileManager } from '../../../board/hooks/useFileManager';
 
 const AssignmentGradeDialog = ({ open, onClose, submission, assignment, onSuccess }) => {
   const [score, setScore] = useState(submission?.score || '');
