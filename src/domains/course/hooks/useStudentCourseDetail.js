@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getCourseDetail, getCourseWeeks } from '../../../api/courseApi';
 import useMyCourses from './useMyCourses';
+import attendanceService from '../../../services/attendanceService';
 
 /**
  * 학생 강의실(과목 상세)용 데이터 로더
  * - 수강중 목록(enrollments/my)에서 기본 메타(교수/시간표/학점/정원 등)
  * - 과목 상세(/courses/{courseId})에서 설명/강의계획서
  * - 주차 목록(/courses/{courseId}/weeks)에서 콘텐츠 목록
+ * - 출석 현황(/api/v1/attendance/courses/{courseId})에서 출석 데이터
  *
  * 전부 read-only 렌더링 목적
  */
@@ -23,6 +25,7 @@ export default function useStudentCourseDetail(courseId) {
   const [detail, setDetail] = useState(null);
   const [weeks, setWeeks] = useState([]);
   const [weeksNotFound, setWeeksNotFound] = useState(false);
+  const [attendance, setAttendance] = useState(null);
 
   const load = useCallback(async () => {
     if (!courseId) return;
@@ -48,10 +51,23 @@ export default function useStudentCourseDetail(courseId) {
           throw eWeeks;
         }
       }
+
+      // 출석 데이터 로드
+      try {
+        const attendanceRes = await attendanceService.getCourseAttendance(courseId);
+        if (attendanceRes?.success) {
+          setAttendance(attendanceRes.data);
+        }
+      } catch (eAttendance) {
+        // 출석 API 실패해도 다른 데이터는 표시
+        console.warn('출석 데이터 로드 실패:', eAttendance);
+        setAttendance(null);
+      }
     } catch (e) {
       setError(e?.message || '강의 정보를 불러오는 중 오류가 발생했습니다.');
       setDetail(null);
       setWeeks([]);
+      setAttendance(null);
     } finally {
       setLoading(false);
     }
@@ -68,6 +84,7 @@ export default function useStudentCourseDetail(courseId) {
     detail,
     weeks,
     weeksNotFound,
+    attendance,
     reload: load,
   };
 }
