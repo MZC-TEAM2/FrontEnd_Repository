@@ -62,7 +62,6 @@ import {
  * @param {Function} onDeleteWeek - 주차 삭제 핸들러
  * @param {Function} onCreateContent - 콘텐츠 추가 핸들러 (application/json)
  * @param {Function} onDeleteContent - 콘텐츠 삭제 핸들러
- * @param {Function} onRefreshWeeks - 주차 목록 새로고침 핸들러
  */
 const WeekManagement = ({
   courseId,
@@ -72,8 +71,9 @@ const WeekManagement = ({
   onDeleteWeek,
   onCreateContent,
   onDeleteContent,
-  onRefreshWeeks,
 }) => {
+  const MAX_WEEKS = 16;
+
   const [expandedWeek, setExpandedWeek] = useState(null);
   const [weekDialogOpen, setWeekDialogOpen] = useState(false);
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
@@ -104,10 +104,23 @@ const WeekManagement = ({
 
   const selectedWeek = weeks.find((w) => w.id === selectedWeekId) || null;
 
+  const getNextAvailableWeekNumber = () => {
+    const used = new Set(
+      weeks
+        .map((w) => Number(w.weekNumber))
+        .filter((n) => Number.isFinite(n) && n > 0)
+    );
+    for (let i = 1; i <= MAX_WEEKS; i += 1) {
+      if (!used.has(i)) return i;
+    }
+    return null;
+  };
+
+  const canCreateMoreWeeks = getNextAvailableWeekNumber() !== null;
+
   const isValidUrl = (value) => {
     if (!value) return false;
     try {
-      // eslint-disable-next-line no-new
       new URL(value);
       return true;
     } catch {
@@ -127,19 +140,21 @@ const WeekManagement = ({
     if (weeks.length > 0 && !expandedWeek) {
       setExpandedWeek(weeks[0].id);
     }
-  }, [weeks]);
+  }, [weeks, expandedWeek]);
 
   const handleWeekExpand = (weekId) => (event, isExpanded) => {
     setExpandedWeek(isExpanded ? weekId : null);
   };
 
   const handleCreateWeekClick = () => {
-    const nextWeekNumber = weeks.length > 0 
-      ? Math.max(...weeks.map(w => w.weekNumber)) + 1 
-      : 1;
+    const nextWeekNumber = getNextAvailableWeekNumber();
+    if (!nextWeekNumber) {
+      alert(`주차는 최대 ${MAX_WEEKS}개까지 생성할 수 있습니다.`);
+      return;
+    }
     setWeekFormData({
       weekNumber: nextWeekNumber,
-      weekTitle: '',
+      weekTitle: `${nextWeekNumber}주차`,
       contents: [],
     });
     setEditingWeek(null);
@@ -167,6 +182,12 @@ const WeekManagement = ({
       console.log('수정 데이터 (weekTitle만):', updateData);
       onUpdateWeek(editingWeek.id, updateData);
     } else {
+      // 프론트에서 최대 주차 제한(백엔드 16개 제한과 동일)도 선제 적용
+      const weekNumber = Number(weekFormData.weekNumber);
+      if (!Number.isFinite(weekNumber) || weekNumber < 1 || weekNumber > MAX_WEEKS) {
+        alert(`주차 번호는 1 ~ ${MAX_WEEKS} 사이여야 합니다.`);
+        return;
+      }
       // 생성 시에는 contents 포함
       const submitData = { ...weekFormData };
       console.log('생성 데이터 (contents 포함):', submitData);
@@ -405,7 +426,6 @@ const WeekManagement = ({
                           }
                           secondaryTypographyProps={{ component: 'div' }}
                         />
-                        <ListItemSecondaryAction>
                           <IconButton
                             size="small"
                             onClick={() => {
@@ -426,7 +446,6 @@ const WeekManagement = ({
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
-                        </ListItemSecondaryAction>
                       </ListItem>
                       {index < week.contents.length - 1 && <Divider />}
                     </React.Fragment>
@@ -457,18 +476,20 @@ const WeekManagement = ({
           <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
             등록된 주차가 없습니다
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateWeekClick}
-          >
-            첫 번째 주차 생성
-          </Button>
+          {canCreateMoreWeeks && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateWeekClick}
+            >
+              첫 번째 주차 생성
+            </Button>
+          )}
         </Paper>
       )}
 
       {/* 주차 추가 버튼 (하단) */}
-      {weeks.length > 0 && (
+      {weeks.length > 0 && canCreateMoreWeeks && (
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <Button
             variant="outlined"
@@ -499,9 +520,11 @@ const WeekManagement = ({
                 })
               }
               sx={{ mb: 2 }}
-              inputProps={{ min: 1 }}
+              inputProps={{ min: 1, max: MAX_WEEKS }}
               disabled={!!editingWeek}
-              helperText={editingWeek ? '주차 번호는 변경할 수 없습니다.' : undefined}
+              helperText={
+                editingWeek ? '주차 번호는 변경할 수 없습니다.' : `주차 번호는 1 ~ ${MAX_WEEKS} 사이로 입력하세요.`
+              }
             />
             <TextField
               fullWidth
@@ -513,7 +536,6 @@ const WeekManagement = ({
                   weekTitle: e.target.value,
                 })
               }
-              placeholder="예: 데이터베이스 개요"
               sx={{ mb: 3 }}
             />
 
