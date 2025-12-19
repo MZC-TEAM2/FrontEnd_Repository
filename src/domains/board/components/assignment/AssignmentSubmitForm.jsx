@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   TextField,
@@ -19,87 +19,25 @@ import {
   AttachFile as AttachFileIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useAssignment } from '../../hooks/useAssignment';
-import attachmentApi from '../../../../api/attachmentApi';
+import { formatFileSize } from '../../../../utils/boardUtils';
+import { useAssignmentSubmit } from '../../hooks/useAssignmentSubmit';
 
 /**
- * 과제 제출 폼 컴포넌트
+ * 과제 제출 폼 컴포넌트 (UI only)
  */
-const AssignmentSubmitForm = ({ assignmentId, onSuccess, onCancel }) => {
-  const [submissionText, setSubmissionText] = useState('');
-  const [attachedFiles, setAttachedFiles] = useState([]);
-  const [uploadingFiles, setUploadingFiles] = useState(false);
-  const [error, setError] = useState(null);
-
-  const { submitAssignment, loading } = useAssignment();
-
-  // 파일 선택 처리
-  const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    setUploadingFiles(true);
-    setError(null);
-
-    try {
-      const uploadedFiles = [];
-      
-      for (const file of files) {
-        const response = await attachmentApi.uploadFile(file, 'DOCUMENT');
-
-        if (response.status === 'SUCCESS') {
-          uploadedFiles.push({
-            id: response.data.id,
-            name: response.data.originalName,
-            size: response.data.fileSize,
-          });
-        }
-      }
-
-      setAttachedFiles([...attachedFiles, ...uploadedFiles]);
-    } catch (err) {
-      console.error('파일 업로드 에러:', err);
-      setError(err.response?.data?.message || '파일 업로드에 실패했습니다.');
-    } finally {
-      setUploadingFiles(false);
-      e.target.value = ''; // 같은 파일 재선택 가능하도록
-    }
-  };
-
-  // 첨부파일 삭제
-  const handleFileRemove = (fileId) => {
-    setAttachedFiles(attachedFiles.filter(f => f.id !== fileId));
-  };
-
-  // 파일 크기 포맷팅
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!submissionText.trim()) {
-      setError('제출 내용을 입력하세요.');
-      return;
-    }
-
-    try {
-      await submitAssignment(assignmentId, {
-        content: submissionText,
-        attachmentIds: attachedFiles.map(f => f.id),
-      });
-      alert('과제가 제출되었습니다.');
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      setError(err.message || '과제 제출에 실패했습니다.');
-    }
-  };
+const AssignmentSubmitForm = ({ assignmentId, existingSubmission, submissionMethod, onSuccess, onCancel }) => {
+  const {
+    submissionText,
+    setSubmissionText,
+    attachedFiles,
+    uploadingFiles,
+    error,
+    setError,
+    loading,
+    handleFileSelect,
+    handleFileRemove,
+    handleSubmit,
+  } = useAssignmentSubmit({ assignmentId, existingSubmission, submissionMethod, onSuccess });
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -114,23 +52,26 @@ const AssignmentSubmitForm = ({ assignmentId, onSuccess, onCancel }) => {
       )}
 
       {/* 제출 내용 */}
-      <TextField
-        fullWidth
-        label="제출 내용"
-        value={submissionText}
-        onChange={(e) => setSubmissionText(e.target.value)}
-        placeholder="과제 내용을 작성하세요"
-        multiline
-        rows={8}
-        required
-        sx={{ mb: 3 }}
-      />
+      {submissionMethod !== 'FILE_UPLOAD' && (
+        <TextField
+          fullWidth
+          label="제출 내용"
+          value={submissionText}
+          onChange={(e) => setSubmissionText(e.target.value)}
+          placeholder="과제 내용을 작성하세요"
+          multiline
+          rows={8}
+          required={submissionMethod === 'TEXT_INPUT' || submissionMethod === 'BOTH'}
+          sx={{ mb: 3 }}
+        />
+      )}
 
       {/* 파일 업로드 */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
-          첨부파일
-        </Typography>
+      {submissionMethod !== 'TEXT_INPUT' && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            첨부파일 {(submissionMethod === 'FILE_UPLOAD' || submissionMethod === 'BOTH') && <span style={{ color: 'red' }}>*</span>}
+          </Typography>
         
         <Button
           variant="outlined"
@@ -143,7 +84,6 @@ const AssignmentSubmitForm = ({ assignmentId, onSuccess, onCancel }) => {
           <input
             type="file"
             hidden
-            multiple
             onChange={handleFileSelect}
             accept=".pdf,.doc,.docx,.hwp,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif"
           />
@@ -175,10 +115,11 @@ const AssignmentSubmitForm = ({ assignmentId, onSuccess, onCancel }) => {
           </Paper>
         )}
 
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-          * 허용 파일: 문서(PDF, DOC, HWP, TXT), 압축파일(ZIP, RAR, 7Z), 이미지(JPG, PNG, GIF)
-        </Typography>
-      </Box>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            * 허용 파일: 문서(PDF, DOC, HWP, TXT), 압축파일(ZIP, RAR, 7Z), 이미지(JPG, PNG, GIF)
+          </Typography>
+        </Box>
+      )}
 
       {/* 제출 버튼 */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

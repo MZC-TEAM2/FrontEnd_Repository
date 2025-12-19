@@ -34,14 +34,16 @@ export const createAssignment = async (data) => {
 };
 
 /**
- * 강의별 과제 목록 조회
- * @param {number} courseId - 강의 ID
+ * 과제 목록 조회 (강의별 또는 전체)
+ * @param {number} courseId - 강의 ID (선택, null이면 전체 조회)
  * @returns {Promise} 과제 목록
  */
 export const getAssignmentsByCourse = async (courseId) => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/assignments`, {
-    params: { courseId }
-  });
+  const params = {};
+  if (courseId !== null && courseId !== undefined) {
+    params.courseId = courseId;
+  }
+  const response = await axiosInstance.get(`${BASE_URL}/api/v1/assignments`, { params });
   return response.data;
 };
 

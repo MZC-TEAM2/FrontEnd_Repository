@@ -80,6 +80,7 @@ import CareerFormPage from './domains/board/components/career/CareerFormPage';
 import AssignmentBoard from './domains/board/components/assignment/AssignmentBoardPage';
 import AssignmentDetailPage from './domains/board/components/assignment/AssignmentDetailPage';
 import AssignmentFormPage from './domains/board/components/assignment/AssignmentFormPage';
+import AssignmentSubmissionsPage from './domains/board/components/assignment/AssignmentSubmissionsPage';
 import ExamBoard from './domains/board/components/exam/ExamBoardPage';
 import QuizBoard from './domains/board/components/quiz/QuizBoardPage';
 import StudyBoard from './domains/board/components/study/StudyRecruitmentBoardPage';
@@ -207,6 +208,7 @@ function App() {
             <Route path="/boards/assignment" element={<AssignmentBoard />} />
             <Route path="/boards/assignment/create" element={<AssignmentFormPage />} />
             <Route path="/boards/assignment/:id/edit" element={<AssignmentFormPage />} />
+            <Route path="/boards/assignment/:id/submissions" element={<AssignmentSubmissionsPage />} />
             <Route path="/boards/assignment/:id" element={<AssignmentDetailPage />} />
             
             <Route path="/boards/exam" element={<ExamBoard />} />

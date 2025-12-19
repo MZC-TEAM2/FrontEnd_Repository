@@ -68,3 +68,37 @@ export const getBoardTypeName = (boardType) => {
   };
   return types[boardType] || '게시판';
 };
+
+/**
+ * 파일 크기를 사람이 읽기 쉬운 형식으로 포맷팅
+ * @param {number} bytes - 파일 크기 (바이트)
+ * @returns {string} 포맷팅된 파일 크기 (예: "1.5 MB")
+ */
+export const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+};
+
+/**
+ * 마감일 상태를 계산하여 라벨과 색상 반환
+ * @param {string|Date} dueDate - 마감일
+ * @returns {object} { label: string, color: string } - Chip에 사용할 라벨과 색상
+ */
+export const getDueDateStatus = (dueDate) => {
+  const now = new Date();
+  const due = new Date(dueDate);
+  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { label: '마감', color: 'error' };
+  } else if (diffDays === 0) {
+    return { label: '오늘 마감', color: 'warning' };
+  } else if (diffDays <= 3) {
+    return { label: `D-${diffDays}`, color: 'warning' };
+  } else {
+    return { label: `D-${diffDays}`, color: 'success' };
+  }
+};
