@@ -50,9 +50,10 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 import useStudentCourseDetail from '../domains/course/hooks/useStudentCourseDetail';
-import AttendanceTab from '../components/attendance/AttendanceTab';
 import { formatScheduleTime } from '../domains/course/utils/scheduleUtils';
 import authService from '../services/authService';
+import attendanceService from '../services/attendanceService';
+import LinearProgress from '@mui/material/LinearProgress';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -74,7 +75,33 @@ export default function CourseDetail() {
   const [currentTab, setCurrentTab] = useState(0);
   const [expandedWeek, setExpandedWeek] = useState(false);
 
-  const { loading, error, courseMeta, detail, weeks, weeksNotFound, reload } = useStudentCourseDetail(courseId);
+  const { loading, error, courseMeta, detail, weeks, weeksNotFound, attendance, reload } = useStudentCourseDetail(courseId);
+
+  // 출석 데이터에서 주차별 출석 정보를 맵으로 변환
+  const weekAttendanceMap = useMemo(() => {
+    if (!attendance?.weekAttendances) return {};
+    return attendance.weekAttendances.reduce((acc, week) => {
+      acc[week.weekNumber] = week;
+      return acc;
+    }, {});
+  }, [attendance]);
+
+  // 출석 데이터에서 콘텐츠별 출석 정보를 맵으로 변환 (contentId -> isCompleted)
+  const contentAttendanceMap = useMemo(() => {
+    if (!attendance?.weekAttendances) return {};
+    const map = {};
+    attendance.weekAttendances.forEach((week) => {
+      if (week.contents) {
+        week.contents.forEach((content) => {
+          map[content.contentId] = {
+            isCompleted: content.isCompleted,
+            completedAt: content.completedAt,
+          };
+        });
+      }
+    });
+    return map;
+  }, [attendance]);
 
   const headerTitle = useMemo(() => {
     if (courseMeta) return `${courseMeta.subjectCode} - ${courseMeta.subjectName}`;
@@ -167,7 +194,6 @@ export default function CourseDetail() {
           textColor="primary"
         >
           <Tab icon={<PlayCircleOutlineIcon />} label="주차별 강의" iconPosition="start" />
-          <Tab icon={<EventAvailableIcon />} label="출석" iconPosition="start" />
           <Tab icon={<NotificationsIcon />} label="공지사항" iconPosition="start" />
           <Tab icon={<AssignmentIcon />} label="과제" iconPosition="start" />
           <Tab icon={<QuizIcon />} label="퀴즈" iconPosition="start" />
@@ -177,6 +203,37 @@ export default function CourseDetail() {
       </Paper>
 
       <TabPanel value={currentTab} index={0}>
+        {/* 출석률 요약 카드 */}
+        {attendance && (
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <EventAvailableIcon sx={{ fontSize: 40, color: `${attendanceService.getAttendanceColor(attendance.attendanceRate)}.main` }} />
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  내 출석 현황
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {attendance.courseName}
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: `${attendanceService.getAttendanceColor(attendance.attendanceRate)}.main` }}>
+                  {attendanceService.formatAttendanceRate(attendance.attendanceRate)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {attendance.completedWeeks} / {attendance.totalWeeks} 주차 완료
+                </Typography>
+              </Box>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={attendance.attendanceRate || 0}
+              color={attendanceService.getAttendanceColor(attendance.attendanceRate)}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
+          </Paper>
+        )}
+
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />
@@ -193,6 +250,8 @@ export default function CourseDetail() {
             const weekKey = `week-${week.weekNumber}`;
             const contents = week.contents || [];
             const completedCount = contents.filter((c) => c.progress?.isCompleted).length;
+            const weekAttendance = weekAttendanceMap[week.weekNumber];
+            const isWeekCompleted = weekAttendance?.isCompleted || completedCount === contents.length && contents.length > 0;
             return (
               <Accordion
                 key={weekKey}
@@ -201,12 +260,22 @@ export default function CourseDetail() {
                 sx={{ mb: 1, '&:before': { display: 'none' } }}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      {week.weekTitle || `${week.weekNumber}주차`}
-                    </Typography>
+                  <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {isWeekCompleted ? (
+                        <CheckCircleIcon color="success" />
+                      ) : (
+                        <RadioButtonUncheckedIcon color="disabled" />
+                      )}
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        {week.weekTitle || `${week.weekNumber}주차`}
+                      </Typography>
+                      {isWeekCompleted && (
+                        <Chip label="출석완료" size="small" color="success" variant="outlined" />
+                      )}
+                    </Box>
                     <Typography variant="body2" color="text.secondary">
-                      {completedCount} / {contents.length} 완료
+                      {completedCount} / {contents.length}
                     </Typography>
                   </Box>
                 </AccordionSummary>
@@ -216,7 +285,9 @@ export default function CourseDetail() {
                   ) : (
                     <List>
                       {contents.map((content, idx) => {
-                        const isCompleted = !!content.progress?.isCompleted;
+                        // 출석 API 데이터에서 완료 여부 확인 (fallback: content.progress)
+                        const attendanceInfo = contentAttendanceMap[content.id];
+                        const isCompleted = attendanceInfo?.isCompleted ?? !!content.progress?.isCompleted;
                         const isVideo = content.contentType === 'VIDEO';
                         return (
                           <React.Fragment key={content.id}>
@@ -226,26 +297,27 @@ export default function CourseDetail() {
                                 mb: 1,
                                 bgcolor: isCompleted ? 'success.lighter' : 'background.paper',
                               }}
-                              secondaryAction={
-                                <IconButton
-                                  edge="end"
-                                  onClick={() => handleOpenContent(content)}
-                                  title="보기"
-                                >
-                                  <VisibilityIcon />
-                                </IconButton>
-                              }
                             >
-                              <ListItemIcon>
+                              <ListItemIcon sx={{ minWidth: 36 }}>
                                 {isCompleted ? <CheckCircleIcon color="success" /> : <RadioButtonUncheckedIcon />}
                               </ListItemIcon>
-                              <ListItemIcon>
+                              <ListItemIcon sx={{ minWidth: 36 }}>
                                 {isVideo ? <PlayCircleOutlineIcon /> : <AttachFileIcon />}
                               </ListItemIcon>
                               <ListItemText
                                 primary={content.title}
                                 secondary={content.duration || content.contentType || '자료'}
                               />
+                              {isCompleted && (
+                                <Chip label="출석인정" size="small" color="success" sx={{ mr: 1 }} />
+                              )}
+                              <IconButton
+                                edge="end"
+                                onClick={() => handleOpenContent(content)}
+                                title="보기"
+                              >
+                                <VisibilityIcon />
+                              </IconButton>
                             </ListItem>
                             {idx < contents.length - 1 && <Divider />}
                           </React.Fragment>
@@ -258,11 +330,6 @@ export default function CourseDetail() {
             );
           })
         )}
-      </TabPanel>
-
-      {/* 출석 탭 */}
-      <TabPanel value={currentTab} index={1}>
-        <AttendanceTab courseId={courseId} />
       </TabPanel>
 
       {[
