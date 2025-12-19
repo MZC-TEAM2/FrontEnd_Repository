@@ -34,6 +34,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Alert,
+  CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup,
+  InputAdornment,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -45,6 +50,7 @@ import {
   Link as LinkIcon,
   Quiz as QuizIcon,
   CloudUpload as UploadIcon,
+  OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import VideoUploader from './VideoUploader';
 
@@ -55,8 +61,8 @@ import VideoUploader from './VideoUploader';
  * @param {Function} onCreateWeek - 주차 생성 핸들러
  * @param {Function} onUpdateWeek - 주차 수정 핸들러
  * @param {Function} onDeleteWeek - 주차 삭제 핸들러
+ * @param {Function} onCreateContent - 콘텐츠 추가 핸들러 (application/json)
  * @param {Function} onDeleteContent - 콘텐츠 삭제 핸들러
- * @param {Function} onRefreshWeeks - 주차 목록 새로고침 핸들러
  */
 const WeekManagement = ({
   courseId,
@@ -64,9 +70,11 @@ const WeekManagement = ({
   onCreateWeek,
   onUpdateWeek,
   onDeleteWeek,
+  onCreateContent,
   onDeleteContent,
-  onRefreshWeeks,
 }) => {
+  const MAX_WEEKS = 16;
+
   const [expandedWeek, setExpandedWeek] = useState(null);
   const [weekDialogOpen, setWeekDialogOpen] = useState(false);
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
@@ -78,31 +86,76 @@ const WeekManagement = ({
     contents: [],
   });
   const [contentFormData, setContentFormData] = useState({
-    contentType: 'VIDEO',
+    contentType: 'DOCUMENT',
     title: '',
     contentUrl: '',
     duration: '',
-    order: 1,
   });
+
+  // 스펙(12.5)에 맞춘 콘텐츠 추가 폼(파일/링크)
+  const [contentUploadForm, setContentUploadForm] = useState({
+    contentType: 'DOCUMENT',
+    title: '',
+    description: '',
+    contentUrl: '',
+    duration: '',
+  });
+  const [contentSubmitLoading, setContentSubmitLoading] = useState(false);
+  const [contentSubmitError, setContentSubmitError] = useState(null);
+
+  const selectedWeek = weeks.find((w) => w.id === selectedWeekId) || null;
+
+  const getNextAvailableWeekNumber = () => {
+    const used = new Set(
+      weeks
+        .map((w) => Number(w.weekNumber))
+        .filter((n) => Number.isFinite(n) && n > 0)
+    );
+    for (let i = 1; i <= MAX_WEEKS; i += 1) {
+      if (!used.has(i)) return i;
+    }
+    return null;
+  };
+
+  const canCreateMoreWeeks = getNextAvailableWeekNumber() !== null;
+
+  const isValidUrl = (value) => {
+    if (!value) return false;
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // NOTE: 12.5가 application/json + contentUrl 기반으로 변경되어 파일 크기 표시가 불필요해짐
+
+  const canSubmitContent = () => {
+    if (!contentUploadForm.title.trim()) return false;
+    return isValidUrl(contentUploadForm.contentUrl.trim());
+  };
 
   // 첫 번째 주차 자동 확장
   useEffect(() => {
     if (weeks.length > 0 && !expandedWeek) {
       setExpandedWeek(weeks[0].id);
     }
-  }, [weeks]);
+  }, [weeks, expandedWeek]);
 
   const handleWeekExpand = (weekId) => (event, isExpanded) => {
     setExpandedWeek(isExpanded ? weekId : null);
   };
 
   const handleCreateWeekClick = () => {
-    const nextWeekNumber = weeks.length > 0 
-      ? Math.max(...weeks.map(w => w.weekNumber)) + 1 
-      : 1;
+    const nextWeekNumber = getNextAvailableWeekNumber();
+    if (!nextWeekNumber) {
+      alert(`주차는 최대 ${MAX_WEEKS}개까지 생성할 수 있습니다.`);
+      return;
+    }
     setWeekFormData({
       weekNumber: nextWeekNumber,
-      weekTitle: '',
+      weekTitle: `${nextWeekNumber}주차`,
       contents: [],
     });
     setEditingWeek(null);
@@ -125,11 +178,17 @@ const WeekManagement = ({
     console.log('콘텐츠 개수:', weekFormData.contents?.length || 0);
     
     if (editingWeek) {
-      // 수정 시에는 contents 제외
-      const { contents, ...updateData } = weekFormData;
-      console.log('수정 데이터 (contents 제외):', updateData);
+      // 명세(12.3): 수정은 weekTitle만
+      const updateData = { weekTitle: weekFormData.weekTitle };
+      console.log('수정 데이터 (weekTitle만):', updateData);
       onUpdateWeek(editingWeek.id, updateData);
     } else {
+      // 프론트에서 최대 주차 제한(백엔드 16개 제한과 동일)도 선제 적용
+      const weekNumber = Number(weekFormData.weekNumber);
+      if (!Number.isFinite(weekNumber) || weekNumber < 1 || weekNumber > MAX_WEEKS) {
+        alert(`주차 번호는 1 ~ ${MAX_WEEKS} 사이여야 합니다.`);
+        return;
+      }
       // 생성 시에는 contents 포함
       const submitData = { ...weekFormData };
       console.log('생성 데이터 (contents 포함):', submitData);
@@ -148,15 +207,10 @@ const WeekManagement = ({
       return;
     }
 
-    const newContent = {
-      ...contentFormData,
-      order: weekFormData.contents.length + 1,
-    };
+    const newContent = { ...contentFormData };
 
-    // VIDEO 타입이 아닌 경우 duration 제거
-    if (newContent.contentType !== 'VIDEO') {
-      delete newContent.duration;
-    }
+    // 주차 생성 시 콘텐츠는 DOCUMENT/LINK만 허용. duration은 사용하지 않음.
+    delete newContent.duration;
 
     console.log('추가될 콘텐츠:', newContent);
     console.log('현재 weekFormData.contents:', weekFormData.contents);
@@ -171,32 +225,79 @@ const WeekManagement = ({
 
     // 폼 초기화
     setContentFormData({
-      contentType: 'VIDEO',
+      contentType: 'DOCUMENT',
       title: '',
       contentUrl: '',
       duration: '',
-      order: 1,
     });
     
     console.log('=== 콘텐츠 추가 완료 ===');
   };
 
   const handleRemoveContentFromWeekForm = (index) => {
-    const updatedContents = weekFormData.contents.filter((_, i) => i !== index);
-    // 순서 재정렬
-    const reorderedContents = updatedContents.map((content, i) => ({
-      ...content,
-      order: i + 1,
-    }));
     setWeekFormData({
       ...weekFormData,
-      contents: reorderedContents,
+      contents: weekFormData.contents.filter((_, i) => i !== index),
     });
   };
 
   const handleAddContentClick = (weekId) => {
     setSelectedWeekId(weekId);
+    setContentUploadForm({
+      contentType: 'DOCUMENT',
+      title: '',
+      description: '',
+      contentUrl: '',
+      duration: '',
+    });
+    setContentSubmitLoading(false);
+    setContentSubmitError(null);
     setContentDialogOpen(true);
+  };
+
+  const handleSubmitCreateContent = async () => {
+    if (!selectedWeekId) return;
+    if (!onCreateContent) return;
+
+    setContentSubmitError(null);
+    setContentSubmitLoading(true);
+
+    const { contentType, title, description, contentUrl } = contentUploadForm;
+
+    if (!title.trim()) {
+      setContentSubmitError('콘텐츠 제목을 입력해주세요.');
+      setContentSubmitLoading(false);
+      return;
+    }
+
+    if (!contentUrl.trim() || !isValidUrl(contentUrl.trim())) {
+      setContentSubmitError('유효한 URL을 입력해주세요. (예: https://...)');
+      setContentSubmitLoading(false);
+      return;
+    }
+
+    const payload = {
+      contentType,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      contentUrl: contentUrl.trim(),
+    };
+
+    // 디버깅 로그: application/json 전송
+    console.log('[WeekManagement] createContent payload (json)', {
+      courseId,
+      weekId: selectedWeekId,
+      ...payload,
+    });
+
+    try {
+      await onCreateContent(selectedWeekId, payload);
+      setContentDialogOpen(false);
+    } catch (e) {
+      setContentSubmitError(e?.message || '콘텐츠 추가에 실패했습니다.');
+    } finally {
+      setContentSubmitLoading(false);
+    }
   };
 
   const getContentIcon = (contentType) => {
@@ -216,14 +317,12 @@ const WeekManagement = ({
 
   const getContentTypeLabel = (contentType) => {
     switch (contentType) {
-      case 'VIDEO':
-        return '영상';
       case 'DOCUMENT':
         return '자료';
       case 'LINK':
-        return '링크';
-      case 'QUIZ':
-        return '퀴즈';
+        return '강의 영상';
+      case 'VIDEO':
+        return '강의 영상';
       default:
         return contentType;
     }
@@ -328,8 +427,8 @@ const WeekManagement = ({
                               )}
                             </Box>
                           }
+                          secondaryTypographyProps={{ component: 'div' }}
                         />
-                        <ListItemSecondaryAction>
                           <IconButton
                             size="small"
                             onClick={() => {
@@ -350,7 +449,6 @@ const WeekManagement = ({
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
-                        </ListItemSecondaryAction>
                       </ListItem>
                       {index < week.contents.length - 1 && <Divider />}
                     </React.Fragment>
@@ -370,7 +468,7 @@ const WeekManagement = ({
                   startIcon={<UploadIcon />}
                   onClick={() => handleAddContentClick(week.id)}
                 >
-                  영상 업로드
+                  콘텐츠 추가
                 </Button>
               </Box>
             </AccordionDetails>
@@ -381,18 +479,20 @@ const WeekManagement = ({
           <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
             등록된 주차가 없습니다
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateWeekClick}
-          >
-            첫 번째 주차 생성
-          </Button>
+          {canCreateMoreWeeks && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateWeekClick}
+            >
+              첫 번째 주차 생성
+            </Button>
+          )}
         </Paper>
       )}
 
       {/* 주차 추가 버튼 (하단) */}
-      {weeks.length > 0 && (
+      {weeks.length > 0 && canCreateMoreWeeks && (
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <Button
             variant="outlined"
@@ -423,7 +523,11 @@ const WeekManagement = ({
                 })
               }
               sx={{ mb: 2 }}
-              inputProps={{ min: 1 }}
+              inputProps={{ min: 1, max: MAX_WEEKS }}
+              disabled={!!editingWeek}
+              helperText={
+                editingWeek ? '주차 번호는 변경할 수 없습니다.' : `주차 번호는 1 ~ ${MAX_WEEKS} 사이로 입력하세요.`
+              }
             />
             <TextField
               fullWidth
@@ -435,7 +539,6 @@ const WeekManagement = ({
                   weekTitle: e.target.value,
                 })
               }
-              placeholder="예: 데이터베이스 개요"
               sx={{ mb: 3 }}
             />
 
@@ -448,28 +551,13 @@ const WeekManagement = ({
                 </Typography>
                 
                 <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>콘텐츠 유형</InputLabel>
-                    <Select
-                      value={contentFormData.contentType}
-                      label="콘텐츠 유형"
-                      onChange={(e) =>
-                        setContentFormData({
-                          ...contentFormData,
-                          contentType: e.target.value,
-                        })
-                      }
-                    >
-                      <MenuItem value="VIDEO">영상</MenuItem>
-                      <MenuItem value="DOCUMENT">자료</MenuItem>
-                      <MenuItem value="LINK">링크</MenuItem>
-                      <MenuItem value="QUIZ">퀴즈</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    강의 영상은 주차 생성 후 "콘텐츠 추가" 버튼으로 업로드해주세요.
+                  </Alert>
 
                   <TextField
                     fullWidth
-                    label="콘텐츠 제목"
+                    label="자료 제목"
                     value={contentFormData.title}
                     onChange={(e) =>
                       setContentFormData({
@@ -482,7 +570,7 @@ const WeekManagement = ({
 
                   <TextField
                     fullWidth
-                    label="콘텐츠 URL"
+                    label="자료 URL"
                     value={contentFormData.contentUrl}
                     onChange={(e) =>
                       setContentFormData({
@@ -490,26 +578,9 @@ const WeekManagement = ({
                         contentUrl: e.target.value,
                       })
                     }
-                    placeholder="https://..."
+                    placeholder="자료 URL (https://...)"
                     sx={{ mb: 2 }}
                   />
-
-                  {contentFormData.contentType === 'VIDEO' && (
-                    <TextField
-                      fullWidth
-                      label="재생 시간"
-                      value={contentFormData.duration}
-                      onChange={(e) =>
-                        setContentFormData({
-                          ...contentFormData,
-                          duration: e.target.value,
-                        })
-                      }
-                      placeholder="예: 42:30 또는 1:25:30"
-                      sx={{ mb: 2 }}
-                      helperText="형식: MM:SS 또는 HH:MM:SS"
-                    />
-                  )}
 
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                     <Button
@@ -518,7 +589,7 @@ const WeekManagement = ({
                       onClick={handleAddContentToWeekForm}
                       disabled={!contentFormData.title.trim() || !contentFormData.contentUrl.trim()}
                     >
-                      콘텐츠 추가
+                      자료 추가
                     </Button>
                   </Box>
                 </Box>
@@ -533,7 +604,6 @@ const WeekManagement = ({
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>순서</TableCell>
                             <TableCell>유형</TableCell>
                             <TableCell>제목</TableCell>
                             <TableCell align="right">삭제</TableCell>
@@ -542,7 +612,6 @@ const WeekManagement = ({
                         <TableBody>
                           {weekFormData.contents.map((content, index) => (
                             <TableRow key={index}>
-                              <TableCell>{content.order}</TableCell>
                               <TableCell>
                                 <Chip
                                   label={getContentTypeLabel(content.contentType)}
@@ -586,35 +655,146 @@ const WeekManagement = ({
       {/* 영상 업로드 다이얼로그 */}
       <Dialog
         open={contentDialogOpen}
-        onClose={() => setContentDialogOpen(false)}
+        onClose={() => !contentSubmitLoading && setContentDialogOpen(false)}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <UploadIcon color="primary" />
-            영상 업로드
+            콘텐츠 추가
           </Box>
+          {selectedWeek && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              대상 주차: {selectedWeek.weekNumber}주차 · {selectedWeek.weekTitle || '미등록'}
+            </Typography>
+          )}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
-            <VideoUploader
-              courseId={courseId}
-              weekId={selectedWeekId}
-              onUploadComplete={() => {
-                setContentDialogOpen(false);
-                if (onRefreshWeeks) {
-                  onRefreshWeeks();
-                }
+            {contentSubmitError && (
+              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setContentSubmitError(null)}>
+                {contentSubmitError}
+              </Alert>
+            )}
+
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              콘텐츠 유형
+            </Typography>
+            <ToggleButtonGroup
+              fullWidth
+              exclusive
+              value={contentUploadForm.contentType}
+              onChange={(_e, next) => {
+                if (!next) return;
+                setContentUploadForm((prev) => ({
+                  ...prev,
+                  contentType: next,
+                  contentUrl: '',
+                }));
               }}
-              onCancel={() => setContentDialogOpen(false)}
-            />
+              sx={{ mb: 2 }}
+              disabled={contentSubmitLoading}
+            >
+              <ToggleButton value="DOCUMENT">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <DocumentIcon fontSize="small" />
+                  자료
+                </Box>
+              </ToggleButton>
+              <ToggleButton value="LINK">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <VideoIcon fontSize="small" />
+                  강의 영상
+                </Box>
+              </ToggleButton>
+            </ToggleButtonGroup>
+
+            {/* LINK(강의 영상) 타입: VideoUploader 표시 */}
+            {contentUploadForm.contentType === 'LINK' ? (
+              <VideoUploader
+                courseId={courseId}
+                weekId={selectedWeekId}
+                onUploadComplete={() => {
+                  setContentDialogOpen(false);
+                  if (onRefreshWeeks) {
+                    onRefreshWeeks();
+                  }
+                }}
+                onCancel={() => setContentDialogOpen(false)}
+              />
+            ) : (
+              <>
+                <TextField
+                  fullWidth
+                  label="제목"
+                  value={contentUploadForm.title}
+                  onChange={(e) => setContentUploadForm((prev) => ({ ...prev, title: e.target.value }))}
+                  sx={{ mb: 2 }}
+                  disabled={contentSubmitLoading}
+                />
+
+                <TextField
+                  fullWidth
+                  label="설명 (선택)"
+                  value={contentUploadForm.description}
+                  onChange={(e) => setContentUploadForm((prev) => ({ ...prev, description: e.target.value }))}
+                  sx={{ mb: 2 }}
+                  multiline
+                  minRows={2}
+                  disabled={contentSubmitLoading}
+                />
+
+                <TextField
+                  fullWidth
+                  label="자료 URL"
+                  value={contentUploadForm.contentUrl}
+                  onChange={(e) => setContentUploadForm((prev) => ({ ...prev, contentUrl: e.target.value }))}
+                  sx={{ mb: 2 }}
+                  placeholder="https://..."
+                  disabled={contentSubmitLoading}
+                  error={!!contentUploadForm.contentUrl && !isValidUrl(contentUploadForm.contentUrl.trim())}
+                  helperText="파일 업로드가 아닌 자료 URL을 입력하세요."
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          disabled={!isValidUrl(contentUploadForm.contentUrl.trim())}
+                          onClick={() => window.open(contentUploadForm.contentUrl.trim(), '_blank', 'noopener,noreferrer')}
+                          title="미리 열기"
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </>
+            )}
           </Box>
         </DialogContent>
+        {/* DOCUMENT 타입일 때만 하단 버튼 표시 (LINK는 VideoUploader 자체 버튼 사용) */}
+        {contentUploadForm.contentType === 'DOCUMENT' && (
+          <DialogActions>
+            <Button onClick={() => setContentDialogOpen(false)} disabled={contentSubmitLoading}>
+              취소
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmitCreateContent}
+              disabled={!canSubmitContent() || contentSubmitLoading}
+              startIcon={contentSubmitLoading ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              {contentSubmitLoading ? '추가 중...' : '추가'}
+            </Button>
+          </DialogActions>
+        )}
       </Dialog>
     </Box>
   );
 };
 
 export default WeekManagement;
+
 
