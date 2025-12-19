@@ -264,17 +264,27 @@ const CourseSchedule = () => {
   };
 
   const openPrintWindow = ({ autoClose = false } = {}) => {
-    const html = buildTimetableExportHtml();
-    const w = window.open('', '_blank', 'noopener,noreferrer');
-    if (!w) return;
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    w.onload = () => {
+    // NOTE:
+    // - 일부 브라우저는 새 창에서 onload 이후 print() 호출을 "사용자 제스처"가 아닌 것으로 간주해 막기도 합니다.
+    // - 또한 buildTimetableExportHtml()에서 예외가 나면 "빈 탭"만 남습니다.
+    // 그래서: (1) 예외를 잡고 (2) 클릭 핸들러 흐름 안에서 최대한 빨리 print()를 호출합니다.
+    const w = window.open('', '_blank');
+    if (!w) {
+      alert('팝업이 차단되어 인쇄 화면을 열 수 없습니다. 브라우저 팝업 차단을 해제해주세요.');
+      return;
+    }
+
+    try {
+      const html = buildTimetableExportHtml();
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+
+      // 가능한 한 사용자 클릭 제스처 안에서 print 트리거
       w.print();
+
       if (autoClose) {
-        // 일부 브라우저에서 onafterprint 지원
         w.onafterprint = () => {
           try {
             w.close();
@@ -283,7 +293,14 @@ const CourseSchedule = () => {
           }
         };
       }
-    };
+    } catch (e) {
+      try {
+        w.close();
+      } catch {
+        // ignore
+      }
+      alert(e?.message || '인쇄 화면을 여는데 실패했습니다.');
+    }
   };
 
   const handlePrint = () => {
@@ -441,7 +458,13 @@ const CourseSchedule = () => {
       <Box ref={exportRef}>
       {/* 시간표 테이블 */}
       <TableContainer component={Paper} sx={{ mb: 3 }}>
-        <Table size="small">
+        <Table size="small" sx={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '80px' }} />
+            {weekDays.map((day) => (
+              <col key={day} style={{ width: 'calc((100% - 80px) / 5)' }} />
+            ))}
+          </colgroup>
           <TableHead>
             <TableRow>
               <TableCell sx={{ width: 80, backgroundColor: 'primary.light', color: 'white', fontWeight: 600 }}>

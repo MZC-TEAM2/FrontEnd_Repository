@@ -6,7 +6,7 @@
  * - 주차/콘텐츠: GET /api/v1/courses/{courseId}/weeks (fallback: /courses/{courseId}/weeks)
  * 를 통해 실제 데이터를 표시합니다.
  *
- * NOTE: 공지/과제/시험/성적은 스펙은 있으나, 본 화면에서는 "보기 전용" placeholder로 둡니다.
+ * NOTE: 공지/과제/퀴즈/시험/성적은 스펙은 있으나, 본 화면에서는 "보기 전용" placeholder로 둡니다.
  */
 
 import React, { useMemo, useState } from 'react';
@@ -38,6 +38,8 @@ import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import QuizIcon from '@mui/icons-material/Quiz';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -168,8 +170,9 @@ export default function CourseDetail() {
           <Tab icon={<EventAvailableIcon />} label="출석" iconPosition="start" />
           <Tab icon={<NotificationsIcon />} label="공지사항" iconPosition="start" />
           <Tab icon={<AssignmentIcon />} label="과제" iconPosition="start" />
-          <Tab icon={<QuizIcon />} label="시험" iconPosition="start" />
-          <Tab icon={<QuizIcon />} label="성적" iconPosition="start" />
+          <Tab icon={<QuizIcon />} label="퀴즈" iconPosition="start" />
+          <Tab icon={<FactCheckIcon />} label="시험" iconPosition="start" />
+          <Tab icon={<AssessmentIcon />} label="성적" iconPosition="start" />
         </Tabs>
       </Paper>
 
@@ -263,10 +266,11 @@ export default function CourseDetail() {
       </TabPanel>
 
       {[
-        { index: 2, icon: <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '공지사항' },
-        { index: 3, icon: <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '과제' },
-        { index: 4, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '시험' },
-        { index: 5, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '성적' },
+        { index: 1, icon: <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '공지사항' },
+        { index: 2, icon: <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '과제' },
+        { index: 3, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '퀴즈' },
+        { index: 4, icon: <FactCheckIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '시험' },
+        { index: 5, icon: <AssessmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '성적' },
       ].map((t) => (
         <TabPanel key={t.index} value={currentTab} index={t.index}>
           <Paper sx={{ p: 4, textAlign: 'center' }}>

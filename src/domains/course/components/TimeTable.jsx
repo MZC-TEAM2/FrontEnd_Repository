@@ -63,9 +63,15 @@ const TimeTable = ({ courses, isPreview = false, registeredIds = [] }) => {
       </Typography>
       <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
         <Table size="small" sx={{ minWidth: 400, tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '60px' }} />
+            {days.map((day) => (
+              <col key={day} style={{ width: 'calc((100% - 60px) / 5)' }} />
+            ))}
+          </colgroup>
           <TableHead>
             <TableRow>
-              <TableCell width="60">시간</TableCell>
+              <TableCell sx={{ width: 60 }}>시간</TableCell>
               {days.map((day) => (
                 <TableCell key={day} align="center">
                   {day}
@@ -134,7 +140,6 @@ const TimeTable = ({ courses, isPreview = false, registeredIds = [] }) => {
                         sx={{ 
                           height: `${40 * rowSpan}px`, 
                           p: 0.5, 
-                          width: '20%',
                           verticalAlign: 'middle',
                           position: 'relative'
                         }}
@@ -161,7 +166,7 @@ const TimeTable = ({ courses, isPreview = false, registeredIds = [] }) => {
                     <TableCell 
                       key={`${day}-${hour}`} 
                       align="center" 
-                      sx={{ height: 40, p: 0.5, width: '20%' }}
+                      sx={{ height: 40, p: 0.5 }}
                     />
                   );
                 })}
