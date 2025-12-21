@@ -134,7 +134,7 @@ const NoticePage = () => {
         <PostContent content={notice.content} />
 
         {/* 해시태그 */}
-        <PostHashtags hashtags={notice.hashtags} />
+        <PostHashtags hashtags={notice.hashtags} clickable={false} />
 
         {/* 첨부파일 */}
         <PostAttachments attachments={notice.attachments} onDownload={downloadFile} />

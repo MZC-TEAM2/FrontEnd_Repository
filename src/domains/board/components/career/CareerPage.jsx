@@ -133,7 +133,7 @@ const CareerPage = () => {
         <PostContent content={post.content} />
 
         {/* 해시태그 */}
-        <PostHashtags hashtags={post.hashtags} />
+        <PostHashtags hashtags={post.hashtags} boardType="CAREER" />
 
         {/* 첨부파일 */}
         <PostAttachments attachments={post.attachments} onDownload={downloadFile} />
