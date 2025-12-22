@@ -145,7 +145,7 @@ const QuestionFormPage = () => {
           <HashtagInput
             hashtags={hashtags}
             onHashtagsChange={setHashtags}
-            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 자료구조, 알고리즘)"
+            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 과제질문, 시험준비)"
           />
 
           {/* 파일 첨부 */}
