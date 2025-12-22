@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -56,6 +56,7 @@ import CourseCreateDialog from '../domains/professor/components/CourseCreateDial
 import ExamManagement from '../domains/professor/components/ExamManagement';
 import QuizManagement from '../domains/professor/components/QuizManagement';
 import AttendanceManagement from '../components/attendance/AttendanceManagement';
+import AssignmentBoard from '../domains/course/components/assignment/AssignmentBoard';
 
 // API
 import {
@@ -87,11 +88,14 @@ const termLabel = (t) => {
 const ProfessorCourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentTab, setCurrentTab] = useState(0);
+  // URL에서 tab 파라미터 읽어서 초기화 (기본값 0)
+  const tabFromUrl = parseInt(searchParams.get('tab') || '0', 10);
+  const [currentTab, setCurrentTab] = useState(tabFromUrl);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [weeks, setWeeks] = useState([]);
   const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
@@ -300,6 +304,12 @@ const ProfessorCourseDetail = () => {
     
   };
 
+  // 탭 변경 핸들러 - state와 URL 모두 업데이트
+  const handleTabChange = (e, newValue) => {
+    setCurrentTab(newValue);
+    setSearchParams({ tab: newValue });
+  };
+
   const handleUpdateWeek = async (weekId, weekData) => {
     
     try {
@@ -459,7 +469,7 @@ const ProfessorCourseDetail = () => {
 
       {/* 탭 메뉴 */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)}>
+        <Tabs value={currentTab} onChange={handleTabChange}>
           <Tab icon={<CalendarMonthIcon />} label="주차 관리" />
           <Tab icon={<EventAvailableIcon />} label="출석 관리" />
           <Tab icon={<NotificationsIcon />} label="공지사항" />
@@ -500,17 +510,7 @@ const ProfessorCourseDetail = () => {
         </Paper>
       )}
 
-      {currentTab === 3 && (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            과제 관리
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            추후 구현 예정
-          </Typography>
-        </Paper>
-      )}
+      {currentTab === 3 && <AssignmentBoard courseId={courseId} isEmbedded={true} />}
 
       {currentTab === 4 && <QuizManagement courseId={courseId} />}
 

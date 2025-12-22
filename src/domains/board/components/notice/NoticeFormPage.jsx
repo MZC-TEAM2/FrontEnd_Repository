@@ -137,13 +137,6 @@ const NoticeFormPage = () => {
             sx={{ mb: 3 }}
           />
 
-          {/* 해시태그 입력 */}
-          <HashtagInput 
-            hashtags={hashtags} 
-            onHashtagsChange={setHashtags} 
-            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 학사일정, 중요공지)" 
-          />
-
           {/* 파일 첨부 */}
           <FileAttachment
             isEditMode={isEditMode}

@@ -56,8 +56,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -109,15 +107,13 @@ const studentMenuItems = [
     description: '학교 커뮤니티',
     children: [
       { title: '학사 공지', path: '/notices', icon: <CampaignIcon /> },
-      { title: '자유게시판', path: '/boards/free', icon: <ForumIcon /> },
-      { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
-      { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
-      { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
+      { title: '자유게시판', path: '/free', icon: <ForumIcon /> },
+      { title: '질문게시판', path: '/questions', icon: <HelpOutlineIcon /> },
+      { title: '토론게시판', path: '/discussions', icon: <RecordVoiceOverIcon /> },
+      { title: '학과게시판', path: '/departments', icon: <AccountBalanceIcon /> },
       { title: '학생 게시판', path: '/boards/student', icon: <GroupsIcon />, requiredRole: 'STUDENT' },
-      { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
-      { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
-      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
-      { title: '스터디 모집', path: '/boards/study', icon: <GroupIcon /> },
+      { title: '공모전', path: '/contest', icon: <EmojiEventsIcon /> },
+      { title: '취업정보', path: '/career', icon: <WorkIcon /> },
     ],
   },
   {
@@ -188,14 +184,13 @@ const professorMenuItems = [
     description: '학교 커뮤니티',
     children: [
       { title: '학사 공지', path: '/notices', icon: <CampaignIcon /> },
-      { title: '자유게시판', path: '/boards/free', icon: <ForumIcon /> },
-      { title: '질문게시판', path: '/boards/question', icon: <HelpOutlineIcon /> },
-      { title: '토론게시판', path: '/boards/discussion', icon: <RecordVoiceOverIcon /> },
-      { title: '학과게시판', path: '/boards/department', icon: <AccountBalanceIcon /> },
+      { title: '자유게시판', path: '/free', icon: <ForumIcon /> },
+      { title: '질문게시판', path: '/questions', icon: <HelpOutlineIcon /> },
+      { title: '토론게시판', path: '/discussion', icon: <RecordVoiceOverIcon /> },
+      { title: '학과게시판', path: '/departments', icon: <AccountBalanceIcon /> },
       { title: '교수 게시판', path: '/boards/professor', icon: <SchoolIcon />, requiredRole: 'PROFESSOR' },
-      { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
-      { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
-      { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
+      { title: '공모전', path: '/contest', icon: <EmojiEventsIcon /> },
+      { title: '취업정보', path: '/career', icon: <WorkIcon /> },
     ],
   },
   {

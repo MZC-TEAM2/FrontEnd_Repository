@@ -32,7 +32,7 @@ import authService from '../../../../services/authService';
  * - 과제 전용 API (/api/v1/assignments) 사용
  * - assignment.id로 상세 페이지 이동
  */
-const AssignmentBoardPage = () => {
+const AssignmentBoard = ({ courseId, isEmbedded = false }) => {
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [filteredAssignments, setFilteredAssignments] = useState([]);
@@ -50,8 +50,8 @@ const AssignmentBoardPage = () => {
       setLoading(true);
       setError(null);
       try {
-        // courseId 없이 전체 과제 조회
-        const data = await getAssignmentsByCourse(null);
+        // courseId로 해당 강의의 과제만 조회 (없으면 전체 조회)
+        const data = await getAssignmentsByCourse(courseId || null);
         setAssignments(data);
         setFilteredAssignments(data);
       } catch (err) {
@@ -63,7 +63,7 @@ const AssignmentBoardPage = () => {
     };
 
     fetchAssignments();
-  }, []);
+  }, [courseId]);
 
   // 검색
   const handleSearch = () => {
@@ -86,23 +86,27 @@ const AssignmentBoardPage = () => {
 
   // 상세 페이지로 이동 (assignment.id 사용)
   const handleRowClick = (assignmentId) => {
-    navigate(`/boards/assignment/${assignmentId}`);
+    if (isEmbedded && courseId) {
+      navigate(`/assignment/${assignmentId}?from=course&courseId=${courseId}`);
+    } else {
+      navigate(`/assignment/${assignmentId}`);
+    }
   };
 
   return (
     <Box>
       {/* 헤더 */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AssignmentIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            과제
-          </Typography>
-        </Box>
         {isProfessor && (
           <Button
             variant="contained"
-            onClick={() => navigate('/boards/assignment/create')}
+            onClick={() => {
+              if (isEmbedded && courseId) {
+                navigate(`/assignment/create?courseId=${courseId}`);
+              } else {
+                navigate('/assignment/create');
+              }
+            }}
           >
             과제 등록
           </Button>
@@ -150,11 +154,8 @@ const AssignmentBoardPage = () => {
                 <TableCell width="10%" align="center">
                   번호
                 </TableCell>
-                <TableCell width="45%">과제 제목</TableCell>
-                <TableCell width="15%" align="center">
-                  작성자
-                </TableCell>
-                <TableCell width="15%" align="center">
+                <TableCell width="50%">과제 제목</TableCell>
+                <TableCell width="20%" align="center">
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                     <CalendarIcon fontSize="small" />
                     마감일
@@ -171,13 +172,13 @@ const AssignmentBoardPage = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredAssignments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
                     <Typography color="text.secondary">
                       {searchTerm ? '검색 결과가 없습니다.' : '등록된 과제가 없습니다.'}
                     </Typography>
@@ -199,11 +200,6 @@ const AssignmentBoardPage = () => {
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {assignment.post?.title || '제목 없음'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" color="text.secondary">
-                          {assignment.createdByName || '알 수 없음'}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -235,4 +231,4 @@ const AssignmentBoardPage = () => {
   );
 };
 
-export default AssignmentBoardPage;
+export default AssignmentBoard;

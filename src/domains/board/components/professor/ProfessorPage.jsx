@@ -145,7 +145,7 @@ const ProfessorPage = () => {
         <PostContent content={post.content} />
 
         {post.hashtags && post.hashtags.length > 0 && (
-          <PostHashtags hashtags={post.hashtags} />
+          <PostHashtags hashtags={post.hashtags} clickable={false} />
         )}
 
         {post.attachments && post.attachments.length > 0 && (

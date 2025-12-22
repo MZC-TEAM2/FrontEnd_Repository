@@ -21,9 +21,9 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAssignment } from '../../hooks/useAssignment';
-import { useFileManager } from '../../hooks/useFileManager';
+import { useFileManager } from '../../../board/hooks/useFileManager';
 import { formatDateTime } from '../../../../utils/boardUtils';
 import authService from '../../../../services/authService';
 import AssignmentSubmitForm from './AssignmentSubmitForm';
@@ -31,6 +31,9 @@ import AssignmentSubmitForm from './AssignmentSubmitForm';
 const AssignmentDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const fromCourse = searchParams.get('from') === 'course';
+  const courseIdFromUrl = searchParams.get('courseId');
   const [assignment, setAssignment] = useState(null);
   const [mySubmission, setMySubmission] = useState(null);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
@@ -90,7 +93,13 @@ const AssignmentDetailPage = () => {
     try {
       await deleteAssignment(id);
       alert('과제가 삭제되었습니다.');
-      navigate('/boards/assignment');
+      
+      // 삭제 후 네비게이션: 강의 관리 페이지에서 온 경우 강의 상세로, 아니면 과제 목록으로
+      if (fromCourse && courseIdFromUrl) {
+        navigate(`/professor/course/${courseIdFromUrl}/manage?tab=3`);
+      } else if (isProfessor && assignment?.courseId) {
+        navigate(`/professor/course/${assignment.courseId}/manage?tab=3`);
+      }
     } catch (err) {
       alert('과제 삭제에 실패했습니다.');
     }
@@ -101,6 +110,15 @@ const AssignmentDetailPage = () => {
     setShowSubmitForm(false);
     const mySubmissionData = await getMySubmission(id);
     setMySubmission(mySubmissionData);
+  };
+
+  // 목록으로 돌아가기
+  const handleBack = () => {
+    if (isProfessor) {
+      navigate(`/professor/course/${assignment.courseId}/manage?tab=3`);
+    } else {
+      navigate(`/course/${assignment.courseId}?tab=2`);
+    }
   };
 
 
@@ -119,7 +137,7 @@ const AssignmentDetailPage = () => {
         <Alert severity="error" sx={{ mb: 3 }}>
           {error || '과제를 찾을 수 없습니다.'}
         </Alert>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/boards/assignment')}>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleBack}>
           목록으로
         </Button>
       </Box>
@@ -135,7 +153,7 @@ const AssignmentDetailPage = () => {
     <Box>
       {/* 상단 네비게이션 */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/boards/assignment')}>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleBack}>
           목록으로
         </Button>
         {isProfessor && (
@@ -144,14 +162,14 @@ const AssignmentDetailPage = () => {
               variant="contained"
               startIcon={<GradeIcon />}
               sx={{ mr: 1 }}
-              onClick={() => navigate(`/boards/assignment/${id}/submissions`)}
+              onClick={() => navigate(`/assignment/${id}/submissions`)}
             >
               제출물 보기
             </Button>
             <Button
               variant="outlined"
               sx={{ mr: 1 }}
-              onClick={() => navigate(`/boards/assignment/${id}/edit`)}
+              onClick={() => navigate(`/assignment/${id}/edit`)}
             >
               수정
             </Button>

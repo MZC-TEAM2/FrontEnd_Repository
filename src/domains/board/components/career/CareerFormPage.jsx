@@ -63,7 +63,7 @@ const CareerFormPage = () => {
   } = usePostFormSubmit({
     id,
     isEditMode,
-    basePath: '/boards/career',
+    basePath: '/career',
     categoryId: 9,
     boardName: '취업 게시판',
     createPostFn: createCareerPost,

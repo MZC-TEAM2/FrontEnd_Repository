@@ -146,7 +146,7 @@ const StudentPage = () => {
         <PostContent content={post.content} />
 
         {post.hashtags && post.hashtags.length > 0 && (
-          <PostHashtags hashtags={post.hashtags} />
+          <PostHashtags hashtags={post.hashtags} boardType="STUDENT" />
         )}
 
         {post.attachments && post.attachments.length > 0 && (

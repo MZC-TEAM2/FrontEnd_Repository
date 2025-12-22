@@ -104,11 +104,11 @@ const ContestPage = () => {
       {/* 상단 네비게이션 */}
       <PostNavigation
         onBack={handleBackToList}
-        onEdit={() => navigate(`/boards/contest/${id}/edit`)}
+        onEdit={() => navigate(`/contest/${id}/edit`)}
         onDelete={() => handleDelete(id, {
           confirmMessage: '정말 삭제하시겠습니까?',
           successMessage: '게시글이 삭제되었습니다.',
-          redirectPath: '/boards/contest',
+          redirectPath: '/contest',
         })}
         deleting={deleting}
       />
@@ -133,7 +133,7 @@ const ContestPage = () => {
         <PostContent content={post.content} />
 
         {/* 해시태그 */}
-        <PostHashtags hashtags={post.hashtags} />
+        <PostHashtags hashtags={post.hashtags} boardType="CONTEST" />
 
         {/* 첨부파일 */}
         <PostAttachments attachments={post.attachments} onDownload={downloadFile} />
@@ -146,7 +146,7 @@ const ContestPage = () => {
           likeCount={likeCount} 
           onLike={handleLike}
           isAuthor={currentUserId === post.createdBy}
-          onEdit={() => navigate(`/boards/contest/${id}/edit`)}
+          onEdit={() => navigate(`/contest/${id}/edit`)}
           onDelete={() => handleDelete(id, handleBackToList)}
           deleting={deleting}
         />

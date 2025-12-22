@@ -132,9 +132,6 @@ const DepartmentPage = () => {
         {/* 본문 */}
         <PostContent content={post.content} />
 
-        {/* 해시태그 */}
-        <PostHashtags hashtags={post.hashtags} />
-
         {/* 첨부파일 */}
         <PostAttachments attachments={post.attachments} onDownload={downloadFile} />
 
