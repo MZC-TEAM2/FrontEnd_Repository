@@ -41,7 +41,6 @@ import {
   Edit as EditIcon,
   CalendarMonth as CalendarMonthIcon,
   Assignment as AssignmentIcon,
-  Notifications as NotificationsIcon,
   Assessment as AssessmentIcon,
   School as SchoolIcon,
   People as PeopleIcon,
@@ -259,7 +258,7 @@ const ProfessorCourseDetail = () => {
 
   // 성적 탭을 열었을 때만 기간/성적을 가져옴
   useEffect(() => {
-    if (currentTab !== 6) return;
+    if (currentTab !== 5) return;
     fetchGradePeriod();
     fetchCourseGrades();
   }, [currentTab, fetchGradePeriod, fetchCourseGrades]);
@@ -472,7 +471,6 @@ const ProfessorCourseDetail = () => {
         <Tabs value={currentTab} onChange={handleTabChange}>
           <Tab icon={<CalendarMonthIcon />} label="주차 관리" />
           <Tab icon={<EventAvailableIcon />} label="출석 관리" />
-          <Tab icon={<NotificationsIcon />} label="공지사항" />
           <Tab icon={<AssignmentIcon />} label="과제" />
           <Tab icon={<QuizIcon />} label="퀴즈" />
           <Tab icon={<FactCheckIcon />} label="시험" />
@@ -498,25 +496,13 @@ const ProfessorCourseDetail = () => {
         <AttendanceManagement courseId={courseId} />
       )}
 
-      {currentTab === 2 && (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            공지사항 관리
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            추후 구현 예정
-          </Typography>
-        </Paper>
-      )}
+      {currentTab === 2 && <AssignmentBoard courseId={courseId} isEmbedded={true} />}
 
-      {currentTab === 3 && <AssignmentBoard courseId={courseId} isEmbedded={true} />}
+      {currentTab === 3 && <QuizManagement courseId={courseId} />}
 
-      {currentTab === 4 && <QuizManagement courseId={courseId} />}
+      {currentTab === 4 && <ExamManagement courseId={courseId} />}
 
-      {currentTab === 5 && <ExamManagement courseId={courseId} />}
-
-      {currentTab === 6 && (
+      {currentTab === 5 && (
         <Paper sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box>
@@ -546,8 +532,8 @@ const ProfessorCourseDetail = () => {
           ) : (
             <Alert severity="info" sx={{ mb: 2 }}>
               <AlertTitle>성적 기간 안내</AlertTitle>
-              - 산출(7.5): <b>성적산출기간(GRADE_CALCULATION) 진행 중</b>에만 가능<br />
-              - 공개(7.6): <b>성적공개기간(GRADE_PUBLISH) 진행 중</b> + <b>산출 완료(GRADED)</b>일 때만 가능
+              - 산출: <b>성적산출기간(GRADE_CALCULATION) 진행 중</b>에만 가능<br />
+              - 공개: <b>성적공개기간(GRADE_PUBLISH) 진행 중</b> + <b>산출 완료(GRADED)</b>일 때만 가능
             </Alert>
           )}
 

@@ -24,6 +24,7 @@ import {
 
 const VIDEO_SERVER_URL = import.meta.env.VITE_VIDEO_SERVER_URL || 'http://localhost:8090';
 const TUS_ENDPOINT = `${VIDEO_SERVER_URL}/api/v1/videos/upload`;
+const MIN_VIDEO_SECONDS = 10;
 
 const formatDuration = (seconds) => {
   const total = Number(seconds);
@@ -81,6 +82,7 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('');
+  const [durationSeconds, setDurationSeconds] = useState(null);
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -89,14 +91,20 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
   const uploadRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  const resetFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const setFileAndAutofill = async (selectedFile) => {
     if (selectedFile) {
       if (!selectedFile.type.startsWith('video/')) {
         setError('영상 파일만 업로드할 수 있습니다.');
         return;
       }
-      setFile(selectedFile);
       setError(null);
+      setSuccess(false);
 
       // 파일명에서 제목 자동 설정 (확장자 제외)
       const fileName = selectedFile.name.replace(/\.[^/.]+$/, '');
@@ -104,17 +112,31 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
         setTitle(fileName);
       }
 
-      // 영상 duration 자동 추출 (사용자가 이미 입력한 경우는 덮어쓰지 않음)
-      if (!duration) {
-        try {
-          const d = await readVideoDuration(selectedFile);
+      // 영상 duration 자동 추출 (10초 미만은 업로드 불가)
+      try {
+        const d = await readVideoDuration(selectedFile);
+        setDurationSeconds(Number.isFinite(d) ? d : null);
+
+        if (Number.isFinite(d) && d > 0) {
           const formatted = formatDuration(d);
           if (formatted) setDuration(formatted);
-        } catch (e) {
-          // duration 추출 실패는 업로드 자체를 막지 않음
-          console.warn('영상 duration 메타데이터 읽기 실패:', e);
         }
+
+        if (Number.isFinite(d) && d < MIN_VIDEO_SECONDS) {
+          setFile(null);
+          setDuration('');
+          setDurationSeconds(null);
+          resetFileInput();
+          setError(`10초 미만 영상은 업로드할 수 없습니다. (현재: ${formatDuration(d) || `${Math.floor(d)}초`})`);
+          return;
+        }
+      } catch (e) {
+        // duration 추출 실패는 업로드 자체를 막지 않음
+        setDurationSeconds(null);
+        console.warn('영상 duration 메타데이터 읽기 실패:', e);
       }
+
+      setFile(selectedFile);
     }
   };
 
@@ -141,6 +163,11 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
 
     if (!weekId) {
       setError('주차 정보가 없습니다.');
+      return;
+    }
+
+    if (typeof durationSeconds === 'number' && durationSeconds < MIN_VIDEO_SECONDS) {
+      setError('10초 미만 영상은 업로드할 수 없습니다.');
       return;
     }
 
@@ -197,12 +224,11 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
     setFile(null);
     setTitle('');
     setDuration('');
+    setDurationSeconds(null);
     setProgress(0);
     setError(null);
     setSuccess(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    resetFileInput();
   };
 
   const formatFileSize = (bytes) => {
