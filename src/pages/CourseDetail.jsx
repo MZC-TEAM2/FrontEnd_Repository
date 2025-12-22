@@ -10,7 +10,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -66,6 +66,7 @@ import { getExamLocalResult, onExamAttemptStorageUpdated, setExamLocalResult } f
 import { getCurrentGradePublishPeriod } from '../api/gradeApi';
 import { getCurrentAcademicTerm } from '../api/academicTermApi';
 import { getStudentGrades } from '../api/gradeApi';
+import AssignmentBoard from '../domains/course/components/assignment/AssignmentBoard';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -84,7 +85,10 @@ function TabPanel({ children, value, index, ...other }) {
 export default function CourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // URL에서 tab 파라미터 읽어서 초기화 (기본값 0)
+  const tabFromUrl = parseInt(searchParams.get('tab') || '0', 10);
+  const [currentTab, setCurrentTab] = useState(tabFromUrl);
   const [expandedWeek, setExpandedWeek] = useState(false);
   const [isGradePublishActive, setIsGradePublishActive] = useState(false);
   const [myGradeLoading, setMyGradeLoading] = useState(false);
@@ -296,6 +300,12 @@ export default function CourseDetail() {
     return map;
   }, [attendance]);
 
+  // 탭 변경 핸들러 - state와 URL 모두 업데이트
+  const handleTabChange = (e, newValue) => {
+    setCurrentTab(newValue);
+    setSearchParams({ tab: newValue });
+  };
+
   const headerTitle = useMemo(() => {
     if (courseMeta) return `${courseMeta.subjectCode} - ${courseMeta.subjectName}`;
     if (detail) return `${detail.courseCode} - ${detail.courseName}`;
@@ -381,7 +391,7 @@ export default function CourseDetail() {
       <Paper sx={{ mb: 3 }}>
         <Tabs
           value={currentTab}
-          onChange={(_e, v) => setCurrentTab(v)}
+          onChange={handleTabChange}
           variant="fullWidth"
           indicatorColor="primary"
           textColor="primary"
@@ -542,15 +552,7 @@ export default function CourseDetail() {
 
       {/* 과제 */}
       <TabPanel value={currentTab} index={2}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            과제
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            (보기 전용) API 연동 예정
-          </Typography>
-        </Paper>
+        <AssignmentBoard courseId={courseId} isEmbedded={true} />
       </TabPanel>
 
       {/* 퀴즈 */}
