@@ -75,3 +75,31 @@ export const transformEnrollmentData = (enrollmentItem) => {
   };
 };
 
+/**
+ * 현재 학기 수강 과목 목록(/enrollments/current) 응답을 UI 형식으로 변환
+ * - courseType 코드(MAJOR_REQ 등)를 화면에서 쓰는 한글 라벨로 변환해 기존 UI 색상 로직 유지
+ */
+export const transformCurrentEnrolledCourse = (course) => {
+  const typeCode = course?.courseType;
+  const typeLabelMap = {
+    MAJOR_REQ: '전공필수',
+    MAJOR_ELEC: '전공선택',
+    GEN_REQ: '교양필수',
+    GEN_ELEC: '교양선택',
+  };
+
+  return {
+    id: course?.id,
+    subjectCode: course?.courseCode,
+    subjectName: course?.courseName,
+    professor: course?.professor?.name || '',
+    credits: course?.credits || 0,
+    courseType: typeLabelMap[typeCode] || typeCode || '',
+    schedule: course?.schedule || [],
+    classroom: course?.schedule?.[0]?.classroom || '',
+    currentStudents: course?.currentStudents || course?.enrollment?.current || 0,
+    maxStudents: course?.maxStudents || course?.enrollment?.max || 0,
+    isFull: !!course?.enrollment?.isFull,
+  };
+};
+

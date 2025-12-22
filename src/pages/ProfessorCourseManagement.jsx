@@ -8,7 +8,7 @@
  * - 주차 관리
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -28,7 +28,7 @@ import {
   Add as AddIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 // 컴포넌트
 import CourseCard from '../domains/professor/components/CourseCard';
@@ -43,6 +43,7 @@ import {
   getCurrentCourseRegistrationPeriod,
 } from '../api/professorApi';
 import axiosInstance from '../api/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -51,6 +52,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
  */
 const ProfessorCourseManagement = () => {
   const navigate = useNavigate();
+  // const navigate = useNavigate(); // 현재 파일에서 사용하지 않음
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,43 +60,15 @@ const ProfessorCourseManagement = () => {
   const [errorDetails, setErrorDetails] = useState(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
-  const [currentTermId, setCurrentTermId] = useState(null);
 
-  // 현재 학기 조회
-  useEffect(() => {
-    fetchCurrentTerm();
-    fetchEnrollmentPeriods();
-  }, []);
-
-  // 학기 변경 시 강의 목록 조회
-  useEffect(() => {
-    if (currentTermId) {
-      fetchCourses();
-    }
-  }, [currentTermId]);
-
-  const fetchCurrentTerm = async () => {
-    try {
-      const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
-      
-      if (response.data?.success && response.data?.data?.currentPeriod?.term) {
-        const term = response.data.data.currentPeriod.term;
-        const termId = term.id || 1; // term.id가 없으면 1 사용 (임시)
-        setCurrentTermId(termId);
-      } else {
-        setCurrentTermId(1); // 기본값
-      }
-    } catch (err) {
-      console.error('현재 학기 조회 실패:', err);
-      setCurrentTermId(1);
-    }
-  };
-
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async (academicTermId) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getMyCourses({ academicTermId: currentTermId });
+      const response =
+        academicTermId !== null && academicTermId !== undefined
+          ? await getMyCourses({ academicTermId })
+          : await getMyCourses();
       
       // 응답 형식 확인
       if (response && response.success && response.data) {
@@ -124,7 +98,27 @@ const ProfessorCourseManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const fetchCurrentTerm = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
+      const term = response.data?.data?.currentPeriod?.term;
+      const termId = term?.id ?? null;
+      await fetchCourses(termId);
+    } catch (err) {
+      console.error('현재 학기 조회 실패:', err);
+      await fetchCourses(undefined);
+    }
+  }, [fetchCourses]);
+
+  // 학기 변경 시 강의 목록 조회는 fetchCurrentTerm에서 함께 처리
+
+  // 현재 학기 조회
+  useEffect(() => {
+    fetchCurrentTerm();
+    fetchEnrollmentPeriods();
+  }, [fetchCurrentTerm]);
 
   const fetchEnrollmentPeriods = async () => {
     try {
@@ -145,20 +139,19 @@ const ProfessorCourseManagement = () => {
     }
   };
 
+  const handleManageCourse = (courseId) => {
+    navigate(`/professor/course/${courseId}/manage`);
+  };
+
   const handleCreateCourse = async (courseData) => {
-    console.log('=== 강의 등록 시작 ===');
-    console.log('요청 데이터:', JSON.stringify(courseData, null, 2));
-    
+
     try {
       const response = await createCourse(courseData);
-      console.log('POST 응답:', response);
       
       if (response.success) {
-        console.log('✅ 강의 등록 성공:', response.data);
         setCreateDialogOpen(false);
         fetchCourses(); // 목록 새로고침
       } else {
-        console.error('❌ 강의 등록 실패 (success: false):', response.error);
         // 에러 다이얼로그 표시
         setErrorDetails({
           code: response.error?.code,
@@ -187,7 +180,6 @@ const ProfessorCourseManagement = () => {
       setCreateDialogOpen(false);
     }
     
-    console.log('=== 강의 등록 종료 ===');
   };
 
   const handleDeleteCourse = async (course) => {
@@ -218,7 +210,7 @@ const ProfessorCourseManagement = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* 헤더 */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
@@ -245,9 +237,10 @@ const ProfessorCourseManagement = () => {
       {courses.length > 0 ? (
         <Grid container spacing={3}>
           {courses.map((course) => (
-            <Grid item xs={12} sm={6} md={4} key={course.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={course.id}>
               <CourseCard
                 course={course}
+                onManage={handleManageCourse}
                 onDelete={handleDeleteCourse}
               />
             </Grid>

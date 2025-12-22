@@ -109,8 +109,6 @@ const useCourseRegistration = () => {
   const fetchCourses = useCallback(async (page = null, silent = false) => {
     if (!enrollmentPeriodId) return;
 
-    console.log('[API 호출] fetchCourses', { page, silent, timestamp: new Date().toISOString() });
-
     try {
       if (!silent) {
         setLoading(true);
@@ -148,7 +146,6 @@ const useCourseRegistration = () => {
 
       const response = await getCourses(params);
 
-      console.log('[API 응답] fetchCourses', { response, timestamp: new Date().toISOString() });
 
       if (response.success && response.data) {
         const transformedCourses = response.data.content?.map(transformCourseData) || [];
@@ -243,11 +240,9 @@ const useCourseRegistration = () => {
 
   // 장바구니 조회
   const fetchCarts = useCallback(async () => {
-    console.log('[API 호출] fetchCarts', { timestamp: new Date().toISOString() });
+
     try {
       const response = await getCarts();
-
-      console.log('[API 응답] fetchCarts', { response, timestamp: new Date().toISOString() });
 
       if (response.success && response.data?.courses) {
         const transformedCarts = response.data.courses.map(transformCartData);
@@ -265,11 +260,8 @@ const useCourseRegistration = () => {
 
   // 수강신청 목록 조회
   const fetchEnrollments = useCallback(async (periodId = null) => {
-    console.log('[API 호출] fetchEnrollments', { periodId, timestamp: new Date().toISOString() });
     try {
       const response = await getMyEnrollments(periodId || enrollmentPeriodId);
-
-      console.log('[API 응답] fetchEnrollments', { response, timestamp: new Date().toISOString() });
 
       if (response.success && response.data?.enrollments) {
         const transformedEnrollments = response.data.enrollments.map(transformEnrollmentData);
@@ -290,7 +282,6 @@ const useCourseRegistration = () => {
   // 검증 항목: 시간표 충돌, 학점 초과만 체크
   const addToCart = useCallback(async (course) => {
     try {
-      console.log('[API 호출] addToCart', { course, timestamp: new Date().toISOString() });
 
       // 수강신청 기간 체크
       if (!enrollmentPeriodId) {
@@ -384,7 +375,7 @@ const useCourseRegistration = () => {
   // 장바구니에서 제거
   const removeFromCart = useCallback(async (courseIdOrCartId) => {
     try {
-      console.log('[API 호출] removeFromCart', { courseIdOrCartId, timestamp: new Date().toISOString() });
+
       setLoading(true);
       setError(null);
 
@@ -421,7 +412,6 @@ const useCourseRegistration = () => {
   // 장바구니 전체 제거
   const clearAllCarts = useCallback(async () => {
     try {
-      console.log('[API 호출] clearAllCarts', { timestamp: new Date().toISOString() });
       setLoading(true);
       setError(null);
 
@@ -460,8 +450,6 @@ const useCourseRegistration = () => {
     }
 
     try {
-      console.log('[API 호출] confirmRegistration', { timestamp: new Date().toISOString() });
-      
       setLoading(true);
       setError(null);
 

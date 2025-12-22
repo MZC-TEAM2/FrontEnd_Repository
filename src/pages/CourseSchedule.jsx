@@ -422,14 +422,18 @@ const CourseSchedule = () => {
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="인쇄">
-            <IconButton onClick={handlePrint} disabled={loading || pdfLoading}>
-              <PrintIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={handlePrint} disabled={loading || pdfLoading}>
+                <PrintIcon />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="PDF 다운로드">
-            <IconButton onClick={handleDownloadPdf} disabled={loading || pdfLoading}>
-              <DownloadIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={handleDownloadPdf} disabled={loading || pdfLoading}>
+                <DownloadIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>

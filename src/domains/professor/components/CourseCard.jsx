@@ -7,12 +7,11 @@ import React from 'react';
 import {
   Card,
   CardContent,
-  CardActions,
+  CardActionArea,
   Typography,
   Button,
   Box,
   Chip,
-  Divider,
 } from '@mui/material';
 import {
   School as SchoolIcon,
@@ -35,106 +34,115 @@ const CourseCard = ({ course, onManage, onDelete }) => {
     return time.substring(0, 5); // "09:00:00" -> "09:00"
   };
 
+  const formatScheduleTime = (s) => {
+    if (!s) return '-';
+    const day =
+      s.dayName ||
+      (s.dayOfWeek && ['월', '화', '수', '목', '금', '토', '일'][Number(s.dayOfWeek) - 1]) ||
+      '-';
+    const start = formatTime(s.startTime);
+    const end = formatTime(s.endTime);
+    return `${day} ${start} - ${end}`;
+  };
+
+  const courseCode = course.courseCode || course.subjectCode || '-';
+  const courseName = course.courseName || course.subjectName || '-';
+  const section = course.section ? `${course.section}분반` : null;
+  const credits = course.credits != null ? `${course.credits}학점` : null;
+
   return (
     <Card
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'all 0.3s ease',
+        transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           boxShadow: 4,
           transform: 'translateY(-4px)',
         },
       }}
     >
-      <CardContent sx={{ flexGrow: 1 }}>
-        {/* 강의 기본 정보 */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-            {course.courseName}
+      <CardActionArea
+        onClick={() => onManage && onManage(course.id)}
+        disabled={!onManage}
+        sx={{ flexGrow: 1, alignItems: 'stretch' }}
+      >
+        {/* 상단 헤더(학생 카드 느낌) */}
+        <Box
+          sx={{
+            height: 72,
+            px: 2,
+            display: 'flex',
+            alignItems: 'center',
+            background: 'linear-gradient(90deg, rgba(25,118,210,0.12), rgba(25,118,210,0.04))',
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            {courseCode}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-            <Chip
-              label={course.courseCode}
-              size="small"
-              color="primary"
-              variant="outlined"
-            />
-            <Chip
-              label={`${course.section}분반`}
-              size="small"
-              color="secondary"
-              variant="outlined"
-            />
-            <Chip
-              label={`${course.credits}학점`}
-              size="small"
-              sx={{ bgcolor: 'info.light', color: 'info.contrastText' }}
-            />
-          </Box>
         </Box>
 
-        <Divider sx={{ my: 1.5 }} />
+        <CardContent>
+          <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+            <Chip label={courseCode} size="small" variant="outlined" />
+            {section && <Chip label={section} size="small" color="secondary" variant="outlined" />}
+            {credits && <Chip label={credits} size="small" variant="outlined" />}
+          </Box>
 
-        {/* 강의 상세 정보 */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            {courseName}
+          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <PeopleIcon fontSize="small" color="action" />
             <Typography variant="body2" color="text.secondary">
-              수강생: {course.enrollment?.current || course.currentStudents || 0} / {course.enrollment?.max || course.maxStudents || 0}명
+              수강생 {course.enrollment?.current || course.currentStudents || 0} /{' '}
+              {course.enrollment?.max || course.maxStudents || 0}
             </Typography>
           </Box>
-          {course.schedule && course.schedule.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AccessTimeIcon fontSize="small" color="action" />
-              <Typography variant="body2" color="text.secondary">
-                {course.schedule[0]?.dayName || 
-                  (course.schedule[0]?.dayOfWeek && ['월', '화', '수', '목', '금', '토', '일'][course.schedule[0].dayOfWeek - 1]) || 
-                  '월'}{' '}
-                {formatTime(course.schedule[0]?.startTime)} - {formatTime(course.schedule[0]?.endTime)}
-              </Typography>
-            </Box>
-          )}
-          {(course.schedule?.[0]?.classroom || course.classroom) && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SchoolIcon fontSize="small" color="action" />
-              <Typography variant="body2" color="text.secondary">
-                {course.schedule?.[0]?.classroom || course.classroom}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </CardContent>
 
-      <Divider />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <AccessTimeIcon fontSize="small" color="action" />
+            <Typography variant="body2" color="text.secondary">
+              {course.schedule?.length ? course.schedule.map(formatScheduleTime).join(', ') : '-'}
+            </Typography>
+          </Box>
 
-      {/* 빠른 액션 버튼 */}
-      <CardActions sx={{ p: 2, pt: 1.5, gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SchoolIcon fontSize="small" color="action" />
+            <Typography variant="body2" color="text.secondary">
+              {course.classroom || course.schedule?.[0]?.classroom || '-'}
+            </Typography>
+          </Box>
+        </CardContent>
+      </CardActionArea>
+
+      <Box sx={{ p: 2, pt: 0, display: 'flex', gap: 1 }}>
         {onManage && (
           <Button
-            size="small"
             variant="contained"
+            fullWidth
             startIcon={<CalendarMonthIcon />}
             onClick={() => onManage(course.id)}
-            sx={{ flex: 1 }}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500 }}
           >
-            관리
+            강의 관리
           </Button>
         )}
         {onDelete && (
           <Button
-            size="small"
             variant="outlined"
             color="error"
+            fullWidth
             startIcon={<DeleteIcon />}
             onClick={() => onDelete(course)}
-            sx={{ flex: 1 }}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 500 }}
           >
             삭제
           </Button>
         )}
-      </CardActions>
+      </Box>
     </Card>
   );
 };

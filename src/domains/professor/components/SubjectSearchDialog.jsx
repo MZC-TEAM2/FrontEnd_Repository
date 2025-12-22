@@ -353,6 +353,10 @@ const SubjectSearchDialog = ({ open, onClose, onSelect }) => {
                               />
                             </Box>
                           }
+                          // MUI ListItemText는 기본적으로 primary=span, secondary=p로 감싸므로
+                          // secondary에 Box/Chip(div)가 들어가면 DOM nesting 경고가 발생할 수 있음.
+                          primaryTypographyProps={{ component: 'div' }}
+                          secondaryTypographyProps={{ component: 'div' }}
                         />
                       </ListItemButton>
                     </ListItem>

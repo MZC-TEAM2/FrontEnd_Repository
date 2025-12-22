@@ -11,7 +11,7 @@
  * - 성적 추이 그래프
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Container,
@@ -35,6 +35,13 @@ import {
   FormControl,
   InputLabel,
   Divider,
+  Alert,
+  AlertTitle,
+  Button,
+  CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 
 // 아이콘 임포트
@@ -46,6 +53,17 @@ import DownloadIcon from '@mui/icons-material/Download';
 import PrintIcon from '@mui/icons-material/Print';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
+import authService from '../services/authService';
+import {
+  getStudentAcademicTerms,
+  getStudentGrades,
+  getCourseGradesForProfessor,
+  getProfessorAcademicTerms,
+} from '../api/gradeApi';
+import { getMyCourses } from '../api/professorApi';
+import { getCurrentAcademicTerm } from '../api/academicTermApi';
 
 /**
  * 탭 패널 컴포넌트
@@ -59,110 +77,612 @@ function TabPanel({ children, value, index }) {
 }
 
 /**
+ * 교수용: 성적 조회(지난 학기 강의들에 대한 학생 성적 목록) - 조회 전용
+ * - 산출/공개 버튼은 "강의 관리 > 성적 탭"에서 제공
+ */
+const ProfessorGradesReadOnlyPanel = () => {
+  const [termsLoading, setTermsLoading] = useState(true);
+  const [termsError, setTermsError] = useState(null);
+  const [terms, setTerms] = useState([]);
+  const [selectedTermId, setSelectedTermId] = useState('');
+  const [termsEmptyReason, setTermsEmptyReason] = useState(null); // 'NO_PAST_DATA' | null
+
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [coursesError, setCoursesError] = useState(null);
+
+  const [expandedCourseId, setExpandedCourseId] = useState(false);
+  const [gradesByCourseId, setGradesByCourseId] = useState({});
+  const [gradesLoadingByCourseId, setGradesLoadingByCourseId] = useState({});
+  const [gradesErrorByCourseId, setGradesErrorByCourseId] = useState({});
+
+  const refreshCourses = async () => {
+    setCoursesLoading(true);
+    setCoursesError(null);
+    try {
+      const res = await getMyCourses({ academicTermId: selectedTermId || undefined });
+      // 응답 포맷이 data.courses / data(array) / array 직접 반환 등으로 섞여 있을 수 있어 방어적으로 파싱
+      const coursesData = res?.data?.courses ?? res?.data ?? res;
+      const list = Array.isArray(coursesData) ? coursesData : [];
+      setCourses(list);
+    } catch (e) {
+      setCoursesError(e);
+      setCourses([]);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
+  const termLabel = (t) => {
+    const map = { '1': '1학기', '2': '2학기', SUMMER: '하계', WINTER: '동계' };
+    return `${t.year}년 ${map[t.termType] ?? t.termType}`;
+  };
+
+  const refreshTerms = async () => {
+    setTermsLoading(true);
+    setTermsError(null);
+    setTermsEmptyReason(null);
+    try {
+      // 1) 지난 학기 목록(교수용) + 2) 현재 학기(공통)를 합쳐서 보여줌
+      let pastList = [];
+      try {
+        const res = await getProfessorAcademicTerms();
+        pastList = Array.isArray(res?.data) ? res.data : [];
+      } catch (e) {
+        // 백엔드에서 "지난 학기 데이터 없음"을 500으로 내려주는 케이스 UX 보정
+        if (e?.status === 500 || e?.response?.status === 500) {
+          setTermsEmptyReason('NO_PAST_DATA');
+          pastList = [];
+        } else {
+          throw e;
+        }
+      }
+
+      const current = await getCurrentAcademicTerm();
+      const list = [...pastList];
+      if (current?.id !== null && current?.id !== undefined) {
+        const exists = list.some((t) => String(t?.id) === String(current.id));
+        if (!exists) list.unshift(current);
+      }
+
+      const order = { '2': 4, '1': 3, WINTER: 2, SUMMER: 1 };
+      list.sort((a, b) => {
+        if (a.year !== b.year) return (b.year || 0) - (a.year || 0);
+        return (order[b.termType] || 0) - (order[a.termType] || 0);
+      });
+      setTerms(list);
+      if (!selectedTermId && list.length > 0) setSelectedTermId(String(list[0].id));
+    } catch (e) {
+      setTermsError(e);
+      setTerms([]);
+    } finally {
+      setTermsLoading(false);
+    }
+  };
+
+  const loadGradesForCourse = async (courseId) => {
+    if (!courseId) return;
+    // 이미 로드되어 있고 에러도 없으면 재조회 안 함(상태 필터 바뀔 때는 아래 effect에서 초기화)
+    if (gradesByCourseId[courseId] && !gradesErrorByCourseId[courseId]) return;
+
+    setGradesLoadingByCourseId((prev) => ({ ...prev, [courseId]: true }));
+    setGradesErrorByCourseId((prev) => ({ ...prev, [courseId]: null }));
+    try {
+      // 교수 화면에서는 항상 전체(ALL) 성적을 조회
+      const res = await getCourseGradesForProfessor(courseId, 'ALL');
+      const list = Array.isArray(res?.data) ? res.data : [];
+      setGradesByCourseId((prev) => ({ ...prev, [courseId]: list }));
+    } catch (e) {
+      setGradesErrorByCourseId((prev) => ({ ...prev, [courseId]: e }));
+      setGradesByCourseId((prev) => ({ ...prev, [courseId]: [] }));
+    } finally {
+      setGradesLoadingByCourseId((prev) => ({ ...prev, [courseId]: false }));
+    }
+  };
+
+  useEffect(() => {
+    refreshTerms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // 학기 선택이 바뀌면 강의/성적 선택을 초기화하고 강의 목록 재조회
+    setExpandedCourseId(false);
+    setGradesByCourseId({});
+    setGradesLoadingByCourseId({});
+    setGradesErrorByCourseId({});
+    if (selectedTermId) refreshCourses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTermId]);
+
+  return (
+    <Paper sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          성적 조회 (교수)
+        </Typography>
+        <Button onClick={refreshTerms} disabled={termsLoading} variant="outlined" size="small">
+          학기 새로고침
+        </Button>
+      </Box>
+
+      <Alert severity="info" sx={{ mb: 2 }}>
+        <b>지난 학기</b>를 선택한 뒤, 해당 학기의 <b>담당 강의</b>에 대한 <b>수강생 성적(조회)</b>을 확인합니다.
+        성적 산출/공개는 <b>강의 관리 &gt; 성적</b> 탭에서 진행하세요.
+      </Alert>
+
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>학기 선택</InputLabel>
+          <Select
+            value={selectedTermId}
+            onChange={(e) => setSelectedTermId(e.target.value)}
+            label="학기 선택"
+            disabled={termsLoading || terms.length === 0}
+          >
+            {terms.map((t) => (
+              <MenuItem key={t.id} value={String(t.id)}>
+                {termLabel(t)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Button onClick={refreshCourses} disabled={coursesLoading || !selectedTermId} variant="outlined">
+          과목 새로고침
+        </Button>
+      </Box>
+
+      {!termsLoading && termsError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          학기 목록 조회에 실패했습니다.
+        </Alert>
+      )}
+
+      {termsLoading && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+          <CircularProgress size={18} />
+          <Typography variant="body2" color="text.secondary">
+            학기 목록을 불러오는 중입니다...
+          </Typography>
+        </Box>
+      )}
+
+      {!termsLoading && !termsError && terms.length === 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {termsEmptyReason === 'NO_PAST_DATA'
+            ? '지난 학기 자료가 없습니다.'
+            : '조회 가능한 학기가 없습니다.'}
+        </Alert>
+      )}
+
+      {!coursesLoading && coursesError && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          담당 강의 목록 조회에 실패했습니다.
+        </Alert>
+      )}
+
+      {coursesLoading && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+          <CircularProgress size={18} />
+          <Typography variant="body2" color="text.secondary">
+            강의 목록을 불러오는 중입니다...
+          </Typography>
+        </Box>
+      )}
+
+      {!coursesLoading && !coursesError && courses.length === 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          조회할 강의가 없습니다.
+        </Alert>
+      )}
+
+      {!coursesLoading && !coursesError && courses.length > 0 && (
+        <Box>
+          {courses.map((c) => {
+            const courseId = String(c.id);
+            const loaded = Object.prototype.hasOwnProperty.call(gradesByCourseId, courseId);
+            const isLoading = !!gradesLoadingByCourseId[courseId];
+            const err = gradesErrorByCourseId[courseId];
+            const gradeRows = gradesByCourseId[courseId] || [];
+
+            return (
+              <Accordion
+                key={courseId}
+                expanded={expandedCourseId === courseId}
+                onChange={async (_e, expanded) => {
+                  setExpandedCourseId(expanded ? courseId : false);
+                  if (expanded) await loadGradesForCourse(courseId);
+                }}
+                sx={{ mb: 1, '&:before': { display: 'none' } }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      <Typography sx={{ fontWeight: 700 }}>
+                        {c.courseCode} {c.courseName} ({c.section})
+                      </Typography>
+                      <Chip size="small" label={`${c.credits ?? '-'}학점`} variant="outlined" />
+                      <Chip size="small" label={c.status ?? '-'} variant="outlined" />
+                      {loaded && !isLoading && (
+                        <Chip size="small" color="primary" label={`수강생 ${gradeRows.length}명`} />
+                      )}
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      담당교수: {c?.professor?.name ?? '-'}
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {isLoading && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+                      <CircularProgress size={18} />
+                      <Typography variant="body2" color="text.secondary">
+                        성적 목록을 불러오는 중입니다...
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {!isLoading && err && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                      성적 목록 조회에 실패했습니다.
+                    </Alert>
+                  )}
+
+                  {!isLoading && !err && loaded && gradeRows.length === 0 && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      표시할 성적이 없습니다.
+                    </Alert>
+                  )}
+
+                  {!isLoading && !err && loaded && gradeRows.length > 0 && (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>학생</TableCell>
+                            <TableCell align="center">학번</TableCell>
+                            <TableCell align="center">상태</TableCell>
+                            <TableCell align="center">중간</TableCell>
+                            <TableCell align="center">기말</TableCell>
+                            <TableCell align="center">퀴즈</TableCell>
+                            <TableCell align="center">과제</TableCell>
+                            <TableCell align="center">출석</TableCell>
+                            <TableCell align="center">최종</TableCell>
+                            <TableCell align="center">등급</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {gradeRows.map((g) => (
+                            <TableRow key={`${g.courseId}-${g.student?.id ?? ''}`}>
+                              <TableCell>{g.student?.name ?? '-'}</TableCell>
+                              <TableCell align="center">{g.student?.studentNumber ?? '-'}</TableCell>
+                              <TableCell align="center">{g.status}</TableCell>
+                              <TableCell align="center">{g.midtermScore}</TableCell>
+                              <TableCell align="center">{g.finalExamScore}</TableCell>
+                              <TableCell align="center">{g.quizScore}</TableCell>
+                              <TableCell align="center">{g.assignmentScore}</TableCell>
+                              <TableCell align="center">{g.attendanceScore}</TableCell>
+                              <TableCell align="center">{g.finalScore}</TableCell>
+                              <TableCell align="center">{g.finalGrade}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+        </Box>
+      )}
+    </Paper>
+  );
+};
+
+/**
+ * 학생용: 성적 조회(학기 선택 + 공개된 성적만)
+ */
+const StudentGradesPanel = () => {
+  const [termsLoading, setTermsLoading] = useState(true);
+  const [termsError, setTermsError] = useState(null);
+  const [terms, setTerms] = useState([]);
+  const [selectedTermId, setSelectedTermId] = useState('');
+
+  const [gradesLoading, setGradesLoading] = useState(false);
+  const [gradesError, setGradesError] = useState(null);
+  const [grades, setGrades] = useState([]);
+
+  const [allGradesLoading, setAllGradesLoading] = useState(false);
+  const [allGrades, setAllGrades] = useState([]);
+
+  const termLabel = (t) => {
+    const map = { '1': '1학기', '2': '2학기', SUMMER: '하계', WINTER: '동계' };
+    return `${t.year}년 ${map[t.termType] ?? t.termType}`;
+  };
+
+  const gradeToPoint = (grade) => {
+    const map = {
+      'A+': 4.5, A0: 4.0,
+      'B+': 3.5, B0: 3.0,
+      'C+': 2.5, C0: 2.0,
+      'D+': 1.5, D0: 1.0,
+      F: 0,
+    };
+    return map[grade] ?? 0;
+  };
+
+  const isEarnedGrade = (grade) => {
+    if (grade == null) return false;
+    return String(grade).trim().toUpperCase() !== 'F';
+  };
+
+  const calcEarnedCredits = (gradeRows) => {
+    const rows = Array.isArray(gradeRows) ? gradeRows : [];
+    return rows.reduce((acc, r) => {
+      const credits = Number(r.courseCredits) || 0;
+      return acc + (isEarnedGrade(r.finalGrade) ? credits : 0);
+    }, 0);
+  };
+
+  const calcGpa = (gradeRows) => {
+    const rows = Array.isArray(gradeRows) ? gradeRows : [];
+    const creditsSum = rows.reduce((acc, r) => acc + (Number(r.courseCredits) || 0), 0);
+    if (creditsSum === 0) return '0.00';
+    const pointsSum = rows.reduce(
+      (acc, r) => acc + gradeToPoint(r.finalGrade) * (Number(r.courseCredits) || 0),
+      0
+    );
+    return (pointsSum / creditsSum).toFixed(2);
+  };
+
+  const overallStats = useMemo(() => {
+    const rows = Array.isArray(allGrades) ? allGrades : [];
+    // "이수 학점"은 F 제외 (일반적인 취득학점 기준)
+    const totalCredits = calcEarnedCredits(rows);
+    const overallGPA = calcGpa(rows);
+    return { totalCredits, overallGPA };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allGrades]);
+
+  const selectedTermStats = useMemo(() => {
+    const totalCredits = calcEarnedCredits(grades);
+    const gpa = calcGpa(grades);
+    return { totalCredits, gpa };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grades]);
+
+  const fetchTerms = async () => {
+    setTermsLoading(true);
+    setTermsError(null);
+    try {
+      const res = await getStudentAcademicTerms();
+      const list = Array.isArray(res?.data) ? res.data : [];
+      // 최신 학기 우선 정렬(대략): year desc, termType desc(2>1>WINTER>SUMMER)
+      const order = { '2': 4, '1': 3, WINTER: 2, SUMMER: 1 };
+      list.sort((a, b) => {
+        if (a.year !== b.year) return (b.year || 0) - (a.year || 0);
+        return (order[b.termType] || 0) - (order[a.termType] || 0);
+      });
+      setTerms(list);
+      if (!selectedTermId && list.length > 0) setSelectedTermId(String(list[0].id));
+    } catch (e) {
+      setTermsError(e);
+      setTerms([]);
+    } finally {
+      setTermsLoading(false);
+    }
+  };
+
+  const fetchGrades = async (termId) => {
+    if (!termId) return;
+    setGradesLoading(true);
+    setGradesError(null);
+    try {
+      const res = await getStudentGrades(termId);
+      setGrades(Array.isArray(res?.data) ? res.data : []);
+    } catch (e) {
+      setGradesError(e);
+      setGrades([]);
+    } finally {
+      setGradesLoading(false);
+    }
+  };
+
+  const fetchAllGrades = async () => {
+    setAllGradesLoading(true);
+    try {
+      const res = await getStudentGrades(null);
+      setAllGrades(Array.isArray(res?.data) ? res.data : []);
+    } finally {
+      setAllGradesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTerms();
+    fetchAllGrades();
+    // NOTE: fetchTerms/fetchAllGrades는 컴포넌트 내부 함수(closure)라 의존성에 넣지 않고 최초 1회만 호출
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (selectedTermId) fetchGrades(selectedTermId);
+  }, [selectedTermId]);
+
+  return (
+    <>
+      {/* 전체 통계 카드(간단 버전) */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card>
+            <CardContent>
+                  <Typography color="text.secondary" variant="body2" gutterBottom>
+                    전체 평균 학점
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                {overallStats.overallGPA}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    / 4.5
+                  </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card>
+            <CardContent>
+                  <Typography color="text.secondary" variant="body2" gutterBottom>
+                    총 이수 학점
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 600 }}>
+                {overallStats.totalCredits}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                학점
+                  </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Paper sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            학기별 성적
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>학기 선택</InputLabel>
+            <Select
+              value={selectedTermId}
+              onChange={(e) => setSelectedTermId(e.target.value)}
+              label="학기 선택"
+              disabled={termsLoading || terms.length === 0}
+            >
+              {terms.map((t) => (
+                <MenuItem key={t.id} value={String(t.id)}>
+                  {termLabel(t)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        {termsError && <Alert severity="warning">학기 목록 조회에 실패했습니다.</Alert>}
+        {!termsLoading && !termsError && terms.length === 0 && (
+          <Alert severity="info">조회 가능한 학기가 없습니다.</Alert>
+        )}
+
+        <Tabs value={0} sx={{ mb: 2 }}>
+          <Tab label="성적 목록" />
+        </Tabs>
+
+        {gradesLoading && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 2 }}>
+            <CircularProgress size={18} />
+            <Typography variant="body2" color="text.secondary">
+              성적을 불러오는 중입니다...
+            </Typography>
+          </Box>
+        )}
+
+        {!gradesLoading && gradesError && (
+          <Alert severity="warning">성적 조회에 실패했습니다.</Alert>
+        )}
+
+        {!gradesLoading && !gradesError && grades.length === 0 && (
+          <Alert severity="info">
+            해당 학기에 공개된 성적이 없습니다.
+          </Alert>
+        )}
+
+        {!gradesLoading && !gradesError && grades.length > 0 && (
+          <>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>과목명</TableCell>
+                  <TableCell align="center">학점</TableCell>
+                  <TableCell align="center">등급</TableCell>
+                    <TableCell align="center">최종 점수</TableCell>
+                    <TableCell align="center">공개일</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                  {grades.map((g) => (
+                    <TableRow key={`${g.academicTermId}-${g.courseId}`}>
+                      <TableCell>{g.courseName}</TableCell>
+                      <TableCell align="center">{g.courseCredits}</TableCell>
+                    <TableCell align="center">
+                        <Chip label={g.finalGrade} size="small" />
+                    </TableCell>
+                      <TableCell align="center">{g.finalScore}</TableCell>
+                      <TableCell align="center">{g.publishedAt ?? '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+            <Grid container spacing={2}>
+                <Grid size={{ xs: 6, md: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  학기 평균 학점
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                    {selectedTermStats.gpa} / 4.5
+                </Typography>
+              </Grid>
+                <Grid size={{ xs: 6, md: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  이수 학점
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                    {selectedTermStats.totalCredits} 학점
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+          </>
+        )}
+      </Paper>
+
+      {/* 전체 성적 로딩이 길어도 UX 깨지지 않게 */}
+      {allGradesLoading && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+          전체 성적 통계를 계산 중입니다...
+                  </Typography>
+      )}
+    </>
+  );
+};
+
+/**
  * Grades 컴포넌트
  */
 const Grades = () => {
-  const [selectedSemester, setSelectedSemester] = useState('2024-2');
-  const [tabValue, setTabValue] = useState(0);
+  const currentUser = authService.getCurrentUser();
+  const userType = currentUser?.userType;
+  const isProfessor = userType === 'PROFESSOR';
+  const headerSubText = isProfessor
+    ? `교수 | ${currentUser?.name ?? ''}`.trim()
+    : `${currentUser?.departmentName ?? '-'} | ${currentUser?.userNumber ?? '-'} ${currentUser?.name ?? ''}`.trim();
 
-  // 학기별 성적 데이터
-  const gradesData = {
-    '2024-2': {
-      courses: [
-        { code: 'CS301', name: '데이터베이스', credits: 3, grade: 'A+', score: 95 },
-        { code: 'CS302', name: '알고리즘', credits: 3, grade: 'A', score: 92 },
-        { code: 'CS401', name: '운영체제', credits: 3, grade: 'B+', score: 88 },
-        { code: 'CS402', name: '소프트웨어공학', credits: 3, grade: 'A', score: 93 },
-        { code: 'CS403', name: '캡스톤디자인', credits: 3, grade: 'A+', score: 96 },
-        { code: 'GE201', name: '기술과 창업', credits: 3, grade: 'A', score: 91 },
-      ],
-      gpa: 4.25,
-      totalCredits: 18,
-    },
-    '2024-1': {
-      courses: [
-        { code: 'CS201', name: '자료구조', credits: 3, grade: 'A', score: 93 },
-        { code: 'CS202', name: '컴퓨터구조', credits: 3, grade: 'B+', score: 87 },
-        { code: 'CS203', name: '프로그래밍언어론', credits: 3, grade: 'A', score: 92 },
-        { code: 'CS204', name: '웹프로그래밍', credits: 3, grade: 'A+', score: 96 },
-        { code: 'GE101', name: '영어회화', credits: 2, grade: 'B', score: 85 },
-        { code: 'GE102', name: '글쓰기', credits: 2, grade: 'B+', score: 88 },
-      ],
-      gpa: 4.06,
-      totalCredits: 16,
-    },
-    '2023-2': {
-      courses: [
-        { code: 'CS101', name: '프로그래밍기초', credits: 3, grade: 'A+', score: 97 },
-        { code: 'CS102', name: '이산수학', credits: 3, grade: 'A', score: 91 },
-        { code: 'CS103', name: '디지털논리회로', credits: 3, grade: 'B+', score: 86 },
-        { code: 'GE001', name: '미적분학', credits: 3, grade: 'A', score: 90 },
-        { code: 'GE002', name: '일반물리학', credits: 3, grade: 'B', score: 83 },
-      ],
-      gpa: 3.94,
-      totalCredits: 15,
-    },
-  };
-
-  // 전체 통계 계산
-  const calculateOverallStats = () => {
-    let totalGradePoints = 0;
-    let totalCredits = 0;
-    let majorCredits = 0;
-    let generalCredits = 0;
-
-    Object.values(gradesData).forEach(semester => {
-      totalGradePoints += semester.gpa * semester.totalCredits;
-      totalCredits += semester.totalCredits;
-
-      semester.courses.forEach(course => {
-        if (course.code.startsWith('CS')) {
-          majorCredits += course.credits;
-        } else {
-          generalCredits += course.credits;
-        }
-      });
-    });
-
-    return {
-      overallGPA: (totalGradePoints / totalCredits).toFixed(2),
-      totalCredits,
-      majorCredits,
-      generalCredits,
-    };
-  };
-
-  const stats = calculateOverallStats();
-
-  // 학점을 점수로 변환
-  const gradeToPoint = (grade) => {
-    const gradeMap = {
-      'A+': 4.5, 'A': 4.0, 'B+': 3.5, 'B': 3.0,
-      'C+': 2.5, 'C': 2.0, 'D+': 1.5, 'D': 1.0, 'F': 0,
-    };
-    return gradeMap[grade] || 0;
-  };
-
-  // 학점 색상
-  const getGradeColor = (grade) => {
-    if (grade.startsWith('A')) return 'success';
-    if (grade.startsWith('B')) return 'primary';
-    if (grade.startsWith('C')) return 'warning';
-    return 'error';
-  };
-
-  return (
+                    return (
     <Container maxWidth="xl">
       {/* 페이지 헤더 */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
-            성적 조회
-          </Typography>
+            {isProfessor ? '성적 관리' : '성적 조회'}
+                  </Typography>
           <Typography variant="body1" color="text.secondary">
-            컴퓨터공학과 | 3학년 | 20220001 홍길동
-          </Typography>
-        </Box>
+            {isProfessor ? `${headerSubText} | 성적 산출/공개 관리` : headerSubText}
+                          </Typography>
+                        </Box>
         <Box>
           <Tooltip title="성적표 인쇄">
             <IconButton>
@@ -175,275 +695,14 @@ const Grades = () => {
             </IconButton>
           </Tooltip>
         </Box>
-      </Box>
-
-      {/* 전체 통계 카드 */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    전체 평균 학점
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    {stats.overallGPA}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    / 4.5
-                  </Typography>
-                </Box>
-                <AssessmentIcon sx={{ fontSize: 48, color: 'primary.light' }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    총 이수 학점
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                    {stats.totalCredits}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    / 130 학점
-                  </Typography>
-                </Box>
-                <SchoolIcon sx={{ fontSize: 48, color: 'success.light' }} />
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={(stats.totalCredits / 130) * 100}
-                sx={{ mt: 2, height: 6, borderRadius: 3 }}
-                color="success"
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    전공 이수
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                    {stats.majorCredits}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    / 84 학점
-                  </Typography>
-                </Box>
-                <StarIcon sx={{ fontSize: 48, color: 'warning.light' }} />
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={(stats.majorCredits / 84) * 100}
-                sx={{ mt: 2, height: 6, borderRadius: 3 }}
-                color="warning"
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    교양 이수
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                    {stats.generalCredits}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    / 46 학점
-                  </Typography>
-                </Box>
-                <TrendingUpIcon sx={{ fontSize: 48, color: 'info.light' }} />
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={(stats.generalCredits / 46) * 100}
-                sx={{ mt: 2, height: 6, borderRadius: 3 }}
-                color="info"
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* 학기별 성적 */}
-      <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            학기별 성적
-          </Typography>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>학기 선택</InputLabel>
-            <Select
-              value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
-              label="학기 선택"
-            >
-              <MenuItem value="2024-2">2024년 2학기</MenuItem>
-              <MenuItem value="2024-1">2024년 1학기</MenuItem>
-              <MenuItem value="2023-2">2023년 2학기</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Tabs value={tabValue} onChange={(e, val) => setTabValue(val)} sx={{ mb: 2 }}>
-          <Tab label="성적 목록" />
-          <Tab label="성적 분포" />
-        </Tabs>
-
-        {/* 성적 목록 탭 */}
-        <TabPanel value={tabValue} index={0}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>과목코드</TableCell>
-                  <TableCell>과목명</TableCell>
-                  <TableCell align="center">이수구분</TableCell>
-                  <TableCell align="center">학점</TableCell>
-                  <TableCell align="center">등급</TableCell>
-                  <TableCell align="center">점수</TableCell>
-                  <TableCell align="center">평점</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {gradesData[selectedSemester].courses.map((course) => (
-                  <TableRow key={course.code}>
-                    <TableCell>{course.code}</TableCell>
-                    <TableCell>{course.name}</TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={course.code.startsWith('CS') ? '전공' : '교양'}
-                        size="small"
-                        color={course.code.startsWith('CS') ? 'primary' : 'default'}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell align="center">{course.credits}</TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={course.grade}
-                        size="small"
-                        color={getGradeColor(course.grade)}
-                      />
-                    </TableCell>
-                    <TableCell align="center">{course.score}</TableCell>
-                    <TableCell align="center">{gradeToPoint(course.grade)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={4}>
-                <Typography variant="body2" color="text.secondary">
-                  학기 평균 학점
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                  {gradesData[selectedSemester].gpa} / 4.5
-                </Typography>
-              </Grid>
-              <Grid item xs={4}>
-                <Typography variant="body2" color="text.secondary">
-                  이수 학점
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  {gradesData[selectedSemester].totalCredits} 학점
-                </Typography>
-              </Grid>
-              <Grid item xs={4}>
-                <Typography variant="body2" color="text.secondary">
-                  석차
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  12 / 145 명
-                </Typography>
-              </Grid>
-            </Grid>
-          </Box>
-        </TabPanel>
-
-        {/* 성적 분포 탭 */}
-        <TabPanel value={tabValue} index={1}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    등급 분포
-                  </Typography>
-                  {['A+', 'A', 'B+', 'B', 'C+'].map((grade) => {
-                    const count = gradesData[selectedSemester].courses.filter(c => c.grade === grade).length;
-                    const percentage = (count / gradesData[selectedSemester].courses.length) * 100;
-
-                    return (
-                      <Box key={grade} sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="body2">{grade}</Typography>
-                          <Typography variant="body2">{count}과목</Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={percentage}
-                          sx={{ height: 8, borderRadius: 4 }}
-                          color={getGradeColor(grade)}
-                        />
                       </Box>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    학기별 평균 학점 추이
-                  </Typography>
-                  <Box sx={{ mt: 3 }}>
-                    {Object.entries(gradesData).reverse().map(([semester, data]) => (
-                      <Box key={semester} sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="body2">
-                            {semester.replace('-', '년 ')}학기
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {data.gpa}
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={(data.gpa / 4.5) * 100}
-                          sx={{ height: 8, borderRadius: 4 }}
-                        />
-                      </Box>
-                    ))}
+      {isProfessor && (
+        <Box sx={{ mb: 3 }}>
+          <ProfessorGradesReadOnlyPanel />
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
-      </Paper>
+      )}
+      {!isProfessor && <StudentGradesPanel />}
     </Container>
   );
 };
