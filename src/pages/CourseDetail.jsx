@@ -66,7 +66,7 @@ import { getExamLocalResult, onExamAttemptStorageUpdated, setExamLocalResult } f
 import { getCurrentGradePublishPeriod } from '../api/gradeApi';
 import { getCurrentAcademicTerm } from '../api/academicTermApi';
 import { getStudentGrades } from '../api/gradeApi';
-import AssignmentBoard from '../domains/course/components/assignment/AssignmentBoard';
+import AssignmentBoard from '../domains/board/components/assignment/AssignmentBoardPage';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
