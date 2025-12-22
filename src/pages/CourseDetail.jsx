@@ -66,7 +66,7 @@ import { getExamLocalResult, onExamAttemptStorageUpdated, setExamLocalResult } f
 import { getCurrentGradePublishPeriod } from '../api/gradeApi';
 import { getCurrentAcademicTerm } from '../api/academicTermApi';
 import { getStudentGrades } from '../api/gradeApi';
-import AssignmentBoard from '../domains/board/components/assignment/AssignmentBoardPage';
+import AssignmentBoard from '../domains/course/components/assignment/AssignmentBoard';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -555,16 +555,12 @@ export default function CourseDetail() {
         <AssignmentBoard courseId={courseId} isEmbedded={true} />
       </TabPanel>
 
-      {[
-        { index: 3, icon: <QuizIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '퀴즈' },
-        { index: 4, icon: <FactCheckIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '시험' },
-        { index: 5, icon: <AssessmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />, title: '성적' },
-      ].map((t) => (
-        <TabPanel key={t.index} value={currentTab} index={t.index}>
-          <Paper sx={{ p: 4, textAlign: 'center' }}>
-            {t.icon}
-            <Typography variant="h6" color="text.secondary">
-              {t.title}
+      {/* 퀴즈 */}
+      <TabPanel value={currentTab} index={3}>
+        <Paper sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              퀴즈
             </Typography>
             <Button size="small" variant="outlined" onClick={fetchQuizzes} disabled={quizLoading}>
               새로고침
