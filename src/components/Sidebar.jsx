@@ -117,8 +117,6 @@ const studentMenuItems = [
       { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
       { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
       { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
-      { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
-      { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
       { title: '스터디 모집', path: '/boards/study', icon: <GroupIcon /> },
     ],
   },
@@ -127,12 +125,6 @@ const studentMenuItems = [
     path: '/grades',
     icon: <AssessmentIcon />,
     description: '성적 및 학점 확인',
-  },
-  {
-    title: '학사 일정',
-    path: '/calendar',
-    icon: <CalendarMonthIcon />,
-    description: '학사 일정 확인',
   },
   {
     divider: true, // 구분선
@@ -204,15 +196,13 @@ const professorMenuItems = [
       { title: '공모전', path: '/boards/contest', icon: <EmojiEventsIcon /> },
       { title: '취업정보', path: '/boards/career', icon: <WorkIcon /> },
       { title: '과제', path: '/boards/assignment', icon: <AssignmentIcon /> },
-      { title: '시험', path: '/boards/exam', icon: <DescriptionIcon /> },
-      { title: '퀴즈', path: '/boards/quiz', icon: <QuizIcon /> },
     ],
   },
   {
-    title: '학사 일정',
-    path: '/calendar',
-    icon: <CalendarMonthIcon />,
-    description: '학사 일정 확인',
+    title: '성적 조회',
+    path: '/grades',
+    icon: <AssessmentIcon />,
+    description: '지난 학기 성적 조회',
   },
   {
     divider: true, // 구분선
@@ -592,10 +582,19 @@ const Sidebar = ({ open, handleDrawerToggle, drawerWidth }) => {
                         sx={{ height: 20, fontSize: '0.75rem' }}
                       />
                     )}
+                    {item.hasBadge && unreadCount > 0 && (
+                      <Chip
+                        label={unreadCount}
+                        size="small"
+                        color="error"
+                        sx={{ height: 20, fontSize: '0.75rem' }}
+                      />
+                    )}
                   </Box>
                 }
                 secondary={item.description}
-                primaryTypographyProps={{ fontWeight: isActive(item.path) ? 600 : 400 }}
+                // primary가 Box/Chip(div)를 포함하므로 기본 span 래핑을 피한다.
+                primaryTypographyProps={{ component: 'div', fontWeight: isActive(item.path) ? 600 : 400 }}
               />
             </ListItemButton>
           );

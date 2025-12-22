@@ -173,14 +173,11 @@ const WeekManagement = ({
   };
 
   const handleWeekSubmit = () => {
-    console.log('=== 주차 제출 시작 ===');
-    console.log('전체 weekFormData:', weekFormData);
-    console.log('콘텐츠 개수:', weekFormData.contents?.length || 0);
-    
+
     if (editingWeek) {
       // 명세(12.3): 수정은 weekTitle만
       const updateData = { weekTitle: weekFormData.weekTitle };
-      console.log('수정 데이터 (weekTitle만):', updateData);
+
       onUpdateWeek(editingWeek.id, updateData);
     } else {
       // 프론트에서 최대 주차 제한(백엔드 16개 제한과 동일)도 선제 적용
@@ -191,7 +188,7 @@ const WeekManagement = ({
       }
       // 생성 시에는 contents 포함
       const submitData = { ...weekFormData };
-      console.log('생성 데이터 (contents 포함):', submitData);
+
       onCreateWeek(submitData);
     }
     setWeekDialogOpen(false);
@@ -199,8 +196,6 @@ const WeekManagement = ({
   };
 
   const handleAddContentToWeekForm = () => {
-    console.log('=== 콘텐츠 추가 시작 ===');
-    console.log('현재 contentFormData:', contentFormData);
     
     if (!contentFormData.title.trim() || !contentFormData.contentUrl.trim()) {
       alert('콘텐츠 제목과 URL을 입력해주세요.');
@@ -212,11 +207,7 @@ const WeekManagement = ({
     // 주차 생성 시 콘텐츠는 DOCUMENT/LINK만 허용. duration은 사용하지 않음.
     delete newContent.duration;
 
-    console.log('추가될 콘텐츠:', newContent);
-    console.log('현재 weekFormData.contents:', weekFormData.contents);
-
     const updatedContents = [...weekFormData.contents, newContent];
-    console.log('업데이트될 contents:', updatedContents);
 
     setWeekFormData({
       ...weekFormData,
@@ -231,7 +222,6 @@ const WeekManagement = ({
       duration: '',
     });
     
-    console.log('=== 콘텐츠 추가 완료 ===');
   };
 
   const handleRemoveContentFromWeekForm = (index) => {
@@ -282,13 +272,6 @@ const WeekManagement = ({
       description: description.trim() || undefined,
       contentUrl: contentUrl.trim(),
     };
-
-    // 디버깅 로그: application/json 전송
-    console.log('[WeekManagement] createContent payload (json)', {
-      courseId,
-      weekId: selectedWeekId,
-      ...payload,
-    });
 
     try {
       await onCreateContent(selectedWeekId, payload);

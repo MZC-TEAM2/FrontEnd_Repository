@@ -25,11 +25,49 @@ import {
 const VIDEO_SERVER_URL = import.meta.env.VITE_VIDEO_SERVER_URL || 'http://localhost:8090';
 const TUS_ENDPOINT = `${VIDEO_SERVER_URL}/api/v1/videos/upload`;
 
-/**
- * Base64 인코딩 함수
- */
-const encodeBase64 = (str) => {
-  return btoa(unescape(encodeURIComponent(str)));
+const formatDuration = (seconds) => {
+  const total = Number(seconds);
+  if (!Number.isFinite(total) || total < 0) return '';
+
+  const whole = Math.floor(total);
+  const s = whole % 60;
+  const m = Math.floor(whole / 60) % 60;
+  const h = Math.floor(whole / 3600);
+
+  const pad2 = (n) => String(n).padStart(2, '0');
+  if (h > 0) return `${h}:${pad2(m)}:${pad2(s)}`;
+  return `${m}:${pad2(s)}`;
+};
+
+const readVideoDuration = (videoFile) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const url = URL.createObjectURL(videoFile);
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = url;
+
+      const cleanup = () => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // ignore
+        }
+      };
+
+      video.onloadedmetadata = () => {
+        const d = video.duration;
+        cleanup();
+        resolve(d);
+      };
+      video.onerror = (e) => {
+        cleanup();
+        reject(e);
+      };
+    } catch (e) {
+      reject(e);
+    }
+  });
 };
 
 /**
@@ -51,8 +89,7 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
   const uploadRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const handleFileSelect = (e) => {
-    const selectedFile = e.target.files?.[0];
+  const setFileAndAutofill = async (selectedFile) => {
     if (selectedFile) {
       if (!selectedFile.type.startsWith('video/')) {
         setError('영상 파일만 업로드할 수 있습니다.');
@@ -66,51 +103,34 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
       if (!title) {
         setTitle(fileName);
       }
+
+      // 영상 duration 자동 추출 (사용자가 이미 입력한 경우는 덮어쓰지 않음)
+      if (!duration) {
+        try {
+          const d = await readVideoDuration(selectedFile);
+          const formatted = formatDuration(d);
+          if (formatted) setDuration(formatted);
+        } catch (e) {
+          // duration 추출 실패는 업로드 자체를 막지 않음
+          console.warn('영상 duration 메타데이터 읽기 실패:', e);
+        }
+      }
     }
+  };
+
+  const handleFileSelect = (e) => {
+    const selectedFile = e.target.files?.[0];
+    void setFileAndAutofill(selectedFile);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     const droppedFile = e.dataTransfer.files?.[0];
-    if (droppedFile) {
-      if (!droppedFile.type.startsWith('video/')) {
-        setError('영상 파일만 업로드할 수 있습니다.');
-        return;
-      }
-      setFile(droppedFile);
-      setError(null);
-
-      const fileName = droppedFile.name.replace(/\.[^/.]+$/, '');
-      if (!title) {
-        setTitle(fileName);
-      }
-    }
+    void setFileAndAutofill(droppedFile);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
-  };
-
-  const buildMetadata = () => {
-    const metadata = {
-      filename: encodeBase64(file.name),
-      filetype: encodeBase64(file.type),
-      courseId: encodeBase64(String(courseId)),
-      weekId: encodeBase64(String(weekId)),
-    };
-
-    if (title.trim()) {
-      metadata.title = encodeBase64(title.trim());
-    }
-
-    if (duration.trim()) {
-      metadata.duration = encodeBase64(duration.trim());
-    }
-
-    // TUS 메타데이터 형식: key value,key value,...
-    return Object.entries(metadata)
-      .map(([key, value]) => `${key} ${value}`)
-      .join(',');
   };
 
   const handleUpload = () => {
@@ -295,9 +315,8 @@ const VideoUploader = ({ courseId, weekId, onUploadComplete, onCancel }) => {
                 fullWidth
                 label="재생 시간"
                 value={duration}
-                onChange={(e) => setDuration(e.target.value)}
+                disabled
                 placeholder="예: 10:30 또는 1:25:30"
-                helperText="형식: MM:SS 또는 HH:MM:SS (선택사항)"
               />
             </Box>
           )}

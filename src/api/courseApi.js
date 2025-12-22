@@ -26,7 +26,7 @@ export const getCurrentEnrollmentPeriod = async (typeCode = null) => {
   if (response.data?.success && response.data.data?.currentPeriod) {
     const period = response.data.data.currentPeriod;
     
-    console.log(period);
+    console.log( 'period ', period);
   }
   return response.data;
 };
@@ -113,33 +113,36 @@ export const getCourseDetail = async (courseId) => {
 };
 
 /**
- * 주차 목록 조회 (학생용)
- * API_SPECIFICATION.md: GET /courses/{courseId}/weeks
+ * 주차 목록 조회 (학생/교수 공용)
+ * API_SPECIFICATION.md:
+ * - 12.1: GET /api/v1/courses/{courseId}/weeks
  *
  * 백엔드 라우팅이 /api/v1 prefix를 사용하는 경우가 있어 1회 fallback을 둠.
  */
 export const getCourseWeeks = async (courseId) => {
   try {
-    // 최신 스펙(12.1): 교수/수강중 학생 공통 엔드포인트
-    const response = await axiosInstance.get(`${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`);
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}/weeks`);
     return response.data;
-  } catch (err) {
-    // fallback 1: 학생 수강 과목 API(구버전/대안)
-    if (err?.status === 404) {
-      try {
-        const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}/weeks`);
-        return response.data;
-      } catch (err2) {
-        // fallback 2: 스펙에 맞춘 prefix 없는 경로
-        if (err2?.status === 404) {
-          const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}/weeks`);
-          return response.data;
-        }
-        throw err2;
-      }
+  } catch (eStudent) {
+    if (eStudent?.status === 404) {
+      // legacy fallback
+      const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}/weeks`);
+      return response.data;
     }
-    throw err;
+    throw eStudent;
   }
+};
+
+/**
+ * 주차별 콘텐츠 조회 (학생/교수 공용)
+ * API_SPECIFICATION.md:
+ * - GET /api/v1/courses/{courseId}/weeks/{weekId}/contents
+ */
+export const getWeekContents = async (courseId, weekId) => {
+  const response = await axiosInstance.get(
+    `${BASE_URL}/api/v1/courses/${courseId}/weeks/${weekId}/contents`
+  );
+  return response.data;
 };
 
 /**
@@ -225,9 +228,26 @@ export const getMyEnrollments = async (enrollmentPeriodId = null) => {
   const url = queryParams.toString() 
     ? `${BASE_URL}/api/v1/enrollments/my?${queryParams.toString()}`
     : `${BASE_URL}/api/v1/enrollments/my`;
-    
-  const response = await axiosInstance.get(url);
-  return response.data;
+
+  try {
+    const response = await axiosInstance.get(url);
+    return response.data;
+  } catch (e) {
+    // 일부 백엔드에서 "수강신청(수강중) 내역 없음"을 400으로 내려주는 케이스가 있어
+    // 시간표/수강과목 화면이 깨지지 않도록 빈 데이터로 처리한다.
+    if (e?.status === 400) {
+      return {
+        success: true,
+        data: {
+          term: null,
+          summary: { totalCourses: 0, totalCredits: 0 },
+          enrollments: [],
+        },
+        message: e?.message || '수강 과목이 없습니다.',
+      };
+    }
+    throw e;
+  }
 };
 
 /**
@@ -253,6 +273,37 @@ export const getMySchedule = async (params = {}) => {
 
   const response = await axiosInstance.get(url);
   return response.data;
+};
+
+/**
+ * 현재 학기 수강 과목 목록 조회 (학생)
+ * API_SPECIFICATION.md: GET /enrollments/current?year={year}&term={term}
+ *
+ * @param {Object} params
+ * @param {number} params.year - 학년도
+ * @param {string|number} params.term - 학기 (termType)
+ */
+export const getCurrentEnrolledCourses = async (params = {}) => {
+  const { year, term } = params;
+  const queryParams = new URLSearchParams();
+  if (year !== undefined && year !== null && year !== '') queryParams.append('year', year);
+  if (term !== undefined && term !== null && term !== '') queryParams.append('term', term);
+
+  const basePath = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  const url = `${BASE_URL}/enrollments/current${basePath}`;
+
+  try {
+    const response = await axiosInstance.get(url);
+    return response.data;
+  } catch (err) {
+    // 일부 환경에서 /api/v1 prefix가 필요한 경우 fallback
+    if (err?.response?.status === 404 || err?.status === 404) {
+      const fallbackUrl = `${BASE_URL}/api/v1/enrollments/current${basePath}`;
+      const response = await axiosInstance.get(fallbackUrl);
+      return response.data;
+    }
+    throw err;
+  }
 };
 
 /**

@@ -248,9 +248,9 @@ Authorization: Bearer {accessToken}
       "grading": {
         "midterm": 30,
         "final": 30,
+        "quiz": 10,
         "assignment": 20,
-        "attendance": 10,
-        "participation": 10
+        "attendance": 10
       }
     }
   }
@@ -260,9 +260,12 @@ Authorization: Bearer {accessToken}
 ### 3.3 n주차 목록 조회
 
 ```http
-GET /courses/{courseId}/weeks
+GET /api/v1/courses/{courseId}/weeks
 Authorization: Bearer {accessToken}
 ```
+
+**권한**
+- 수강 중인 학생 또는 해당 강의 담당 교수
 
 **Response**
 ```json
@@ -280,17 +283,26 @@ Authorization: Bearer {accessToken}
           "title": "데이터베이스 시스템의 개념",
           "contentUrl": "https://video.mzc.ac.kr/courses/101/week1/lecture1.mp4",
           "duration": "45:23",
-          "progress": {
-            "isCompleted": true,
-            "progressPercentage": 100,
-            "lastPositionSeconds": 2723,
-            "completedAt": "2024-09-03T14:30:00Z",
-            "firstAccessedAt": "2024-09-03T13:00:00Z",
-            "lastAccessedAt": "2024-09-03T14:30:00Z",
-            "accessCount": 2
-          }
+          "order": 1,
+          "createdAt": "2024-09-01T10:00:00Z"
+        },
+        {
+          "id": 2002,
+          "contentType": "DOCUMENT",
+          "title": "강의노트 - 1주차",
+          "contentUrl": "https://files.mzc.ac.kr/courses/101/week1/notes.pdf",
+          "order": 2,
+          "createdAt": "2024-09-01T10:05:00Z"
         }
-      ]
+      ],
+      "createdAt": "2024-09-01T09:00:00Z"
+    },
+    {
+      "id": 1002,
+      "weekNumber": 2,
+      "weekTitle": "2주차: ER 다이어그램",
+      "contents": [],
+      "createdAt": "2024-09-05T14:00:00Z"
     }
   ]
 }
@@ -500,16 +512,19 @@ Authorization: Bearer {accessToken}
 
 ## 6. 시험 API
 
-### 6.1 시험 일정 조회
+### 6.1 시험/퀴즈 목록 조회 (학생)
 ```http
-GET /exams
+GET /api/v1/exams?courseId={courseId}&examType={examType}
 Authorization: Bearer {accessToken}
 ```
 
 **Query Parameters**
-- `courseId`: 특정 과목 시험만 조회
-- `examType`: 시험 유형 (MIDTERM, FINAL, QUIZ)
-- `status`: 상태 (UPCOMING, COMPLETED)
+- `courseId`: 특정 강의의 시험/퀴즈만 조회
+- `examType`: 유형 (MIDTERM, FINAL, REGULAR, QUIZ)
+
+**정책**
+- 학생은 **수강 중인 강의(courseId)**만 조회 가능
+- 학생은 **시작시간(startAt) 이전**의 시험/퀴즈는 **목록에서 제외**됨
 
 **Response**
 ```json
@@ -519,37 +534,366 @@ Authorization: Bearer {accessToken}
     {
       "id": 601,
       "courseId": 101,
-      "courseName": "데이터베이스",
-      "examName": "중간고사",
-      "examType": "MIDTERM",
-      "examDate": "2024-10-20T10:00:00Z",
-      "duration": 90,
-      "location": "공학관 301호",
-      "maxScore": 100,
-      "status": "UPCOMING"
+      "type": "QUIZ",
+      "title": "1주차 퀴즈",
+      "startAt": "2024-10-20T10:00:00Z",
+      "endAt": "2024-10-20T10:15:00Z",
+      "durationMinutes": 15,
+      "totalScore": 100,
+      "isOnline": true,
+      "location": "온라인"
     }
   ]
 }
 ```
 
-### 6.2 시험 성적 조회
+### 6.2 시험/퀴즈 상세 조회 (학생)
 ```http
-GET /exams/{examId}/score
+GET /api/v1/exams/{examId}
 Authorization: Bearer {accessToken}
 ```
+
+**정책**
+- 학생은 **수강 중인 강의**만 조회 가능
+- 학생은 **시작시간 이전**에는 조회 불가(400)
+- 문제 데이터는 DB의 `exams.question_data`에 저장되며, 학생 응답에서는 **정답(`correctChoiceIndex`)이 마스킹**됨
 
 **Response**
 ```json
 {
   "success": true,
   "data": {
+    "id": 601,
+    "postId": 9001,
+    "courseId": 101,
+    "type": "QUIZ",
+    "title": "1주차 퀴즈",
+    "content": "1주차 학습 내용 퀴즈입니다.",
+    "startAt": "2024-10-20T10:00:00Z",
+    "endAt": "2024-10-20T10:15:00Z",
+    "durationMinutes": 15,
+    "totalScore": 100,
+    "isOnline": true,
+    "location": "온라인",
+    "instructions": "제한시간 내 제출하세요.",
+    "questionCount": 10,
+    "passingScore": 60,
+    "questionData": {
+      "questions": [
+        {
+          "id": "q1",
+          "type": "MCQ",
+          "prompt": "다음 중 옳은 것은?",
+          "choices": ["A", "B", "C", "D"],
+          "points": 10
+        }
+      ]
+    }
+  }
+}
+```
+
+### 6.3 응시 시작 (학생)
+```http
+POST /api/v1/exams/{examId}/start
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- 중복 응시 방지: 이미 제출(`submittedAt` 존재)한 경우 시작 불가
+- 종료된 시험/퀴즈는 신규 응시 시작 불가
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "attemptId": 7001,
+    "startedAt": "2024-10-20T10:00:05Z",
+    "endAt": "2024-10-20T10:15:05Z",
+    "remainingSeconds": 895
+  }
+}
+```
+
+### 6.4 최종 제출 (학생)
+```http
+POST /api/v1/exams/results/{attemptId}/submit
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**Request Body**
+```json
+{
+  "answers": {
+    "q1": 1,
+    "q2": "Spring Boot는 ..."
+  }
+}
+```
+
+**정책**
+- 임시저장(autosave) 기능은 제공하지 않음(제출 시점에만 `answer_data` 저장)
+- **퀴즈(QUIZ)**: 제출 즉시 **자동채점**하여 `score` 반환/저장
+- **시험(MIDTERM/FINAL/REGULAR)**: 제출 시점에 **즉시 채점하지 않음** (`score=null` 유지), 교수 채점 API로 점수 확정
+- 지각 제출(late) 정책:
+  - 마감시간(응시 종료 시각) 이후 **10분까지는 제출 허용**하며 **10% 감점** 정보를 저장 (`latePenaltyRate = 0.10`)
+  - 마감시간 이후 **10분이 초과되면 제출 자체가 불가**(400)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "attemptId": 7001,
+    "submittedAt": "2024-10-20T10:16:00Z",
+    "isLate": true,
+    "latePenaltyRate": 0.10,
+    "score": 81.00
+  }
+}
+```
+
+### 6.5 시험/퀴즈 등록 (교수)
+```http
+POST /api/v1/boards/{boardType}/exams
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**Path Parameter**
+- `boardType`: `QUIZ` 또는 `EXAM`
+
+**정책**
+- 교수 권한 필요(`PROFESSOR`)
+- 정합성 규칙:
+  - `boardType=QUIZ`이면 `type=QUIZ`만 허용
+  - `boardType=EXAM`이면 `type=QUIZ`는 허용하지 않음
+- 문제/정답 JSON은 `questionData`로 전달되며 DB의 `exams.question_data`에 저장
+- 퀴즈(`type=QUIZ`)는 **객관식(MCQ) 문항만 허용**
+
+**Request Body**
+```json
+{
+  "courseId": 101,
+  "title": "1주차 퀴즈",
+  "content": "1주차 학습 내용 퀴즈입니다.",
+  "type": "QUIZ",
+  "startAt": "2024-10-20T10:00:00",
+  "durationMinutes": 15,
+  "totalScore": 100,
+  "isOnline": true,
+  "location": "온라인",
+  "instructions": "제한시간 내 제출하세요.",
+  "questionCount": 10,
+  "passingScore": 60,
+  "questionData": {
+    "questions": [
+      {
+        "id": "q1",
+        "type": "MCQ",
+        "prompt": "다음 중 옳은 것은?",
+        "choices": ["A", "B", "C", "D"],
+        "correctChoiceIndex": 1,
+        "points": 10
+      }
+    ]
+  }
+}
+```
+
+```json
+{
+  "courseId": 101,
+  "title": "중간고사",
+  "content": "중간고사 안내 및 시험 범위입니다.",
+  "type": "MIDTERM",
+  "startAt": "2024-10-30T09:00:00",
+  "durationMinutes": 90,
+  "totalScore": 100,
+  "isOnline": false,
+      "location": "공학관 301호",
+  "instructions": "주관식은 문장으로 작성하세요.",
+  "questionCount": 3,
+  "passingScore": 60,
+  "questionData": {
+    "questions": [
+      {
+        "id": "q1",
+        "type": "SUBJECTIVE",
+        "prompt": "정규화(1NF~3NF)의 목적과 각 정규형의 조건을 설명하시오.",
+        "points": 40
+      },
+      {
+        "id": "q2",
+        "type": "MCQ",
+        "prompt": "다음 중 트랜잭션 격리 수준이 아닌 것은?",
+        "choices": ["READ UNCOMMITTED", "READ COMMITTED", "REPEATABLE READ", "SERIALIZABLE"],
+        "correctChoiceIndex": 2,
+        "points": 30
+      },
+      {
+        "id": "q3",
+        "type": "SUBJECTIVE",
+        "prompt": "인덱스의 장단점과, 어떤 경우에 인덱스가 오히려 성능을 떨어뜨릴 수 있는지 서술하시오.",
+        "points": 30
+    }
+  ]
+  }
+}
+```
+
+### 6.6 시험/퀴즈 수정 (교수)
+```http
+PUT /api/v1/exams/{examId}/edit
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+### 6.7 시험/퀴즈 삭제 (교수)
+```http
+DELETE /api/v1/exams/{examId}/delete
+Authorization: Bearer {accessToken}
+```
+
+### 6.7.1 시험 채점 (교수)
+```http
+PUT /api/v1/exams/results/{attemptId}/grade
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**정책**
+- 교수 권한 필요(`PROFESSOR`)
+- 퀴즈는 자동채점이므로 본 API 대상이 아님
+- 시험 점수는 교수 입력 후, 지각인 경우 `latePenaltyRate`만큼 감점 적용되어 저장됨
+
+**Request Body**
+```json
+{
+  "score": 90,
+  "feedback": "채점 완료"
+}
+```
+
+### 6.8 시험/퀴즈 목록 조회 (교수)
+```http
+GET /api/v1/professor/exams?courseId={courseId}&examType={examType}
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- 교수 권한 필요(`PROFESSOR`)
+- 본인 강의(courseId)만 조회 가능
+- 교수는 **시작 전 항목도 포함**해서 조회 가능(미리보기)
+
+### 6.9 시험/퀴즈 상세 조회 (교수)
+```http
+GET /api/v1/professor/exams/{examId}
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- 교수 권한 필요(`PROFESSOR`)
+- 본인 강의만 조회 가능
+- `questionData`는 **정답 포함 원본** 제공
+
+### 6.10 응시자/응시 결과 목록 조회 (교수)
+```http
+GET /api/v1/professor/exams/{examId}/attempts?status={status}
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+- `status`(optional): `ALL` | `SUBMITTED` | `IN_PROGRESS` (기본값: `ALL`)
+
+**정책**
+- 교수 권한 필요(`PROFESSOR`)
+- 본인 강의의 시험/퀴즈만 조회 가능
+- 해당 시험/퀴즈의 응시 기록(attempt) 목록을 반환
+- 퀴즈도 응시 기록 조회는 가능(자동채점 결과 확인용)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "attemptId": 7001,
+      "examId": 601,
+      "courseId": 101,
+      "student": {
+        "id": 2001,
+        "studentNumber": "202012345",
+        "name": "홍길동"
+      },
+      "startedAt": "2024-10-20T10:00:05Z",
+      "submittedAt": "2024-10-20T10:16:00Z",
+      "isLate": true,
+      "latePenaltyRate": 0.10,
+      "score": null,
+      "feedback": null
+    }
+  ]
+}
+```
+
+### 6.11 응시 결과 상세 조회(답안 포함) (교수)
+```http
+GET /api/v1/professor/exams/results/{attemptId}
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- 교수 권한 필요(`PROFESSOR`)
+- 본인 강의의 응시 결과만 조회 가능
+- `answerData`는 학생이 제출한 원본 답안(JSON) 제공
+- `questionData`는 교수 조회이므로 **정답 포함 원본** 제공(채점/검수 목적)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "attemptId": 7001,
     "examId": 601,
-    "score": 85,
-    "maxScore": 100,
-    "rank": 15,
-    "totalStudents": 60,
-    "average": 72.5,
-    "gradedAt": "2024-10-25T15:00:00Z"
+    "courseId": 101,
+    "student": {
+      "id": 2001,
+      "studentNumber": "202012345",
+      "name": "홍길동"
+    },
+    "startedAt": "2024-10-20T10:00:05Z",
+    "submittedAt": "2024-10-20T10:16:00Z",
+    "isLate": true,
+    "latePenaltyRate": 0.10,
+    "score": null,
+    "feedback": null,
+    "answerData": {
+      "answers": {
+        "q1": 1,
+        "q2": "Spring Boot는 ..."
+      }
+    },
+    "questionData": {
+      "questions": [
+        {
+          "id": "q1",
+          "type": "MCQ",
+          "prompt": "다음 중 옳은 것은?",
+          "choices": ["A", "B", "C", "D"],
+          "correctChoiceIndex": 1,
+          "points": 10
+        },
+        {
+          "id": "q2",
+          "type": "SUBJECTIVE",
+          "prompt": "Spring Boot에 대해 서술하시오.",
+          "points": 10
+        }
+      ]
+    }
   }
 }
 ```
@@ -558,49 +902,341 @@ Authorization: Bearer {accessToken}
 
 ## 7. 성적 API
 
-### 7.1 전체 성적 조회
+**공통 정의**
+- **GradeStatus**
+  - `PENDING`: 아직 산출/확정되지 않음(grade row가 없거나, 산출 전 상태)
+  - `GRADED`: 산출/채점 완료(현재 구현에서는 주로 내부 상태로 사용 가능)
+  - `PUBLISHED`: 성적 공개 완료(학생 조회는 이 상태만 노출)
+- **공통 오류 응답 형식**
+```json
+{
+  "success": false,
+  "message": "에러 메시지"
+}
+```
+
+### 7.0 학기 목록 조회 (학생, 성적 조회용)
 ```http
-GET /grades
+GET /api/v1/student/academic-terms
 Authorization: Bearer {accessToken}
 ```
 
-**Query Parameters**
-- `year`: 학년도
-- `term`: 학기
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 3,
+      "year": 2024,
+      "termType": "2",
+      "startDate": "2024-09-01",
+      "endDate": "2024-12-20"
+    }
+  ],
+  "count": 1
+}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+
+---
+
+### 7.0-A 현재 학기 조회 (학생)
+```http
+GET /api/v1/student/academic-terms/current
+Authorization: Bearer {accessToken}
+```
 
 **Response**
 ```json
 {
   "success": true,
   "data": {
-    "term": {
-      "year": 2024,
-      "termType": "1"
-    },
-    "summary": {
-      "totalCredits": 18,
-      "averageGPA": 3.75,
-      "totalGPA": 3.65
-    },
-    "courses": [
-      {
-        "courseCode": "CS201",
-        "courseName": "자료구조",
-        "credits": 3,
-        "grade": "A",
-        "gradePoint": 4.0,
-        "details": {
-          "midterm": 88,
-          "final": 92,
-          "assignment": 95,
-          "attendance": 100,
-          "total": 91.5
-        }
-      }
-    ]
+    "id": 1,
+    "year": 2025,
+    "termType": "2",
+    "startDate": "2025-09-01",
+    "endDate": "2025-12-31"
   }
 }
 ```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+- 400 (Bad Request): 현재 날짜에 해당하는 학기가 없음 (academic_terms.start_date~end_date)
+
+---
+
+### 7.0-A-1 현재 학기 조회 (공통: 학생/교수)
+```http
+GET /api/v1/academic-terms/current
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- 학생/교수 모두 사용 가능 (인증 필요)
+- academic_terms의 start_date~end_date 범위로 현재 날짜에 해당하는 학기를 반환
+
+**Response**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "year": 2025,
+    "termType": "2",
+    "startDate": "2025-09-01",
+    "endDate": "2025-12-31"
+  }
+}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+- 400 (Bad Request): 현재 날짜에 해당하는 학기가 없음 (academic_terms.start_date~end_date)
+
+---
+
+### 7.0-1 학기 목록 조회 (교수, 지난 학기 강의/성적 조회용)
+```http
+GET /api/v1/professor/academic-terms
+Authorization: Bearer {accessToken}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 3,
+      "year": 2024,
+      "termType": "2",
+      "startDate": "2024-09-01",
+      "endDate": "2024-12-20"
+    }
+  ],
+  "count": 1
+}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+
+---
+
+### 7.1 성적 조회 (학생, 공개된 성적만)
+```http
+GET /api/v1/student/grades?academicTermId={academicTermId}
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+- `academicTermId` (optional): 학기 ID로 필터링 (미지정 시 전체 학기 조회)
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "academicTermId": 3,
+      "courseId": 101,
+        "courseName": "자료구조",
+      "courseCredits": 3,
+      "status": "PUBLISHED",
+      "midtermScore": 88.00,
+      "finalExamScore": 92.00,
+      "quizScore": 40.00,
+      "assignmentScore": 0.00,
+      "attendanceScore": 100.00,
+      "finalScore": 91.50,
+      "finalGrade": "A0",
+      "publishedAt": "2024-12-20T03:10:00"
+    }
+  ],
+  "count": 1
+}
+```
+
+**정책**
+- `PUBLISHED`(공개 완료) 상태의 성적만 조회됩니다.
+- 성적이 아직 공개되지 않은 경우 `data`는 빈 배열이 될 수 있습니다.
+- 학기별 조회가 필요하면 먼저 `GET /api/v1/student/academic-terms`로 `academicTermId`를 확인한 뒤 사용하세요.
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+
+---
+
+### 7.2 성적 공개 수동 실행 - 종료된 성적산출기간 대상 (교수)
+```http
+POST /api/v1/professor/grades/publish-ended-terms
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- `PROFESSOR` 권한이면 “아무 교수나” 실행 가능
+- **성적 공개 기간(GRADE_PUBLISH) 중인 학기**를 대상으로 공개 처리를 실행
+- “공개”는 이미 산출(7.5)되어 `status=GRADED`인 강의만 `PUBLISHED`로 전환됩니다.
+
+**Response**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "성적 공개 기간 대상 성적 공개 처리를 실행했습니다."
+}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+- 400 (Bad Request): 성적 공개 기간이 아님 / period_types에 `GRADE_PUBLISH` 누락 등
+
+---
+
+### 7.3 성적 공개 수동 실행 - 특정 학기 (교수)
+```http
+POST /api/v1/professor/grades/publish/terms/{academicTermId}
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- `PROFESSOR` 권한이면 “아무 교수나” 실행 가능
+- 해당 학기의 **성적 공개 기간(GRADE_PUBLISH) 중에만** 실행 가능
+
+**Response**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "성적 공개 처리를 실행했습니다."
+}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+- 400 (Bad Request): 성적 공개 기간이 아님 / `GRADE_PUBLISH` 누락 등
+
+---
+
+### 7.4 담당 강의 수강생 성적 전체 조회 (교수)
+```http
+GET /api/v1/professor/courses/{courseId}/grades?status=ALL|PUBLISHED
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+- `status` (optional): `ALL`(기본) | `PUBLISHED`
+
+**정책**
+- `PROFESSOR` 권한 + **해당 강의 담당 교수만** 조회 가능
+- `ALL`은 grades가 아직 생성/공개되지 않은 학생도 포함되며, 이 경우 점수는 `null`, `status`는 `PENDING`으로 내려갈 수 있습니다.
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "courseId": 101,
+      "academicTermId": 3,
+      "courseName": "자료구조",
+      "student": {
+        "id": 2001,
+        "studentNumber": 2001,
+        "name": "홍길동"
+      },
+      "midtermScore": 88.00,
+      "finalExamScore": 92.00,
+      "quizScore": 40.00,
+      "assignmentScore": 0.00,
+      "attendanceScore": 100.00,
+      "finalScore": 91.50,
+      "finalGrade": "A0",
+      "status": "PUBLISHED",
+      "gradedAt": "2024-12-20T03:10:00",
+      "publishedAt": "2024-12-20T03:10:00"
+    }
+  ],
+  "count": 1
+}
+```
+
+**PUBLISHED만 조회 예시**
+```http
+GET /api/v1/professor/courses/{courseId}/grades?status=PUBLISHED
+Authorization: Bearer {accessToken}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+- 400 (Bad Request): 담당 교수가 아님 / `status` 값이 잘못됨(ALL|PUBLISHED만 허용) / courseId가 유효하지 않음
+
+---
+
+### 7.5 특정 강의 성적 산출(점수 계산) 수동 실행 (교수)
+```http
+POST /api/v1/professor/courses/{courseId}/grades/calculate
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- `PROFESSOR` 권한 + **해당 강의 담당 교수만** 실행 가능
+- 해당 강의가 속한 학기의 성적산출기간(GRADE_CALCULATION) **진행 중에만** 실행 가능
+- 산출이 “실제로” 수행되지 않을 수 있는 대표 실패 사유(400):
+  - 중간/기말에 **채점 미완료 제출(시험 score=null)** 존재
+  - 과제 기능이 미구현인데 **assignment 비중 > 0**
+  - 강의 평가비율 정책 미존재 등 입력/데이터 문제
+- 산출 결과는 `GET /api/v1/professor/courses/{courseId}/grades?status=ALL`에서 `status=GRADED`로 확인할 수 있습니다.
+
+**Request Body**
+- 없음
+
+**Response**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "성적 산출 처리를 실행했습니다. (강의 단위)"
+}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+- 400 (Bad Request): 담당 교수가 아님 / 성적 산출기간이 아님 / `GRADE_CALCULATION` 누락 등
+
+---
+
+### 7.6 특정 강의 성적 공개(등급 확정) 수동 실행 (교수)
+```http
+POST /api/v1/professor/courses/{courseId}/grades/publish
+Authorization: Bearer {accessToken}
+```
+
+**정책**
+- `PROFESSOR` 권한 + **해당 강의 담당 교수만** 실행 가능
+- 해당 강의가 속한 학기의 **성적 공개 기간(GRADE_PUBLISH) 중에만** 실행 가능
+- **사전 산출(7.5)** 이 완료되어 `status=GRADED`인 경우에만 공개 가능
+- 공개 시 상대평가 등급을 부여하고 `status=PUBLISHED`로 변경됩니다.
+
+**Request Body**
+- 없음
+
+**Response**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "성적 공개 처리를 실행했습니다. (강의 단위)"
+}
+```
+
+**Error**
+- 401 (Unauthorized): 토큰이 없거나 만료
+- 400 (Bad Request): 담당 교수가 아님 / 성적 산출기간이 종료되지 않았음 / 산출(GRADED)되지 않았음 / `GRADE_CALCULATION` 누락 등
 
 ---
 
@@ -665,6 +1301,8 @@ Authorization: Bearer {accessToken}
   - `COURSE_REGISTRATION`: 강의등록 기간
   - `ADJUSTMENT`: 정정 기간
   - `CANCELLATION`: 수강철회 기간
+  - `GRADE_CALCULATION`: 성적산출기간 (교수: 산출 버튼 허용)
+  - `GRADE_PUBLISH`: 성적공개기간 (교수: 공개 버튼 허용, 학생: 공개된 성적 조회)
 
 **Examples**
 ```http
@@ -1545,9 +2183,9 @@ Authorization: Bearer {accessToken}
     "grading": {
       "midterm": 30,
       "final": 30,
+      "quiz": 10,
       "assignment": 20,
-      "attendance": 10,
-      "participation": 10
+      "attendance": 10
     }
   },
   "totalWeeks": 16
@@ -1584,9 +2222,9 @@ Authorization: Bearer {accessToken}
     "grading": {
       "midterm": 30,
       "final": 30,
+      "quiz": 10,
       "assignment": 25,
-      "attendance": 10,
-      "participation": 5
+      "attendance": 5
     }
   },
   "totalWeeks": 16
@@ -1776,9 +2414,9 @@ Authorization: Bearer {accessToken}
       "grading": {
         "midterm": 30,
         "final": 30,
+        "quiz": 10,
         "assignment": 20,
-        "attendance": 10,
-        "participation": 10
+        "attendance": 10
       }
     },
     "statistics": {
@@ -1806,7 +2444,7 @@ Authorization: Bearer {accessToken}
 
 ### 12.1 강의 주차 목록 조회 (교수/수강중 학생)
 ```http
-GET /api/v1/professor/courses/{courseId}/weeks
+GET /api/v1/courses/{courseId}/weeks
 Authorization: Bearer {accessToken}
 ```
 

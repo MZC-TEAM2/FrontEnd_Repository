@@ -36,6 +36,8 @@ import ProfessorCourseManagement from './pages/ProfessorCourseManagement';
 import ProfessorMyCourses from './pages/ProfessorMyCourses';
 import ProfessorCourseDetail from './pages/ProfessorCourseDetail';
 import ProfessorSchedule from './pages/ProfessorSchedule';
+import AssessmentDetail from './pages/AssessmentDetail';
+import AssessmentAttempt from './pages/AssessmentAttempt';
 
 // 인증 관련 페이지
 import Login from './pages/Login';
@@ -133,6 +135,8 @@ function App() {
             <Route path="/courses/my" element={<Courses />} />
             <Route path="/courses/schedule" element={<CourseSchedule />} />
             <Route path="/course/:courseId" element={<CourseDetail />} />
+            <Route path="/course/:courseId/exams/:examId" element={<AssessmentDetail />} />
+            <Route path="/exams/attempts/:attemptId" element={<AssessmentAttempt />} />
 
             {/* 수강신청 */}
             <Route path="/registration" element={<CourseRegistration />} />
@@ -146,8 +150,8 @@ function App() {
             {/* 과제 */}
             <Route path="/assignments" element={<TempPage title="과제" />} />
 
-            {/* 퀴즈/시험 */}
-            <Route path="/exams" element={<TempPage title="퀴즈/시험" />} />
+            {/* 퀴즈/시험: 사이드바 진입은 제거했지만, 혹시 남아있는 링크/북마크를 위해 강의 상세로 유도 */}
+            <Route path="/exams" element={<Navigate to="/courses/my" replace />} />
 
             {/* 커뮤니티 관련 라우트 */}
             <Route path="/notices" element={<NoticeBoard />} />

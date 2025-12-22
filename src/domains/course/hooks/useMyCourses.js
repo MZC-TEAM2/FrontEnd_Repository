@@ -12,10 +12,11 @@ export const invalidateMyCoursesCache = () => {
 
 /**
  * 학생: 수강중 과목 / 시간표 페이지에서 공통으로 쓰는 데이터 로더
- * - source of truth: GET /api/v1/enrollments/my
+ * - source of truth: 9.8 GET /api/v1/enrollments/my
+ *   (수강신청 기간과 무관하게 "내 수강신청(수강중)" 내역을 반환)
  */
 export default function useMyCourses(options = {}) {
-  const { forceOnMount = false } = options;
+  const { forceOnMount = false, enrollmentPeriodId = null } = options;
   const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState(null);
   const [term, setTerm] = useState(cached?.term ?? null);
@@ -42,13 +43,13 @@ export default function useMyCourses(options = {}) {
     setError(null);
 
     try {
-      const res = await getMyEnrollments();
+      const res = await getMyEnrollments(enrollmentPeriodId);
       if (!res?.success) {
         throw new Error(res?.message || '수강 과목 정보를 불러올 수 없습니다.');
       }
 
       const data = res.data || {};
-      const nextTerm = data.term ?? null;
+      const nextTerm = data.term ?? null; // 9.8: term.id(=enrollmentPeriodId), year, termType, termName
       const nextSummary = data.summary ?? null;
       const nextCourses = (data.enrollments ?? []).map(transformEnrollmentData);
 
@@ -70,7 +71,7 @@ export default function useMyCourses(options = {}) {
 
   useEffect(() => {
     load({ force: forceOnMount });
-  }, [load]);
+  }, [load, forceOnMount]);
 
   const totalCredits = useMemo(() => summary?.totalCredits ?? courses.reduce((sum, c) => sum + (c.credits || 0), 0), [summary, courses]);
 

@@ -14,22 +14,15 @@ import {
   Typography,
   Grid,
   Paper,
-  Card,
-  CardContent,
-  CardActions,
   Button,
-  Chip,
   Alert,
   CircularProgress,
-  Divider,
 } from '@mui/material';
 import {
-  People as PeopleIcon,
-  CalendarToday as CalendarIcon,
   School as SchoolIcon,
-  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import CourseCard from '../domains/professor/components/CourseCard';
 
 // API
 import { getMyCourses } from '../api/professorApi';
@@ -45,58 +38,31 @@ const ProfessorMyCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentTermId, setCurrentTermId] = useState(null);
 
-  // 시간 포맷 함수 (HH:mm:ss -> HH:mm)
-  const formatTime = (time) => {
-    if (!time) return '';
-    return time.substring(0, 5); // "09:00:00" -> "09:00"
-  };
-
-  const fetchCurrentTerm = async () => {
-    try {
-      console.log('📅 현재 학기 조회 중...');
-      const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
-      console.log('📅 현재 학기 응답:', response.data);
-      
-      if (response.data?.success && response.data?.data?.currentPeriod?.term) {
-        const term = response.data.data.currentPeriod.term;
-        // TODO: 백엔드에 term.id 추가 요청 필요
-        // 임시로 DB 데이터 기준 academic_term_id = 1 사용
-        const termId = term.id || 1; // term.id가 없으면 1 사용 (임시)
-        console.log('✅ 현재 학기 ID:', termId);
-        setCurrentTermId(termId);
-      } else {
-        console.warn('⚠️ 현재 학기 정보 없음, 기본값 1 사용');
-        setCurrentTermId(1); // 기본값
-      }
-    } catch (err) {
-      console.error('❌ 현재 학기 조회 실패:', err);
-      // 실패해도 기본값으로 진행
-      setCurrentTermId(1);
-    }
-  };
-
-  const fetchCourses = useCallback(async () => {
+  const fetchCourses = useCallback(async (academicTermId) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('📚 내 강의 목록 조회 시작... (academicTermId:', currentTermId, ')');
-      const response = await getMyCourses({ academicTermId: currentTermId });
-      console.log('📥 내 강의 API 응답:', response);
+
+      // term.id(academicTermId)가 없을 수도 있으므로, 없으면 파라미터 없이 조회(백엔드 기본 현재학기)
+      const response =
+        academicTermId !== null && academicTermId !== undefined
+          ? await getMyCourses({ academicTermId })
+          : await getMyCourses();
+
       
       // 응답 형식 확인
       if (response && response.success && response.data) {
         // 새로운 응답 형식: data.courses 배열
         const coursesData = response.data.courses || response.data || [];
-        console.log('✅ 강의 데이터:', coursesData);
+
         setCourses(Array.isArray(coursesData) ? coursesData : []);
       } else if (Array.isArray(response)) {
         // 응답이 배열로 직접 오는 경우
-        console.log('✅ 강의 데이터 (배열):', response);
+
         setCourses(response);
       } else {
-        console.warn('⚠️ 예상치 못한 응답 형식:', response);
+
         setError(response?.error?.message || response?.message || '강의 목록을 불러오는데 실패했습니다.');
       }
     } catch (err) {
@@ -116,19 +82,26 @@ const ProfessorMyCourses = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentTermId]);
+  }, []);
+
+  const fetchCurrentTerm = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
+      const term = response.data?.data?.currentPeriod?.term;
+      const termId = term?.id ?? null;
+      await fetchCourses(termId);
+    } catch (err) {
+      console.error('❌ 현재 학기 조회 실패:', err);
+      await fetchCourses(undefined);
+    }
+  }, [fetchCourses]);
 
   // 현재 학기 조회
   useEffect(() => {
     fetchCurrentTerm();
-  }, []);
+  }, [fetchCurrentTerm]);
 
-  // 학기 변경 시 강의 목록 조회
-  useEffect(() => {
-    if (currentTermId) {
-      fetchCourses();
-    }
-  }, [currentTermId, fetchCourses]);
+  // 학기 변경 시 강의 목록 조회는 fetchCurrentTerm에서 함께 처리
 
   const handleManageClick = (courseId) => {
     // 강의 관리 페이지로 이동 (주차 관리, 콘텐츠 관리 등)
@@ -144,7 +117,7 @@ const ProfessorMyCourses = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* 헤더 */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
@@ -166,139 +139,8 @@ const ProfessorMyCourses = () => {
       {courses.length > 0 ? (
         <Grid container spacing={3}>
           {courses.map((course) => (
-            <Grid item xs={12} sm={6} md={4} key={course.id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                  },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  {/* 강의 정보 */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      {course.courseName || course.courseName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {course.courseCode || course.courseCode} - {course.section || course.section}
-                    </Typography>
-                  </Box>
-
-                  <Divider sx={{ my: 2 }} />
-
-                  {/* 통계 정보 */}
-                  <Grid container spacing={2} sx={{ mb: 2 }}>
-                    <Grid item xs={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PeopleIcon fontSize="small" color="action" />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            수강생
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {course.enrollment?.current || 0} / {course.enrollment?.max || 0}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <SchoolIcon fontSize="small" color="action" />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            학점
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {course.credits || 0}학점
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-
-                  {/* 상태 및 정보 */}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                    {course.status && (
-                      <Chip
-                        label={course.status === 'PUBLISHED' ? '개설됨' : course.status === 'DRAFT' ? '초안' : course.status}
-                        size="small"
-                        color={course.status === 'PUBLISHED' ? 'success' : 'default'}
-                      />
-                    )}
-                    {course.department && (
-                      <Chip
-                        label={course.department.name || course.department}
-                        size="small"
-                        variant="outlined"
-                      />
-                    )}
-                    {course.courseType && (
-                      <Chip
-                        label={course.courseType.name || course.courseType}
-                        size="small"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-
-                  {/* 시간표 정보 */}
-                  {course.schedule && course.schedule.length > 0 && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                        수업 시간
-                      </Typography>
-                      {course.schedule.map((schedule, idx) => {
-                        const dayName = schedule.dayName || 
-                          (schedule.dayOfWeek && ['월', '화', '수', '목', '금', '토', '일'][schedule.dayOfWeek - 1]) || 
-                          '';
-                        return (
-                          <Typography key={idx} variant="body2" sx={{ fontSize: '0.875rem' }}>
-                            {dayName}
-                            {dayName && ' '}
-                            {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
-                            {schedule.classroom && ` (${schedule.classroom})`}
-                          </Typography>
-                        );
-                      })}
-                    </Box>
-                  )}
-
-                  {/* 설명 */}
-                  {course.description && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {course.description}
-                    </Typography>
-                  )}
-                </CardContent>
-
-                <CardActions sx={{ p: 2, pt: 0 }}>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<SettingsIcon />}
-                    onClick={() => handleManageClick(course.id)}
-                    fullWidth
-                  >
-                    관리
-                  </Button>
-                </CardActions>
-              </Card>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={course.id}>
+              <CourseCard course={course} onManage={handleManageClick} />
             </Grid>
           ))}
         </Grid>
