@@ -145,7 +145,7 @@ const FreeFormPage = () => {
           <HashtagInput
             hashtags={hashtags}
             onHashtagsChange={setHashtags}
-            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 스프링부트, 백엔드)"
+            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 대학생활, 맛집추천)"
           />
 
           {/* 파일 첨부 */}

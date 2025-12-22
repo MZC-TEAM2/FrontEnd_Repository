@@ -25,7 +25,7 @@ export const useProfessor = () => {
     loadForEdit,
   } = usePostDetail({
     categoryId: 6,
-    listPath: '/boards/professor',
+    listPath: '/professor',
     detailApi: (id) => getPost('PROFESSOR', id),
     createApi: (data) => createPost('PROFESSOR', data),
     boardName: '교수 게시판',

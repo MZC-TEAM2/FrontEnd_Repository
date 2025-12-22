@@ -25,7 +25,7 @@ export const useCareer = () => {
     loadForEdit,
   } = usePostDetail({
     categoryId: 9,
-    listPath: '/boards/career',
+    listPath: '/career',
     detailApi: (id) => getPost('CAREER', id),
     createApi: (data) => createPost('CAREER', data),
     boardName: '취업 게시판',

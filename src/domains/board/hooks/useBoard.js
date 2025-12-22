@@ -24,7 +24,7 @@ export const useBoard = (boardType) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // 게시글 목록 조회
-  const fetchPosts = async (pageNum = 0, search = '') => {
+  const fetchPosts = async (pageNum = 0, search = '', hashtag = '') => {
     setLoading(true);
     setError(null);
     
@@ -36,6 +36,10 @@ export const useBoard = (boardType) => {
       
       if (search) {
         params.search = search; // title -> search로 변경
+      }
+      
+      if (hashtag) {
+        params.hashtag = hashtag;
       }
       
       const response = await axiosInstance.get(
@@ -67,17 +71,20 @@ export const useBoard = (boardType) => {
   useEffect(() => {
     const currentPage = parseInt(searchParams.get('page') || '0', 10);
     const currentSearch = searchParams.get('search') || '';
+    const currentHashtag = searchParams.get('hashtag') || '';
     
     setSearchTerm(currentSearch);
     setPage(currentPage);
     
-    fetchPosts(currentPage, currentSearch);
+    fetchPosts(currentPage, currentSearch, currentHashtag);
   }, [searchParams, boardType]);
 
   // 페이지 변경
   const handlePageChange = (event, newPage) => {
     const params = {};
     if (searchTerm) params.search = searchTerm;
+    const currentHashtag = searchParams.get('hashtag');
+    if (currentHashtag) params.hashtag = currentHashtag;
     if (newPage > 0) params.page = newPage.toString();
     setSearchParams(params);
   };
@@ -86,6 +93,8 @@ export const useBoard = (boardType) => {
   const handleSearch = () => {
     const params = {};
     if (searchTerm) params.search = searchTerm;
+    const currentHashtag = searchParams.get('hashtag');
+    if (currentHashtag) params.hashtag = currentHashtag;
     setSearchParams(params);
   };
 
