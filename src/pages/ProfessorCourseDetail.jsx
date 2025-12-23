@@ -47,6 +47,7 @@ import {
   Quiz as QuizIcon,
   FactCheck as FactCheckIcon,
   EventAvailable as EventAvailableIcon,
+  Campaign as CampaignIcon,
 } from '@mui/icons-material';
 
 // 컴포넌트
@@ -56,6 +57,7 @@ import ExamManagement from '../domains/professor/components/ExamManagement';
 import QuizManagement from '../domains/professor/components/QuizManagement';
 import AttendanceManagement from '../components/attendance/AttendanceManagement';
 import AssignmentBoard from '../domains/course/components/assignment/AssignmentBoard';
+import { CourseNoticeBoard } from '../domains/course/components/notice';
 
 // API
 import {
@@ -258,7 +260,7 @@ const ProfessorCourseDetail = () => {
 
   // 성적 탭을 열었을 때만 기간/성적을 가져옴
   useEffect(() => {
-    if (currentTab !== 5) return;
+    if (currentTab !== 6) return;
     fetchGradePeriod();
     fetchCourseGrades();
   }, [currentTab, fetchGradePeriod, fetchCourseGrades]);
@@ -470,6 +472,7 @@ const ProfessorCourseDetail = () => {
       <Paper sx={{ mb: 3 }}>
         <Tabs value={currentTab} onChange={handleTabChange}>
           <Tab icon={<CalendarMonthIcon />} label="주차 관리" />
+          <Tab icon={<CampaignIcon />} label="공지사항" />
           <Tab icon={<EventAvailableIcon />} label="출석 관리" />
           <Tab icon={<AssignmentIcon />} label="과제" />
           <Tab icon={<QuizIcon />} label="퀴즈" />
@@ -493,16 +496,20 @@ const ProfessorCourseDetail = () => {
       )}
 
       {currentTab === 1 && (
+        <CourseNoticeBoard courseId={courseId} />
+      )}
+
+      {currentTab === 2 && (
         <AttendanceManagement courseId={courseId} />
       )}
 
-      {currentTab === 2 && <AssignmentBoard courseId={courseId} isEmbedded={true} />}
+      {currentTab === 3 && <AssignmentBoard courseId={courseId} isEmbedded={true} />}
 
-      {currentTab === 3 && <QuizManagement courseId={courseId} />}
+      {currentTab === 4 && <QuizManagement courseId={courseId} />}
 
-      {currentTab === 4 && <ExamManagement courseId={courseId} />}
+      {currentTab === 5 && <ExamManagement courseId={courseId} />}
 
-      {currentTab === 5 && (
+      {currentTab === 6 && (
         <Paper sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box>
