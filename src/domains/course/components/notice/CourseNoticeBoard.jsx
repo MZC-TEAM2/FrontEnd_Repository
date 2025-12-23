@@ -40,7 +40,7 @@ export default function CourseNoticeBoard({ courseId }) {
   const [formError, setFormError] = useState(null);
 
   const currentUser = authService.getCurrentUser();
-  const isProfessor = currentUser?.role === 'PROFESSOR' || currentUser?.role === 'ROLE_PROFESSOR';
+  const isProfessor = currentUser?.userType === 'PROFESSOR' || currentUser?.userType === 'ROLE_PROFESSOR';
 
   // 목록 조회
   const fetchNotices = useCallback(async (pageNum = 0) => {
