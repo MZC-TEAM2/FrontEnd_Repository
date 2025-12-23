@@ -55,6 +55,8 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import authService from '../services/authService';
 import {
   getStudentAcademicTerms,
@@ -493,8 +495,28 @@ const StudentGradesPanel = () => {
   const fetchAllGrades = async () => {
     setAllGradesLoading(true);
     try {
-      const res = await getStudentGrades(null);
-      setAllGrades(Array.isArray(res?.data) ? res.data : []);
+      // 먼저 모든 학기 목록 조회
+      const termsRes = await getStudentAcademicTerms();
+      const termList = Array.isArray(termsRes?.data) ? termsRes.data : [];
+
+      if (termList.length === 0) {
+        setAllGrades([]);
+        return;
+      }
+
+      // 각 학기별로 성적 조회 (병렬 처리)
+      const gradePromises = termList.map((term) => getStudentGrades(term.id));
+      const gradeResults = await Promise.all(gradePromises);
+
+      // 모든 성적 합치기
+      const combinedGrades = gradeResults.flatMap((res) =>
+        Array.isArray(res?.data) ? res.data : []
+      );
+
+      setAllGrades(combinedGrades);
+    } catch (error) {
+      console.error('전체 성적 조회 실패:', error);
+      setAllGrades([]);
     } finally {
       setAllGradesLoading(false);
     }
@@ -510,6 +532,134 @@ const StudentGradesPanel = () => {
   useEffect(() => {
     if (selectedTermId) fetchGrades(selectedTermId);
   }, [selectedTermId]);
+
+  // PDF 성적표 다운로드
+  const downloadGradesPDF = async () => {
+    try {
+      if (!allGrades || allGrades.length === 0) {
+        alert('다운로드할 성적 데이터가 없습니다.');
+        return;
+      }
+
+      const currentUser = authService.getCurrentUser();
+
+      // 학기별로 그룹핑
+      const gradesByTerm = {};
+      allGrades.forEach((g) => {
+        const termTypeMap = { '1': '1학기', '2': '2학기', SUMMER: '하계', WINTER: '동계' };
+        const termKey = `${g.academicTermYear || ''} ${termTypeMap[g.academicTermType] || g.academicTermType || ''}`;
+        if (!gradesByTerm[termKey]) {
+          gradesByTerm[termKey] = [];
+        }
+        gradesByTerm[termKey].push(g);
+      });
+
+      // 임시 HTML 요소 생성
+      const container = document.createElement('div');
+      container.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 800px; padding: 40px; background: white; font-family: "Malgun Gothic", "맑은 고딕", sans-serif;';
+
+      // 헤더
+      container.innerHTML = `
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="margin: 0; font-size: 24px; color: #333;">성적증명서</h1>
+          <p style="color: #666; margin-top: 5px;">Grade Report</p>
+        </div>
+        <div style="margin-bottom: 30px; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+          <p style="margin: 5px 0;"><strong>이름:</strong> ${currentUser?.name || '-'}</p>
+          <p style="margin: 5px 0;"><strong>학번:</strong> ${currentUser?.userNumber || '-'}</p>
+          <p style="margin: 5px 0;"><strong>학과:</strong> ${currentUser?.departmentName || '-'}</p>
+          <p style="margin: 5px 0;"><strong>발급일:</strong> ${new Date().toLocaleDateString('ko-KR')}</p>
+        </div>
+      `;
+
+      // 학기별 테이블 생성
+      Object.entries(gradesByTerm).forEach(([termName, termGrades]) => {
+        const termCredits = termGrades.reduce((acc, r) => acc + (Number(r.courseCredits) || 0), 0);
+        const termPoints = termGrades.reduce(
+          (acc, r) => acc + gradeToPoint(r.finalGrade) * (Number(r.courseCredits) || 0),
+          0
+        );
+        const termGPA = termCredits > 0 ? (termPoints / termCredits).toFixed(2) : '0.00';
+
+        const rows = termGrades.map((g) => `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;">${g.courseName || '-'}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${g.courseCredits || 0}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${g.finalGrade || '-'}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${g.finalScore || '-'}</td>
+          </tr>
+        `).join('');
+
+        container.innerHTML += `
+          <div style="margin-bottom: 25px;">
+            <h3 style="margin: 0 0 10px 0; color: #1976d2;">${termName}</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <thead>
+                <tr style="background: #424242; color: white;">
+                  <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">과목명</th>
+                  <th style="padding: 10px; border: 1px solid #ddd; width: 80px;">학점</th>
+                  <th style="padding: 10px; border: 1px solid #ddd; width: 80px;">등급</th>
+                  <th style="padding: 10px; border: 1px solid #ddd; width: 80px;">점수</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+              <tfoot>
+                <tr style="background: #f0f0f0; font-weight: bold;">
+                  <td style="padding: 8px; border: 1px solid #ddd;">학기 평점: ${termGPA}</td>
+                  <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${termCredits}</td>
+                  <td colspan="2" style="padding: 8px; border: 1px solid #ddd;"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        `;
+      });
+
+      // 전체 요약
+      container.innerHTML += `
+        <div style="margin-top: 30px; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+          <h3 style="margin: 0 0 15px 0; color: #1976d2;">전체 요약</h3>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>총 이수 학점:</strong> ${overallStats.totalCredits} 학점</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>전체 평균 학점:</strong> ${overallStats.overallGPA} / 4.5</p>
+        </div>
+      `;
+
+      document.body.appendChild(container);
+
+      // html2canvas로 캡처
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      document.body.removeChild(container);
+
+      // PDF 생성
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+
+      // 이미지가 한 페이지에 안 맞으면 여러 페이지로 분할
+      const pageHeight = pdfHeight * imgWidth / pdfWidth;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+
+      // 다운로드
+      pdf.save(`성적증명서_${currentUser?.userNumber || 'student'}.pdf`);
+    } catch (error) {
+      console.error('PDF 생성 실패:', error);
+      alert('PDF 생성에 실패했습니다.');
+    }
+  };
 
   return (
     <>
@@ -542,6 +692,23 @@ const StudentGradesPanel = () => {
                   <Typography variant="body2" color="text.secondary">
                 학점
                   </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Button
+                variant="contained"
+                startIcon={<DownloadIcon />}
+                onClick={downloadGradesPDF}
+                disabled={allGradesLoading || allGrades.length === 0}
+              >
+                성적표 다운로드
+              </Button>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                PDF 형식
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
