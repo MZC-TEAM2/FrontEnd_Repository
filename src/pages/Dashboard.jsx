@@ -287,7 +287,7 @@ const Dashboard = () => {
   // 과제 상세 페이지 이동
   const handleAssignmentClick = (assignment) => {
     setAssignmentDialogOpen(false);
-    navigate(`/course/${assignment.courseId}/post/${assignment.postId}`);
+    navigate(`/assignment/${assignment.assignmentId}`);
   };
 
   // 공지사항 클릭 핸들러
