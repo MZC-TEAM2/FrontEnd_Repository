@@ -36,6 +36,7 @@ import {
 import SchoolIcon from '@mui/icons-material/School';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import QuizIcon from '@mui/icons-material/Quiz';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonIcon from '@mui/icons-material/Person';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
@@ -228,9 +229,11 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [enrollmentSummary, setEnrollmentSummary] = useState(null);
   const [pendingAssignments, setPendingAssignments] = useState([]);
+  const [upcomingAssessments, setUpcomingAssessments] = useState([]);
   const [todayCourses, setTodayCourses] = useState([]);
   const [notices, setNotices] = useState([]);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
+  const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
 
   // 데이터 로드
   useEffect(() => {
@@ -239,9 +242,10 @@ const Dashboard = () => {
       setError('');
 
       try {
-        const [summaryRes, assignmentsRes, coursesRes, noticesRes] = await Promise.allSettled([
+        const [summaryRes, assignmentsRes, assessmentsRes, coursesRes, noticesRes] = await Promise.allSettled([
           dashboardService.getEnrollmentSummary(),
           dashboardService.getPendingAssignments(7),
+          dashboardService.getUpcomingAssessments(7),
           dashboardService.getTodayCourses(),
           dashboardService.getNotices(5),
         ]);
@@ -251,6 +255,9 @@ const Dashboard = () => {
         }
         if (assignmentsRes.status === 'fulfilled' && assignmentsRes.value.success) {
           setPendingAssignments(assignmentsRes.value.data || []);
+        }
+        if (assessmentsRes.status === 'fulfilled' && assessmentsRes.value.success) {
+          setUpcomingAssessments(assessmentsRes.value.data || []);
         }
         if (coursesRes.status === 'fulfilled' && coursesRes.value.success) {
           setTodayCourses(coursesRes.value.data || []);
@@ -290,6 +297,17 @@ const Dashboard = () => {
     navigate(`/assignment/${assignment.assignmentId}`);
   };
 
+  // 시험 카드 클릭 핸들러
+  const handleAssessmentCardClick = () => {
+    setAssessmentDialogOpen(true);
+  };
+
+  // 시험 상세 페이지 이동
+  const handleAssessmentClick = (assessment) => {
+    setAssessmentDialogOpen(false);
+    navigate(`/course/${assessment.courseId}/exams/${assessment.assessmentId}`);
+  };
+
   // 공지사항 클릭 핸들러
   const handleNoticeClick = (noticeId) => {
     navigate(`/notices/${noticeId}`);
@@ -323,6 +341,17 @@ const Dashboard = () => {
       color: 'warning',
       clickable: true,
       onClick: handleAssignmentCardClick,
+    },
+    {
+      title: '이번주 시험',
+      value: upcomingAssessments.length,
+      subtitle: upcomingAssessments.filter(a => a.daysRemaining <= 1).length > 0
+        ? `오늘/내일 시험 ${upcomingAssessments.filter(a => a.daysRemaining <= 1).length}개`
+        : upcomingAssessments.length > 0 ? '시험 준비하세요' : '예정된 시험 없음',
+      icon: <FactCheckIcon />,
+      color: 'error',
+      clickable: true,
+      onClick: handleAssessmentCardClick,
     },
     {
       title: '오늘의 강의',
@@ -572,6 +601,96 @@ const Dashboard = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAssignmentDialogOpen(false)}>
+            닫기
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 이번주 시험 목록 다이얼로그 */}
+      <Dialog
+        open={assessmentDialogOpen}
+        onClose={() => setAssessmentDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FactCheckIcon color="error" />
+            이번주 시험
+          </Box>
+          <IconButton onClick={() => setAssessmentDialogOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {upcomingAssessments.length > 0 ? (
+            <List disablePadding>
+              {upcomingAssessments.map((assessment, index) => (
+                <React.Fragment key={assessment.assessmentId}>
+                  <ListItem
+                    sx={{
+                      px: 1,
+                      py: 2,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.hover' },
+                      borderRadius: 1,
+                    }}
+                    onClick={() => handleAssessmentClick(assessment)}
+                  >
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography fontWeight={600}>
+                            {assessment.title}
+                          </Typography>
+                          <Chip
+                            label={getDdayText(assessment.daysRemaining)}
+                            size="small"
+                            color={assessment.daysRemaining <= 1 ? 'error' : assessment.daysRemaining <= 3 ? 'warning' : 'default'}
+                          />
+                          <Chip
+                            label={assessment.assessmentType === 'MIDTERM' ? '중간고사' : assessment.assessmentType === 'FINAL' ? '기말고사' : '시험'}
+                            size="small"
+                            variant="outlined"
+                          />
+                          {assessment.isOnline && (
+                            <Chip label="온라인" size="small" color="info" variant="outlined" />
+                          )}
+                        </Box>
+                      }
+                      secondary={
+                        <Box sx={{ mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {assessment.courseName}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            시험일: {new Date(assessment.startAt).toLocaleString('ko-KR')} ({assessment.durationMinutes}분)
+                          </Typography>
+                          {assessment.location && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              장소: {assessment.location}
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                    />
+                    <ArrowForwardIcon color="action" />
+                  </ListItem>
+                  {index < upcomingAssessments.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <FactCheckIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+              <Typography color="text.secondary">
+                이번주 예정된 시험이 없습니다
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssessmentDialogOpen(false)}>
             닫기
           </Button>
         </DialogActions>

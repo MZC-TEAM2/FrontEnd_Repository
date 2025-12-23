@@ -38,8 +38,10 @@ const CommentItem = ({
   const [editContent, setEditContent] = useState(comment.content);
   const { downloadFile } = useFileManager();
 
-  const isAuthor = currentUserId === comment.authorId;
-  const displayName = comment.isAnonymous ? '익명' : comment.authorName || '사용자';
+  const authorId = comment.author?.id || comment.authorId;
+  const authorName = comment.author?.name || comment.authorName;
+  const isAuthor = currentUserId === authorId;
+  const displayName = comment.isAnonymous ? '익명' : authorName || '사용자';
 
   // 메뉴 열기/닫기
   const handleMenuOpen = (event) => {
@@ -148,7 +150,7 @@ const CommentItem = ({
                       <Chip
                         key={attachment.id}
                         icon={<AttachFileIcon />}
-                        label={`${attachment.originalName} (${(attachment.fileSize / 1024).toFixed(1)}KB)`}
+                        label={`${attachment.fileName || attachment.originalName} (${(attachment.fileSize / 1024).toFixed(1)}KB)`}
                         size="small"
                         onClick={() => downloadFile(attachment)}
                         sx={{ maxWidth: 300, cursor: 'pointer' }}

@@ -43,6 +43,17 @@ const dashboardService = {
     const response = await axiosInstance.get(`${BASE_URL}/enrollment-summary`);
     return response.data;
   },
+
+  /**
+   * 다가오는 시험 목록 조회
+   * @param {number} days - 시험일 기준 일수 (기본값: 7, 최대 30)
+   */
+  getUpcomingAssessments: async (days = 7) => {
+    const response = await axiosInstance.get(`${BASE_URL}/upcoming-assessments`, {
+      params: { days },
+    });
+    return response.data;
+  },
 };
 
 export default dashboardService;
