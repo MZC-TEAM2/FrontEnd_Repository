@@ -40,6 +40,7 @@ const CommentItem = ({
 
   const authorId = comment.author?.id || comment.authorId;
   const authorName = comment.author?.name || comment.authorName;
+  const thumbnailUrl = comment.author?.thumbnailUrl;
   const isAuthor = currentUserId === authorId;
   const displayName = comment.isAnonymous ? '익명' : authorName || '사용자';
 
@@ -99,7 +100,11 @@ const CommentItem = ({
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
           {/* 프로필 아바타 */}
-          <Avatar sx={{ width: 40, height: 40 }}>
+          <Avatar
+            src={thumbnailUrl || undefined}
+            alt={displayName}
+            sx={{ width: 40, height: 40 }}
+          >
             {displayName.charAt(0)}
           </Avatar>
 
