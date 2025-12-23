@@ -67,9 +67,9 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
       grading: {
         midterm: 30,
         final: 30,
-        quiz: 10,
         assignment: 20,
         attendance: 10,
+        participation: 10,
       },
     },
     totalWeeks: 16,
@@ -193,9 +193,9 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
           grading: {
             midterm: 30,
             final: 30,
-            quiz: 10,
             assignment: 20,
             attendance: 10,
+            participation: 10,
           },
         },
         totalWeeks: 16,
@@ -212,9 +212,9 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
     const total =
       formData.syllabus.grading.midterm +
       formData.syllabus.grading.final +
-      formData.syllabus.grading.quiz +
       formData.syllabus.grading.assignment +
-      formData.syllabus.grading.attendance;
+      formData.syllabus.grading.attendance +
+      formData.syllabus.grading.participation;
     setGradingTotal(total);
   }, [formData.syllabus.grading]);
 
@@ -491,9 +491,9 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
     const totalGrading =
       formData.syllabus.grading.midterm +
       formData.syllabus.grading.final +
-      formData.syllabus.grading.quiz +
       formData.syllabus.grading.assignment +
-      formData.syllabus.grading.attendance;
+      formData.syllabus.grading.attendance +
+      formData.syllabus.grading.participation;
 
     if (totalGrading !== 100) {
       newErrors.grading = '평가 비율의 합계가 100%가 되어야 합니다';
@@ -1522,21 +1522,6 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
                     <TextField
                       fullWidth
                       type="number"
-                      label="퀴즈 (%)"
-                      value={formData.syllabus.grading.quiz}
-                      onChange={(e) => handleChange('syllabus.grading.quiz', parseInt(e.target.value) || 0)}
-                      inputProps={{ min: 0, max: 100 }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                        }
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} sm={4}>
-                    <TextField
-                      fullWidth
-                      type="number"
                       label="과제 (%)"
                       value={formData.syllabus.grading.assignment}
                       onChange={(e) => handleChange('syllabus.grading.assignment', parseInt(e.target.value) || 0)}
@@ -1555,6 +1540,21 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
                       label="출석 (%)"
                       value={formData.syllabus.grading.attendance}
                       onChange={(e) => handleChange('syllabus.grading.attendance', parseInt(e.target.value) || 0)}
+                      inputProps={{ min: 0, max: 100 }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="참여도 (%)"
+                      value={formData.syllabus.grading.participation}
+                      onChange={(e) => handleChange('syllabus.grading.participation', parseInt(e.target.value) || 0)}
                       inputProps={{ min: 0, max: 100 }}
                       sx={{
                         '& .MuiOutlinedInput-root': {
