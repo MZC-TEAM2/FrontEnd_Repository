@@ -45,6 +45,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import QuizIcon from '@mui/icons-material/Quiz';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -66,6 +67,7 @@ import { getCurrentGradePublishPeriod } from '../api/gradeApi';
 import { getCurrentAcademicTerm } from '../api/academicTermApi';
 import { getStudentGrades } from '../api/gradeApi';
 import AssignmentBoard from '../domains/course/components/assignment/AssignmentBoard';
+import { CourseNoticeBoard } from '../domains/course/components/notice';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -131,7 +133,7 @@ export default function CourseDetail() {
 
   // 성적 탭이 숨겨졌는데 선택돼 있으면 탭을 안전하게 초기화
   useEffect(() => {
-    if (!isGradePublishActive && currentTab === 4) {
+    if (!isGradePublishActive && currentTab === 5) {
       setCurrentTab(0);
     }
   }, [isGradePublishActive, currentTab]);
@@ -141,7 +143,7 @@ export default function CourseDetail() {
     let cancelled = false;
     const fetchMyGrade = async () => {
       if (!isGradePublishActive) return;
-      if (currentTab !== 4) return;
+      if (currentTab !== 5) return;
       if (!courseId) return;
       try {
         setMyGradeLoading(true);
@@ -269,8 +271,8 @@ export default function CourseDetail() {
 
   useEffect(() => {
     // 탭을 열 때 최신화
-    if (currentTab === 2) fetchQuizzes();
-    if (currentTab === 3) fetchExams();
+    if (currentTab === 3) fetchQuizzes();
+    if (currentTab === 4) fetchExams();
   }, [currentTab, fetchExams, fetchQuizzes]);
 
   // 출석 데이터에서 주차별 출석 정보를 맵으로 변환
@@ -396,6 +398,7 @@ export default function CourseDetail() {
           textColor="primary"
         >
           <Tab icon={<PlayCircleOutlineIcon />} label="주차별 강의" iconPosition="start" />
+          <Tab icon={<CampaignIcon />} label="공지사항" iconPosition="start" />
           <Tab icon={<AssignmentIcon />} label="과제" iconPosition="start" />
           <Tab icon={<QuizIcon />} label="퀴즈" iconPosition="start" />
           <Tab icon={<FactCheckIcon />} label="시험" iconPosition="start" />
@@ -535,13 +538,18 @@ export default function CourseDetail() {
         )}
       </TabPanel>
 
-      {/* 과제 */}
+      {/* 공지사항 */}
       <TabPanel value={currentTab} index={1}>
+        <CourseNoticeBoard courseId={courseId} />
+      </TabPanel>
+
+      {/* 과제 */}
+      <TabPanel value={currentTab} index={2}>
         <AssignmentBoard courseId={courseId} isEmbedded={true} />
       </TabPanel>
 
       {/* 퀴즈 */}
-      <TabPanel value={currentTab} index={2}>
+      <TabPanel value={currentTab} index={3}>
         <Paper sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -589,7 +597,7 @@ export default function CourseDetail() {
       </TabPanel>
 
       {/* 시험 */}
-      <TabPanel value={currentTab} index={3}>
+      <TabPanel value={currentTab} index={4}>
         <Paper sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -638,7 +646,7 @@ export default function CourseDetail() {
 
       {/* 성적 */}
       {isGradePublishActive && (
-        <TabPanel value={currentTab} index={4}>
+        <TabPanel value={currentTab} index={5}>
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
