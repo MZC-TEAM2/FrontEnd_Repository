@@ -21,20 +21,21 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAssignment } from '../../hooks/useAssignment';
-import { useFileManager } from '../../hooks/useFileManager';
+import { useFileManager } from '../../../board/hooks/useFileManager';
 import { formatDateTime } from '../../../../utils/boardUtils';
 import authService from '../../../../services/authService';
 import AssignmentSubmitForm from './AssignmentSubmitForm';
-import AssignmentSubmissionList from './AssignmentSubmissionList';
 
 const AssignmentDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const fromCourse = searchParams.get('from') === 'course';
+  const courseIdFromUrl = searchParams.get('courseId');
   const [assignment, setAssignment] = useState(null);
   const [mySubmission, setMySubmission] = useState(null);
-  const [submissions, setSubmissions] = useState([]);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,7 +48,6 @@ const AssignmentDetailPage = () => {
   const {
     getAssignment,
     getMySubmission,
-    getSubmissions,
     deleteAssignment,
     loading: actionLoading,
   } = useAssignment();
@@ -75,12 +75,6 @@ const AssignmentDetailPage = () => {
             }
           }
         }
-
-        // 교수: 제출 목록 조회
-        if (isProfessor) {
-          const submissionsData = await getSubmissions(id);
-          setSubmissions(submissionsData);
-        }
       } catch (err) {
         console.error('과제 조회 실패:', err);
         setError('과제를 불러오는데 실패했습니다.');
@@ -99,7 +93,13 @@ const AssignmentDetailPage = () => {
     try {
       await deleteAssignment(id);
       alert('과제가 삭제되었습니다.');
-      navigate('/boards/assignment');
+      
+      // 삭제 후 네비게이션: 강의 관리 페이지에서 온 경우 강의 상세로, 아니면 과제 목록으로
+      if (fromCourse && courseIdFromUrl) {
+        navigate(`/professor/course/${courseIdFromUrl}/manage?tab=3`);
+      } else if (isProfessor && assignment?.courseId) {
+        navigate(`/professor/course/${assignment.courseId}/manage?tab=3`);
+      }
     } catch (err) {
       alert('과제 삭제에 실패했습니다.');
     }
@@ -112,11 +112,16 @@ const AssignmentDetailPage = () => {
     setMySubmission(mySubmissionData);
   };
 
-  // 채점 완료 후 리로드
-  const handleGradeSuccess = async () => {
-    const submissionsData = await getSubmissions(id);
-    setSubmissions(submissionsData);
+  // 목록으로 돌아가기
+  const handleBack = () => {
+    if (isProfessor) {
+      navigate(`/professor/course/${assignment.courseId}/manage?tab=3`);
+    } else {
+      navigate(`/course/${assignment.courseId}?tab=2`);
+    }
   };
+
+
 
   if (loading) {
     return (
@@ -132,7 +137,7 @@ const AssignmentDetailPage = () => {
         <Alert severity="error" sx={{ mb: 3 }}>
           {error || '과제를 찾을 수 없습니다.'}
         </Alert>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/boards/assignment')}>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleBack}>
           목록으로
         </Button>
       </Box>
@@ -148,15 +153,23 @@ const AssignmentDetailPage = () => {
     <Box>
       {/* 상단 네비게이션 */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/boards/assignment')}>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleBack}>
           목록으로
         </Button>
         {isProfessor && (
           <Box>
             <Button
+              variant="contained"
+              startIcon={<GradeIcon />}
+              sx={{ mr: 1 }}
+              onClick={() => navigate(`/assignment/${id}/submissions`)}
+            >
+              제출물 보기
+            </Button>
+            <Button
               variant="outlined"
               sx={{ mr: 1 }}
-              onClick={() => navigate(`/boards/assignment/${id}/edit`)}
+              onClick={() => navigate(`/assignment/${id}/edit`)}
             >
               수정
             </Button>
@@ -183,7 +196,7 @@ const AssignmentDetailPage = () => {
         </Box>
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <CalendarIcon sx={{ mr: 1, fontSize: 20, color: 'text.secondary' }} />
               <Typography variant="body2" color="text.secondary">
@@ -194,7 +207,7 @@ const AssignmentDetailPage = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <GradeIcon sx={{ mr: 1, fontSize: 20, color: 'text.secondary' }} />
               <Typography variant="body2" color="text.secondary">
@@ -217,7 +230,12 @@ const AssignmentDetailPage = () => {
         {/* 제출 방법 */}
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            제출 방법: {assignment.submissionMethod === 'ONLINE' ? '온라인 제출' : '오프라인 제출'}
+            제출 방법: {
+              assignment.submissionMethod === 'FILE_UPLOAD' ? '파일 업로드' :
+              assignment.submissionMethod === 'TEXT_INPUT' ? '텍스트 입력' :
+              assignment.submissionMethod === 'BOTH' ? '파일 + 텍스트' :
+              assignment.submissionMethod
+            }
           </Typography>
         </Box>
       </Paper>
@@ -312,6 +330,7 @@ const AssignmentDetailPage = () => {
                     ) : (
                       <AssignmentSubmitForm
                         assignmentId={id}
+                        submissionMethod={assignment.submissionMethod}
                         onSuccess={handleSubmitSuccess}
                         onCancel={() => setShowSubmitForm(false)}
                       />
@@ -333,6 +352,8 @@ const AssignmentDetailPage = () => {
                     ) : (
                       <AssignmentSubmitForm
                         assignmentId={id}
+                        existingSubmission={mySubmission}
+                        submissionMethod={assignment.submissionMethod}
                         onSuccess={handleSubmitSuccess}
                         onCancel={() => setShowSubmitForm(false)}
                       />
@@ -360,6 +381,8 @@ const AssignmentDetailPage = () => {
                   ) : (
                     <AssignmentSubmitForm
                       assignmentId={id}
+                      existingSubmission={mySubmission}
+                      submissionMethod={assignment.submissionMethod}
                       onSuccess={handleSubmitSuccess}
                       onCancel={() => setShowSubmitForm(false)}
                     />
@@ -368,17 +391,6 @@ const AssignmentDetailPage = () => {
               )}
             </Box>
           )}
-        </Paper>
-      )}
-
-      {/* 교수: 제출 목록 */}
-      {isProfessor && (
-        <Paper sx={{ p: 4 }}>
-          <AssignmentSubmissionList
-            submissions={submissions}
-            maxScore={assignment.maxScore}
-            onGradeSuccess={handleGradeSuccess}
-          />
         </Paper>
       )}
     </Box>

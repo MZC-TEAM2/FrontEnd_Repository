@@ -71,22 +71,23 @@ const ProfessorSchedule = () => {
     try {
       const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current`);
       const term = response.data?.data?.currentPeriod?.term;
-      const termId = term?.id || 1; // 기존 코드와 동일: term.id가 없으면 1 (임시)
+      const termId = term?.id ?? null;
       setCurrentTermId(termId);
-
       setTermLabel(term?.termName || (term?.year ? `${term.year}학년도 ${term.termType}학기` : '현재 학기'));
     } catch (e) {
-      setCurrentTermId(1);
       setTermLabel('현재 학기');
+      setCurrentTermId(null);
     }
   }, []);
 
   const fetchCourses = useCallback(async () => {
-    if (!currentTermId) return;
     try {
       setLoading(true);
       setError(null);
-      const response = await getMyCourses({ academicTermId: currentTermId });
+      const response =
+        currentTermId !== null && currentTermId !== undefined
+          ? await getMyCourses({ academicTermId: currentTermId })
+          : await getMyCourses();
       if (response && response.success && response.data) {
         const coursesData = response.data.courses || response.data || [];
         setCourses(Array.isArray(coursesData) ? coursesData : []);
@@ -457,14 +458,18 @@ const ProfessorSchedule = () => {
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="인쇄">
-            <IconButton onClick={openPrintWindow} disabled={loading || pdfLoading}>
-              <PrintIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={openPrintWindow} disabled={loading || pdfLoading}>
+                <PrintIcon />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="PDF 다운로드">
-            <IconButton onClick={handleDownloadPdf} disabled={loading || pdfLoading}>
-              <DownloadIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={handleDownloadPdf} disabled={loading || pdfLoading}>
+                <DownloadIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>
@@ -563,7 +568,7 @@ const ProfessorSchedule = () => {
           {(loading ? Array.from({ length: 6 }).map((_, i) => `sk-${i}`) : uniqueCourseIds).map((courseId) => {
             const course = scheduleData.find((c) => c.id === courseId);
             return (
-              <Grid item xs={12} sm={6} md={4} key={courseId}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={courseId}>
                 <Card
                   sx={{
                     p: 2,

@@ -54,7 +54,8 @@ export const getMyCourses = async (params = {}) => {
   
   const queryParams = new URLSearchParams();
   
-  if (academicTermId) {
+  // academicTermId는 0일 수도 있으므로(null/undefined만 제외)
+  if (academicTermId !== null && academicTermId !== undefined) {
     queryParams.append('academicTermId', academicTermId);
   }
   
@@ -65,15 +66,11 @@ export const getMyCourses = async (params = {}) => {
   const url = queryParams.toString() 
     ? `${BASE_URL}/api/v1/professor/courses?${queryParams.toString()}`
     : `${BASE_URL}/api/v1/professor/courses`;
-  
-  console.log('📤 GET 내 강의:', url);
     
   try {
     const response = await axiosInstance.get(url);
-    console.log('📥 내 강의 응답:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ 내 강의 조회 실패:', error);
     // 404 에러를 명확히 전달
     if (error.response?.status === 404) {
       throw {
@@ -92,15 +89,12 @@ export const getMyCourses = async (params = {}) => {
  * @returns {Promise} 등록된 강의 정보
  */
 export const createCourse = async (courseData) => {
-  console.log('📤 POST /api/v1/professor/courses');
-  console.log('Request Body:', courseData);
   
   const response = await axiosInstance.post(
     `${BASE_URL}/api/v1/professor/courses`,
     courseData
   );
   
-  console.log('📥 Response:', response.data);
   return response.data;
 };
 
@@ -157,15 +151,12 @@ export const getCourseDetailForProfessor = async (courseId) => {
  * @returns {Promise} 생성된 주차 정보
  */
 export const createWeek = async (courseId, weekData) => {
-  console.log('📤 POST /api/v1/professor/courses/' + courseId + '/weeks');
-  console.log('Request Body:', JSON.stringify(weekData, null, 2));
-  
+
   const response = await axiosInstance.post(
     `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`,
     weekData
   );
   
-  console.log('📥 Response:', response.data);
   return response.data;
 };
 
@@ -248,14 +239,24 @@ export const deleteContent = async (contentId) => {
  * @returns {Promise} 주차 목록
  */
 export const getWeeksForProfessor = async (courseId) => {
-  console.log('📤 GET /api/v1/professor/courses/' + courseId + '/weeks');
-  
-  const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`
-  );
-  
-  console.log('📥 주차 목록 Response:', response.data);
-  return response.data;
+  // 최신 스펙(12.1): 교수/수강중 학생 공용
+  // GET /api/v1/courses/{courseId}/weeks
+  // 교수 페이지에서도 "목록 조회"는 공용 경로를 사용.
+  const commonUrl = `${BASE_URL}/api/v1/courses/${courseId}/weeks`;
+
+
+  try {
+    const response = await axiosInstance.get(commonUrl);
+    return response.data;
+  } catch (eCommon) {
+    // 구버전 백엔드 fallback (기존 professor 경로가 살아있는 환경)
+    if (eCommon?.status === 404 || eCommon?.status === 405) {
+      const legacyUrl = `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`;
+      const response = await axiosInstance.get(legacyUrl);
+      return response.data;
+    }
+    throw eCommon;
+  }
 };
 
 /**
@@ -272,16 +273,8 @@ export const searchSubjects = async (query, page = 0, size = 20) => {
   queryParams.append('size', size);
   
   const url = `${BASE_URL}/api/v1/subjects/search?${queryParams.toString()}`;
-  console.log('📤 GET 과목 검색:', url);
-  
-  try {
-    const response = await axiosInstance.get(url);
-    console.log('📥 과목 검색 응답:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('❌ 과목 검색 실패:', error);
-    throw error;
-  }
+  const response = await axiosInstance.get(url);
+  return response.data;
 };
 
 /**
@@ -311,16 +304,9 @@ export const getSubjects = async (params = {}) => {
     ? `${BASE_URL}/api/v1/subjects?${queryParams.toString()}`
     : `${BASE_URL}/api/v1/subjects`;
   
-  console.log('📤 GET 과목 목록:', url);
   
-  try {
-    const response = await axiosInstance.get(url);
-    console.log('📥 과목 목록 응답:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('❌ 과목 목록 조회 실패:', error);
-    throw error;
-  }
+  const response = await axiosInstance.get(url);
+  return response.data;
 };
 
 /**

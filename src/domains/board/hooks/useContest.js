@@ -25,7 +25,7 @@ export const useContest = () => {
     loadForEdit,
   } = usePostDetail({
     categoryId: 8,
-    listPath: '/boards/contest',
+    listPath: '/contest',
     detailApi: (id) => getPost('CONTEST', id),
     createApi: (data) => createPost('CONTEST', data),
     boardName: '공모전 게시판',

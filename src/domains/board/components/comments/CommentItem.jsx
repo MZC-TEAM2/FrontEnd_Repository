@@ -38,8 +38,11 @@ const CommentItem = ({
   const [editContent, setEditContent] = useState(comment.content);
   const { downloadFile } = useFileManager();
 
-  const isAuthor = currentUserId === comment.authorId;
-  const displayName = comment.isAnonymous ? '익명' : comment.authorName || '사용자';
+  const authorId = comment.author?.id || comment.authorId;
+  const authorName = comment.author?.name || comment.authorName;
+  const thumbnailUrl = comment.author?.thumbnailUrl;
+  const isAuthor = currentUserId === authorId;
+  const displayName = comment.isAnonymous ? '익명' : authorName || '사용자';
 
   // 메뉴 열기/닫기
   const handleMenuOpen = (event) => {
@@ -97,7 +100,11 @@ const CommentItem = ({
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
           {/* 프로필 아바타 */}
-          <Avatar sx={{ width: 40, height: 40 }}>
+          <Avatar
+            src={thumbnailUrl || undefined}
+            alt={displayName}
+            sx={{ width: 40, height: 40 }}
+          >
             {displayName.charAt(0)}
           </Avatar>
 
@@ -148,7 +155,7 @@ const CommentItem = ({
                       <Chip
                         key={attachment.id}
                         icon={<AttachFileIcon />}
-                        label={`${attachment.originalName} (${(attachment.fileSize / 1024).toFixed(1)}KB)`}
+                        label={`${attachment.fileName || attachment.originalName} (${(attachment.fileSize / 1024).toFixed(1)}KB)`}
                         size="small"
                         onClick={() => downloadFile(attachment)}
                         sx={{ maxWidth: 300, cursor: 'pointer' }}

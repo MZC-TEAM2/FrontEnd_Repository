@@ -44,7 +44,7 @@ export default function useStudentCourseDetail(courseId) {
         setWeeks(weeksRes.data || []);
       } catch (eWeeks) {
         // 404: 백엔드 엔드포인트 미구현/경로 불일치/권한 이슈 가능 → 화면은 유지하고 안내만
-        if (eWeeks?.status === 404) {
+        if (eWeeks?.status === 404 || eWeeks?.status === 403) {
           setWeeksNotFound(true);
           setWeeks([]);
         } else {

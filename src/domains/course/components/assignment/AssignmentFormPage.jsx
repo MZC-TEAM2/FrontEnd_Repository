@@ -8,12 +8,16 @@ import {
   CircularProgress,
   Alert,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAssignment } from '../../hooks/useAssignment';
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -21,16 +25,18 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 const AssignmentFormPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const courseIdFromUrl = searchParams.get('courseId');
   const isEditMode = Boolean(id);
 
   const [formData, setFormData] = React.useState({
-    courseId: '',
+    courseId: courseIdFromUrl || '',
     title: '',
     content: '',
     dueDate: new Date(),
     maxScore: 100,
-    submissionMethod: 'ONLINE',
-    attachmentUrls: [],
+    submissionMethod: 'FILE_UPLOAD',
+    attachmentIds: [],
   });
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
@@ -55,8 +61,8 @@ const AssignmentFormPage = () => {
             content: data.post.content,
             dueDate: new Date(data.dueDate),
             maxScore: data.maxScore,
-            submissionMethod: data.submissionMethod || 'ONLINE',
-            attachmentUrls: data.attachmentUrls || [],
+            submissionMethod: data.submissionMethod,
+            attachmentIds: data.attachmentIds || [],
           });
         } catch (err) {
           setError('과제를 불러오는데 실패했습니다.');
@@ -111,26 +117,44 @@ const AssignmentFormPage = () => {
         .toISOString()
         .slice(0, 19);
 
-      const payload = {
-        ...formData,
-        dueDate: localDueDate,
-      };
-
       if (isEditMode) {
-        await updateAssignment(id, payload);
+        // 수정 모드: courseId, attachmentIds 제외 (UpdateRequestDto에 없음)
+        const updatePayload = {
+          title: formData.title,
+          content: formData.content,
+          dueDate: localDueDate,
+          maxScore: formData.maxScore,
+          submissionMethod: formData.submissionMethod,
+        };
+        await updateAssignment(id, updatePayload);
         alert('과제가 수정되었습니다.');
       } else {
-        await createAssignment(payload);
+        // 생성 모드: courseId, attachmentIds 포함 (CreateRequestDto에 필요)
+        const createPayload = {
+          courseId: formData.courseId,
+          title: formData.title,
+          content: formData.content,
+          dueDate: localDueDate,
+          maxScore: formData.maxScore,
+          submissionMethod: formData.submissionMethod,
+          attachmentIds: formData.attachmentIds,
+        };
+        await createAssignment(createPayload);
         alert('과제가 등록되었습니다.');
       }
-      navigate('/boards/assignment');
+      
+      // 네비게이션: URL 파라미터 또는 formData의 courseId 사용
+      const targetCourseId = courseIdFromUrl || formData.courseId;
+      navigate(`/professor/course/${targetCourseId}/manage?tab=3`);
     } catch (err) {
       setError(err.message || '과제 저장에 실패했습니다.');
     }
   };
 
   const handleCancel = () => {
-    navigate('/boards/assignment');
+    // URL 파라미터 또는 formData의 courseId 사용
+    const targetCourseId = courseIdFromUrl || formData.courseId;
+    navigate(`/professor/course/${targetCourseId}/manage?tab=3`);
   };
 
   if (loading) {
@@ -176,7 +200,7 @@ const AssignmentFormPage = () => {
                 onChange={handleInputChange}
                 placeholder="강의 ID를 입력하세요"
                 required
-                disabled={isEditMode} // 수정 시에는 변경 불가
+                disabled={isEditMode || Boolean(courseIdFromUrl)} // 수정 시 또는 URL에서 온 경우 변경 불가
               />
             </Grid>
 
@@ -234,6 +258,23 @@ const AssignmentFormPage = () => {
                 required
                 inputProps={{ min: 1 }}
               />
+            </Grid>
+
+            {/* 제출 방법 */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel>제출 방법</InputLabel>
+                <Select
+                  name="submissionMethod"
+                  value={formData.submissionMethod}
+                  onChange={handleInputChange}
+                  label="제출 방법"
+                >
+                  <MenuItem value="FILE_UPLOAD">파일 업로드</MenuItem>
+                  <MenuItem value="TEXT_INPUT">텍스트 입력</MenuItem>
+                  <MenuItem value="BOTH">파일 + 텍스트</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
 
             {/* TODO: 첨부파일 업로드 기능 추가 */}

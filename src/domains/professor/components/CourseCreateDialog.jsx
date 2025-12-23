@@ -417,7 +417,6 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
 
   // 과목 선택 핸들러
   const handleSubjectSelect = (subject) => {
-    console.log('선택된 과목:', subject);
     setSelectedSubject(subject);
     setFormData((prev) => ({
       ...prev,
@@ -503,26 +502,15 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
     setErrors(newErrors);
     const isValid = Object.keys(newErrors).length === 0;
     
-    // 에러가 있을 경우 상세 로깅
-    if (!isValid) {
-      console.log('❌ Validation 실패 - 에러 목록:');
-      Object.entries(newErrors).forEach(([field, message]) => {
-        console.log(`  - ${field}: ${message}`);
-      });
-    }
-    
     return isValid;
   };
 
   const handleSubmit = () => {
-    console.log('🔵 handleSubmit 호출됨');
-    console.log('현재 formData:', JSON.parse(JSON.stringify(formData)));
+
     
     const validationResult = validate();
-    console.log('✅ validation 결과:', validationResult);
     
     if (!validationResult) {
-      console.log('❌ validation 실패, 상세 에러는 화면을 확인하세요');
       return;
     }
     
@@ -545,7 +533,6 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
       requestData.description = formData.description;
     }
     
-    console.log('📤 Submitting course data:', JSON.parse(JSON.stringify(requestData)));
     onSubmit(requestData);
   };
 
@@ -1048,20 +1035,7 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
               >
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                      }}
-                    >
-                      <ScheduleIcon sx={{ fontSize: 28, color: 'white' }} />
-                    </Box>
+                    
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#667eea' }}>
                         수업 시간
@@ -1300,20 +1274,7 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
               >
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                      }}
-                    >
-                      <MenuBookIcon sx={{ fontSize: 28, color: 'white' }} />
-                    </Box>
+                    
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#667eea' }}>
                         강의계획서
@@ -1684,9 +1645,6 @@ const CourseCreateDialog = ({ open, onClose, onSubmit, enrollmentPeriods = [], d
         ) : (
           <Button 
             onClick={() => {
-              console.log('🟢 강의 등록 버튼 클릭됨');
-              console.log('disabled:', disabled);
-              console.log('enrollmentPeriods:', enrollmentPeriods);
               handleSubmit();
             }} 
             variant="contained"

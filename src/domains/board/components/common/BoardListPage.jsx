@@ -24,10 +24,11 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
   ThumbUp as ThumbUpIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useBoard } from '../../hooks/useBoard';
 import { formatDate, getPostTypeLabel } from '../../../../utils/boardUtils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const BoardListPage = ({
   boardType,
@@ -43,7 +44,8 @@ const BoardListPage = ({
   showViewCount = true,
   showLikeCount = true,
 }) => {
-  const [selectedHashtag, setSelectedHashtag] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentHashtag = searchParams.get('hashtag') || null;
   const {
     posts,
     loading,
@@ -58,15 +60,30 @@ const BoardListPage = ({
     handleSearchKeyPress,
     handleRowClick,
   } = useBoard(boardType);
-
+  
   const navigate = useNavigate();
 
-  // 해시태그로 필터링된 게시글
-  const filteredPosts = selectedHashtag
-    ? posts.filter(post => 
-        post.hashtags?.some(tag => tag.tagName === selectedHashtag)
-      )
-    : posts;
+  // 해시태그 필터 제거
+  const handleRemoveHashtagFilter = () => {
+    const params = {};
+    if (searchTerm) params.search = searchTerm;
+    const currentPage = parseInt(searchParams.get('page') || '0', 10);
+    if (currentPage > 0) params.page = currentPage.toString();
+    setSearchParams(params);
+  };
+
+  // 해시태그 클릭 처리 (URL 파라미터 변경)
+  const handleHashtagClick = (hashtagName) => {
+    const params = {};
+    if (searchTerm) params.search = searchTerm;
+    if (hashtagName) {
+      params.hashtag = hashtagName;
+    }
+    setSearchParams(params);
+  };
+
+  // 해시태그로 필터링된 게시글 (URL 파라미터 기반)
+  const filteredPosts = posts;
 
   // 동적 컬럼 수 계산
   const totalColumns = 4 + (showAuthor ? 1 : 0) + (showViewCount ? 1 : 0) + (showLikeCount ? 1 : 0);
@@ -80,6 +97,15 @@ const BoardListPage = ({
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
             {title}
           </Typography>
+          {currentHashtag && (
+            <Chip
+              label={`필터: #${currentHashtag}`}
+              onDelete={handleRemoveHashtagFilter}
+              color="primary"
+              size="small"
+              deleteIcon={<CloseIcon />}
+            />
+          )}
         </Box>
         {showCreateButton && (
           <Button
@@ -100,17 +126,17 @@ const BoardListPage = ({
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Chip
               label="전체"
-              onClick={() => setSelectedHashtag(null)}
-              color={selectedHashtag === null ? 'primary' : 'default'}
+              onClick={() => handleHashtagClick(null)}
+              color={!currentHashtag ? 'primary' : 'default'}
               sx={{ mb: 1 }}
             />
             {hashtags.map(hashtag => (
               <Chip
                 key={hashtag.id}
                 label={`${hashtag.icon || ''} ${hashtag.name}`}
-                onClick={() => setSelectedHashtag(hashtag.id)}
-                color={selectedHashtag === hashtag.id ? hashtag.color || 'primary' : 'default'}
-                variant={selectedHashtag === hashtag.id ? 'filled' : 'outlined'}
+                onClick={() => handleHashtagClick(hashtag.name)}
+                color={currentHashtag === hashtag.name ? hashtag.color || 'primary' : 'default'}
+                variant={currentHashtag === hashtag.name ? 'filled' : 'outlined'}
                 sx={{ mb: 1 }}
               />
             ))}
@@ -200,7 +226,7 @@ const BoardListPage = ({
                 <TableRow>
                   <TableCell colSpan={totalColumns} align="center" sx={{ py: 5 }}>
                     <Typography color="text.secondary">
-                      {selectedHashtag ? `"${selectedHashtag}" 주제의 게시글이 없습니다.` : '게시글이 없습니다.'}
+                      {currentHashtag ? `"#${currentHashtag}" 해시태그의 게시글이 없습니다.` : '게시글이 없습니다.'}
                     </Typography>
                   </TableCell>
                 </TableRow>

@@ -18,7 +18,6 @@ import { usePostForm } from '../../hooks/usePostForm';
 import { useFileManager } from '../../hooks/useFileManager';
 import { useDepartment } from '../../hooks/useDepartment';
 import { usePostFormSubmit } from '../../hooks/usePostFormSubmit';
-import HashtagInput from '../common/HashtagInput';
 import FileAttachment from '../common/FileAttachment';
 import PostTypeSelector from '../common/PostTypeSelector';
 import PostFormActions from '../common/PostFormActions';
@@ -135,13 +134,6 @@ const DepartmentFormPage = () => {
             rows={12}
             required
             sx={{ mb: 3 }}
-          />
-
-          {/* 해시태그 입력 */}
-          <HashtagInput 
-            hashtags={hashtags} 
-            onHashtagsChange={setHashtags} 
-            placeholder="해시태그를 입력하고 Enter를 누르세요 (예: 학과행사, 취업정보)" 
           />
 
           {/* 파일 첨부 */}

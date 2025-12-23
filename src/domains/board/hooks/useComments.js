@@ -28,31 +28,33 @@ export const useComments = (postId, currentUserId) => {
           result.push({
             id: comment.id,
             postId: comment.postId,
-            authorId: comment.authorId || currentUserId,
-            authorName: comment.authorName || '사용자',
+            author: comment.author,
+            authorId: comment.author?.id || comment.authorId || currentUserId,
+            authorName: comment.author?.name || comment.authorName || '사용자',
             content: comment.content,
             depth: comment.depth,
-            parentCommentId: comment.parentCommentId,
+            parentCommentId: comment.parentComment?.id || comment.parentCommentId,
             isAnonymous: comment.isAnonymous || false,
-            isDeleted: comment.isDeleted || false,
+            isDeleted: comment.isDeleted || comment.deletedByAdmin || false,
             attachments: comment.attachments || [],
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
           });
-          
+
           // 대댓글도 flat 배열에 추가
           if (comment.childComments && comment.childComments.length > 0) {
             comment.childComments.forEach(child => {
               result.push({
                 id: child.id,
                 postId: child.postId,
-                authorId: child.authorId || currentUserId,
-                authorName: child.authorName || '사용자',
+                author: child.author,
+                authorId: child.author?.id || child.authorId || currentUserId,
+                authorName: child.author?.name || child.authorName || '사용자',
                 content: child.content,
                 depth: child.depth,
-                parentCommentId: child.parentCommentId,
+                parentCommentId: child.parentComment?.id || child.parentCommentId,
                 isAnonymous: child.isAnonymous || false,
-                isDeleted: child.isDeleted || false,
+                isDeleted: child.isDeleted || child.deletedByAdmin || false,
                 attachments: child.attachments || [],
                 createdAt: child.createdAt,
                 updatedAt: child.updatedAt,

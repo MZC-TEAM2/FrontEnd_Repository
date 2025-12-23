@@ -36,6 +36,8 @@ import ProfessorCourseManagement from './pages/ProfessorCourseManagement';
 import ProfessorMyCourses from './pages/ProfessorMyCourses';
 import ProfessorCourseDetail from './pages/ProfessorCourseDetail';
 import ProfessorSchedule from './pages/ProfessorSchedule';
+import AssessmentDetail from './pages/AssessmentDetail';
+import AssessmentAttempt from './pages/AssessmentAttempt';
 
 // 인증 관련 페이지
 import Login from './pages/Login';
@@ -77,9 +79,10 @@ import ContestFormPage from './domains/board/components/contest/ContestFormPage'
 import CareerBoard from './domains/board/components/career/CareerBoardPage';
 import CareerPage from './domains/board/components/career/CareerPage';
 import CareerFormPage from './domains/board/components/career/CareerFormPage';
-import AssignmentBoard from './domains/board/components/assignment/AssignmentBoardPage';
-import AssignmentDetailPage from './domains/board/components/assignment/AssignmentDetailPage';
-import AssignmentFormPage from './domains/board/components/assignment/AssignmentFormPage';
+import AssignmentBoard from './domains/course/components/assignment/AssignmentBoard';
+import AssignmentDetailPage from './domains/course/components/assignment/AssignmentDetailPage';
+import AssignmentFormPage from './domains/course/components/assignment/AssignmentFormPage';
+import AssignmentSubmissionsPage from './domains/course/components/assignment/AssignmentSubmissionsPage';
 import ExamBoard from './domains/board/components/exam/ExamBoardPage';
 import QuizBoard from './domains/board/components/quiz/QuizBoardPage';
 import StudyBoard from './domains/board/components/study/StudyRecruitmentBoardPage';
@@ -132,6 +135,8 @@ function App() {
             <Route path="/courses/my" element={<Courses />} />
             <Route path="/courses/schedule" element={<CourseSchedule />} />
             <Route path="/course/:courseId" element={<CourseDetail />} />
+            <Route path="/course/:courseId/exams/:examId" element={<AssessmentDetail />} />
+            <Route path="/exams/attempts/:attemptId" element={<AssessmentAttempt />} />
 
             {/* 수강신청 */}
             <Route path="/registration" element={<CourseRegistration />} />
@@ -145,8 +150,8 @@ function App() {
             {/* 과제 */}
             <Route path="/assignments" element={<TempPage title="과제" />} />
 
-            {/* 퀴즈/시험 */}
-            <Route path="/exams" element={<TempPage title="퀴즈/시험" />} />
+            {/* 퀴즈/시험: 사이드바 진입은 제거했지만, 혹시 남아있는 링크/북마크를 위해 강의 상세로 유도 */}
+            <Route path="/exams" element={<Navigate to="/courses/my" replace />} />
 
             {/* 커뮤니티 관련 라우트 */}
             <Route path="/notices" element={<NoticeBoard />} />
@@ -177,46 +182,36 @@ function App() {
             <Route path="/departments/create" element={<DepartmentFormPage />} />
             <Route path="/departments/:id/edit" element={<DepartmentFormPage />} />
             <Route path="/departments/:id" element={<DepartmentPage />} />
-            
-            {/* 게시판 라우트 (레거시 경로 유지) */}
+
+            {/* 교수, 학생 게시판 라우트 (레거시 경로 유지) */}
             <Route path="/boards/professor" element={<ProfessorBoard />} />
             <Route path="/boards/professor/create" element={<ProfessorFormPage />} />
             <Route path="/boards/professor/:id/edit" element={<ProfessorFormPage />} />
             <Route path="/boards/professor/:id" element={<ProfessorPage />} />
-            
+
             <Route path="/boards/student" element={<StudentBoard />} />
             <Route path="/boards/student/create" element={<StudentFormPage />} />
             <Route path="/boards/student/:id/edit" element={<StudentFormPage />} />
             <Route path="/boards/student/:id" element={<StudentPage />} />
-            
-            <Route path="/boards/free" element={<FreeBoard />} />
-            <Route path="/boards/question" element={<QuestionBoard />} />
-            <Route path="/boards/discussion" element={<DiscussionBoard />} />
-            <Route path="/boards/department" element={<DepartmentBoard />} />
-            
-            <Route path="/boards/contest" element={<ContestBoard />} />
-            <Route path="/boards/contest/create" element={<ContestFormPage />} />
-            <Route path="/boards/contest/:id/edit" element={<ContestFormPage />} />
-            <Route path="/boards/contest/:id" element={<ContestPage />} />
-            
-            <Route path="/boards/career" element={<CareerBoard />} />
-            <Route path="/boards/career/create" element={<CareerFormPage />} />
-            <Route path="/boards/career/:id/edit" element={<CareerFormPage />} />
-            <Route path="/boards/career/:id" element={<CareerPage />} />
-            
-            <Route path="/boards/assignment" element={<AssignmentBoard />} />
-            <Route path="/boards/assignment/create" element={<AssignmentFormPage />} />
-            <Route path="/boards/assignment/:id/edit" element={<AssignmentFormPage />} />
-            <Route path="/boards/assignment/:id" element={<AssignmentDetailPage />} />
-            
-            <Route path="/boards/exam" element={<ExamBoard />} />
-            <Route path="/boards/quiz" element={<QuizBoard />} />
-            <Route path="/boards/study" element={<StudyBoard />} />
-            
-            {/* 커뮤니티 라우트 - 새 게시판 시스템 */}
-            <Route path="/community/notices" element={<NoticeBoard />} />
-            <Route path="/community/board" element={<FreeBoard />} />
-            <Route path="/community/qna" element={<QuestionBoard />} />
+
+            {/* 공모전 게시판 */}
+            <Route path="/contest" element={<ContestBoard />} />
+            <Route path="/contest/create" element={<ContestFormPage />} />
+            <Route path="/contest/:id/edit" element={<ContestFormPage />} />
+            <Route path="/contest/:id" element={<ContestPage />} />
+
+            {/* 취업정보 게시판 */}
+            <Route path="/career" element={<CareerBoard />} />
+            <Route path="/career/create" element={<CareerFormPage />} />
+            <Route path="/career/:id/edit" element={<CareerFormPage />} />
+            <Route path="/career/:id" element={<CareerPage />} />
+
+            {/* 과제 라우트 */}
+            <Route path="/assignment" element={<AssignmentBoard />} />
+            <Route path="/assignment/create" element={<AssignmentFormPage />} />
+            <Route path="/assignment/:id/edit" element={<AssignmentFormPage />} />
+            <Route path="/assignment/:id/submissions" element={<AssignmentSubmissionsPage />} />
+            <Route path="/assignment/:id" element={<AssignmentDetailPage />} />
 
             {/* 학습자 관리 */}
             <Route path="/students" element={<TempPage title="학습자 관리" />} />
