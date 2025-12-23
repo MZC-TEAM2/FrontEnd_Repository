@@ -74,6 +74,7 @@ const Notifications = () => {
       SYSTEM: <InfoIcon />,
       COMMENT_CREATED: <ChatBubbleIcon />,
       REPLY_CREATED: <ReplyIcon />,
+      DAILY_COURSE_REMINDER: <SchoolIcon />,
     };
     return icons[type] || <NotificationsIcon />;
   };
@@ -90,6 +91,7 @@ const Notifications = () => {
       SYSTEM: 'default',
       COMMENT_CREATED: 'info',
       REPLY_CREATED: 'info',
+      DAILY_COURSE_REMINDER: 'warning',
     };
     return colors[type] || 'default';
   };

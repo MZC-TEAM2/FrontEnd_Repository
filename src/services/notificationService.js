@@ -98,6 +98,7 @@ const notificationService = {
       SYSTEM: '시스템',
       COMMENT_CREATED: '댓글',
       REPLY_CREATED: '답글',
+      DAILY_COURSE_REMINDER: '오늘의 수업',
     };
     return typeLabels[type] || '알림';
   },
