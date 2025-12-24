@@ -11,7 +11,7 @@
  * - 성적 추이 그래프
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Container,
@@ -386,7 +386,7 @@ const ProfessorGradesReadOnlyPanel = () => {
 /**
  * 학생용: 성적 조회(학기 선택 + 공개된 성적만)
  */
-const StudentGradesPanel = () => {
+const StudentGradesPanel = forwardRef((props, ref) => {
   const [termsLoading, setTermsLoading] = useState(true);
   const [termsError, setTermsError] = useState(null);
   const [terms, setTerms] = useState([]);
@@ -448,12 +448,18 @@ const StudentGradesPanel = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allGrades]);
 
+  // 현재 표시할 성적 (전체 or 학기별)
+  const displayGrades = useMemo(() => {
+    return selectedTermId === 'ALL' ? allGrades : grades;
+  }, [selectedTermId, allGrades, grades]);
+
   const selectedTermStats = useMemo(() => {
-    const totalCredits = calcEarnedCredits(grades);
-    const gpa = calcGpa(grades);
+    const targetGrades = selectedTermId === 'ALL' ? allGrades : grades;
+    const totalCredits = calcEarnedCredits(targetGrades);
+    const gpa = calcGpa(targetGrades);
     return { totalCredits, gpa };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grades]);
+  }, [selectedTermId, allGrades, grades]);
 
   const fetchTerms = async () => {
     setTermsLoading(true);
@@ -530,7 +536,9 @@ const StudentGradesPanel = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedTermId) fetchGrades(selectedTermId);
+    if (selectedTermId && selectedTermId !== 'ALL') {
+      fetchGrades(selectedTermId);
+    }
   }, [selectedTermId]);
 
   // PDF 성적표 다운로드
@@ -661,6 +669,12 @@ const StudentGradesPanel = () => {
     }
   };
 
+  // 부모 컴포넌트에서 호출할 수 있도록 함수 노출
+  useImperativeHandle(ref, () => ({
+    downloadPDF: downloadGradesPDF,
+    printGrades: () => window.print(),
+  }));
+
   return (
     <>
       {/* 전체 통계 카드(간단 버전) */}
@@ -695,23 +709,6 @@ const StudentGradesPanel = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Button
-                variant="contained"
-                startIcon={<DownloadIcon />}
-                onClick={downloadGradesPDF}
-                disabled={allGradesLoading || allGrades.length === 0}
-              >
-                성적표 다운로드
-              </Button>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                PDF 형식
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
       </Grid>
 
       <Paper sx={{ p: 3 }}>
@@ -727,6 +724,7 @@ const StudentGradesPanel = () => {
               label="학기 선택"
               disabled={termsLoading || terms.length === 0}
             >
+              <MenuItem value="ALL">전체</MenuItem>
               {terms.map((t) => (
                 <MenuItem key={t.id} value={String(t.id)}>
                   {termLabel(t)}
@@ -745,7 +743,7 @@ const StudentGradesPanel = () => {
           <Tab label="성적 목록" />
         </Tabs>
 
-        {gradesLoading && (
+        {(selectedTermId === 'ALL' ? allGradesLoading : gradesLoading) && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 2 }}>
             <CircularProgress size={18} />
             <Typography variant="body2" color="text.secondary">
@@ -754,33 +752,39 @@ const StudentGradesPanel = () => {
           </Box>
         )}
 
-        {!gradesLoading && gradesError && (
+        {!(selectedTermId === 'ALL' ? allGradesLoading : gradesLoading) && gradesError && selectedTermId !== 'ALL' && (
           <Alert severity="warning">성적 조회에 실패했습니다.</Alert>
         )}
 
-        {!gradesLoading && !gradesError && grades.length === 0 && (
+        {!(selectedTermId === 'ALL' ? allGradesLoading : gradesLoading) && displayGrades.length === 0 && (
           <Alert severity="info">
-            해당 학기에 공개된 성적이 없습니다.
+            {selectedTermId === 'ALL' ? '공개된 성적이 없습니다.' : '해당 학기에 공개된 성적이 없습니다.'}
           </Alert>
         )}
 
-        {!gradesLoading && !gradesError && grades.length > 0 && (
+        {!(selectedTermId === 'ALL' ? allGradesLoading : gradesLoading) && displayGrades.length > 0 && (
           <>
           <TableContainer>
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>과목명</TableCell>
+                  {selectedTermId === 'ALL' && <TableCell align="center">학기</TableCell>}
                   <TableCell align="center">학점</TableCell>
                   <TableCell align="center">등급</TableCell>
-                    <TableCell align="center">최종 점수</TableCell>
-                    <TableCell align="center">공개일</TableCell>
+                  <TableCell align="center">최종 점수</TableCell>
+                  <TableCell align="center">공개일</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                  {grades.map((g) => (
-                    <TableRow key={`${g.academicTermId}-${g.courseId}`}>
+                  {displayGrades.map((g, idx) => (
+                    <TableRow key={`${g.academicTermId}-${g.courseId}-${idx}`}>
                       <TableCell>{g.courseName}</TableCell>
+                      {selectedTermId === 'ALL' && (
+                        <TableCell align="center">
+                          {g.academicTermYear} {g.academicTermType === '1' ? '1학기' : g.academicTermType === '2' ? '2학기' : g.academicTermType}
+                        </TableCell>
+                      )}
                       <TableCell align="center">{g.courseCredits}</TableCell>
                     <TableCell align="center">
                         <Chip label={g.finalGrade} size="small" />
@@ -797,7 +801,7 @@ const StudentGradesPanel = () => {
             <Grid container spacing={2}>
                 <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">
-                  학기 평균 학점
+                  {selectedTermId === 'ALL' ? '전체 평균 학점' : '학기 평균 학점'}
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
                     {selectedTermStats.gpa} / 4.5
@@ -805,7 +809,7 @@ const StudentGradesPanel = () => {
               </Grid>
                 <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">
-                  이수 학점
+                  {selectedTermId === 'ALL' ? '총 이수 학점' : '이수 학점'}
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
                     {selectedTermStats.totalCredits} 학점
@@ -825,7 +829,7 @@ const StudentGradesPanel = () => {
       )}
     </>
   );
-};
+});
 
 /**
  * Grades 컴포넌트
@@ -834,42 +838,57 @@ const Grades = () => {
   const currentUser = authService.getCurrentUser();
   const userType = currentUser?.userType;
   const isProfessor = userType === 'PROFESSOR';
+  const studentPanelRef = useRef(null);
   const headerSubText = isProfessor
     ? `교수 | ${currentUser?.name ?? ''}`.trim()
     : `${currentUser?.departmentName ?? '-'} | ${currentUser?.userNumber ?? '-'} ${currentUser?.name ?? ''}`.trim();
 
-                    return (
+  const handlePrint = () => {
+    if (studentPanelRef.current?.printGrades) {
+      studentPanelRef.current.printGrades();
+    }
+  };
+
+  const handleDownload = () => {
+    if (studentPanelRef.current?.downloadPDF) {
+      studentPanelRef.current.downloadPDF();
+    }
+  };
+
+  return (
     <Container maxWidth="xl">
       {/* 페이지 헤더 */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
             {isProfessor ? '성적 관리' : '성적 조회'}
-                  </Typography>
+          </Typography>
           <Typography variant="body1" color="text.secondary">
             {isProfessor ? `${headerSubText} | 성적 산출/공개 관리` : headerSubText}
-                          </Typography>
-                        </Box>
-        <Box>
-          <Tooltip title="성적표 인쇄">
-            <IconButton>
-              <PrintIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="성적표 다운로드">
-            <IconButton>
-              <DownloadIcon />
-            </IconButton>
-          </Tooltip>
+          </Typography>
         </Box>
-                      </Box>
+        {!isProfessor && (
+          <Box>
+            <Tooltip title="성적표 인쇄">
+              <IconButton onClick={handlePrint}>
+                <PrintIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="성적표 다운로드">
+              <IconButton onClick={handleDownload}>
+                <DownloadIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
+      </Box>
 
       {isProfessor && (
         <Box sx={{ mb: 3 }}>
           <ProfessorGradesReadOnlyPanel />
-                  </Box>
+        </Box>
       )}
-      {!isProfessor && <StudentGradesPanel />}
+      {!isProfessor && <StudentGradesPanel ref={studentPanelRef} />}
     </Container>
   );
 };
