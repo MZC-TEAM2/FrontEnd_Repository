@@ -1,7 +1,7 @@
 import React from 'react';
 import BoardListPage from '../common/BoardListPage';
-import { EmojiEvents as ContestIcon } from '@mui/icons-material';
-import { CONTEST_HASHTAGS } from '../../constants/boardHashtags';
+import {EmojiEvents as ContestIcon} from '@mui/icons-material';
+import {CONTEST_HASHTAGS} from '../../constants/boardHashtags';
 
 /**
  * 공모전 게시판 페이지
@@ -11,18 +11,18 @@ import { CONTEST_HASHTAGS } from '../../constants/boardHashtags';
  */
 const ContestBoardPage = () => {
 
-  return (
-    <BoardListPage
-      boardType="CONTEST"
-      title="공모전 게시판"
-      icon={<ContestIcon sx={{ fontSize: 32, color: 'primary.main' }} />}
-      basePath="/contest"
-      createPath="/contest/create"
-      createButtonText="공모전 정보 작성"
-      hashtags={CONTEST_HASHTAGS}
-      showHashtagsInTable={true}
-    />
-  );
+    return (
+        <BoardListPage
+            boardType="CONTEST"
+            title="공모전 게시판"
+            icon={<ContestIcon sx={{fontSize: 32, color: 'primary.main'}}/>}
+            basePath="/contest"
+            createPath="/contest/create"
+            createButtonText="공모전 정보 작성"
+            hashtags={CONTEST_HASHTAGS}
+            showHashtagsInTable={true}
+        />
+    );
 };
 
 export default ContestBoardPage;
