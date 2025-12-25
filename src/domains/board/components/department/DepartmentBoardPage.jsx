@@ -1,6 +1,6 @@
 import React from 'react';
 import BoardListPage from '../common/BoardListPage';
-import { School as SchoolIcon } from '@mui/icons-material';
+import {School as SchoolIcon} from '@mui/icons-material';
 
 /**
  * 학과 게시판 페이지
@@ -10,17 +10,17 @@ import { School as SchoolIcon } from '@mui/icons-material';
  */
 const DepartmentBoardPage = () => {
 
-  return (
-    <BoardListPage
-      boardType="DEPARTMENT"
-      title="학과 게시판"
-      icon={<SchoolIcon sx={{ fontSize: 32, color: 'primary.main' }} />}
-      basePath="/departments"
-      createPath="/departments/create"
-      createButtonText="글 작성"
-      showLikeCount={false}
-    />
-  );
+    return (
+        <BoardListPage
+            boardType="DEPARTMENT"
+            title="학과 게시판"
+            icon={<SchoolIcon sx={{fontSize: 32, color: 'primary.main'}}/>}
+            basePath="/departments"
+            createPath="/departments/create"
+            createButtonText="글 작성"
+            showLikeCount={false}
+        />
+    );
 };
 
 export default DepartmentBoardPage;
