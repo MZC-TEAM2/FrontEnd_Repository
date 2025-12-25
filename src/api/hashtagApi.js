@@ -11,12 +11,12 @@ import axiosInstance from './axiosInstance';
  * @returns {Promise<Array>} 해시태그 검색 결과
  */
 export const searchHashtags = async (keyword) => {
-  if (!keyword || keyword.trim().length === 0) {
-    return [];
-  }
-  
-  const response = await axiosInstance.get('/api/v1/hashtags/search', {
-    params: { keyword: keyword.trim() }
-  });
-  return response.data;
+    if (!keyword || keyword.trim().length === 0) {
+        return [];
+    }
+
+    const response = await axiosInstance.get('/api/v1/hashtags/search', {
+        params: {keyword: keyword.trim()}
+    });
+    return response.data;
 };
