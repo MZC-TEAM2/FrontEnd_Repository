@@ -19,28 +19,28 @@
  * />
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import NotificationDetailDialog from './NotificationDetailDialog';
-import { truncateText } from '../utils/textUtils';
+import {truncateText} from '../utils/textUtils';
 import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Badge,
-  Box,
-  Avatar,
-  Menu,
-  MenuItem,
-  Divider,
-  ListItemIcon,
-  ListItemText,
-  Tooltip,
-  useTheme,
-  useMediaQuery,
+    AppBar,
+    Avatar,
+    Badge,
+    Box,
+    Divider,
+    IconButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Toolbar,
+    Tooltip,
+    Typography,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import {alpha} from '@mui/material/styles';
 
 // 아이콘 임포트
 import MenuIcon from '@mui/icons-material/Menu';
@@ -57,7 +57,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import authService from '../services/authService';
 import notificationService from '../services/notificationService';
 import messageService from '../services/messageService';
-import { useThemeContext } from '../contexts/ThemeContext';
+import {useThemeContext} from '../contexts/ThemeContext';
 
 /**
  * Header 컴포넌트
@@ -67,655 +67,679 @@ import { useThemeContext } from '../contexts/ThemeContext';
  * @param {Function} props.handleDrawerToggle - 사이드바 토글 함수
  * @param {number} props.drawerWidth - 사이드바 너비
  */
-const Header = ({ open, handleDrawerToggle, drawerWidth }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const navigate = useNavigate();
-  const { isDarkMode, toggleTheme } = useThemeContext();
+const Header = ({open, handleDrawerToggle, drawerWidth}) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const navigate = useNavigate();
+    const {isDarkMode, toggleTheme} = useThemeContext();
 
-  // 상태 관리
-  const [anchorEl, setAnchorEl] = useState(null); // 사용자 메뉴
-  const [notificationAnchor, setNotificationAnchor] = useState(null); // 알림 메뉴
-  const [messageAnchor, setMessageAnchor] = useState(null); // 메시지 메뉴
-  const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null); // 모바일 메뉴
-  const [notifications, setNotifications] = useState([]); // 알림 목록
-  const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
-  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
-  const [selectedNotification, setSelectedNotification] = useState(null); // 선택된 알림 (상세보기)
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false); // 상세보기 다이얼로그 열림 상태
+    // 상태 관리
+    const [anchorEl, setAnchorEl] = useState(null); // 사용자 메뉴
+    const [notificationAnchor, setNotificationAnchor] = useState(null); // 알림 메뉴
+    const [messageAnchor, setMessageAnchor] = useState(null); // 메시지 메뉴
+    const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null); // 모바일 메뉴
+    const [notifications, setNotifications] = useState([]); // 알림 목록
+    const [unreadCount, setUnreadCount] = useState(0); // 읽지 않은 알림 개수
+    const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
+    const [selectedNotification, setSelectedNotification] = useState(null); // 선택된 알림 (상세보기)
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false); // 상세보기 다이얼로그 열림 상태
 
-  // 메시지 관련 상태
-  const [recentMessages, setRecentMessages] = useState([]); // 최근 메시지 목록
-  const [messageUnreadCount, setMessageUnreadCount] = useState(0); // 안읽은 메시지 수
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    // 메시지 관련 상태
+    const [recentMessages, setRecentMessages] = useState([]); // 최근 메시지 목록
+    const [messageUnreadCount, setMessageUnreadCount] = useState(0); // 안읽은 메시지 수
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // 알림/메시지 데이터 및 사용자 정보 가져오기
-  useEffect(() => {
-    if (authService.isAuthenticated()) {
-      const user = authService.getCurrentUser();
-      setCurrentUser(user);
+    // 알림/메시지 데이터 및 사용자 정보 가져오기
+    useEffect(() => {
+        if (authService.isAuthenticated()) {
+            const user = authService.getCurrentUser();
+            setCurrentUser(user);
 
-      fetchNotifications();
-      fetchUnreadCount();
-      fetchMessageUnreadCount();
+            fetchNotifications();
+            fetchUnreadCount();
+            fetchMessageUnreadCount();
 
-      // 30초마다 알림/메시지 새로고침
-      const interval = setInterval(() => {
-        fetchUnreadCount();
-        fetchMessageUnreadCount();
-      }, 30000);
+            // 30초마다 알림/메시지 새로고침
+            const interval = setInterval(() => {
+                fetchUnreadCount();
+                fetchMessageUnreadCount();
+            }, 30000);
 
-      return () => clearInterval(interval);
-    }
-  }, []);
+            return () => clearInterval(interval);
+        }
+    }, []);
 
-  /**
-   * 알림 목록 가져오기
-   */
-  const fetchNotifications = async () => {
-    setIsLoadingNotifications(true);
-    try {
-      const response = await notificationService.getNotifications(null, 5, true);
-      // 백엔드 응답 구조에 맞게 수정 (notifications 배열)
-      if (response.notifications) {
-        // 알림 데이터 포맷팅
-        const formattedNotifications = response.notifications.map(item => ({
-          id: item.id,
-          type: item.typeCode || item.category, // typeCode 또는 category 사용
-          typeName: item.typeName, // 타입 이름 추가
-          title: item.title,
-          message: item.message, // content 대신 message
-          time: notificationService.formatNotificationTime(item.createdAt),
-          isRead: item.isRead,
-        }));
-        setNotifications(formattedNotifications);
-      }
-    } catch (error) {
-      console.error('알림 목록 조회 실패:', error);
-      // API 연동 전까지는 더미 데이터 사용
-      setNotifications([
-        { id: 1, type: 'ASSIGNMENT', typeName: '과제', title: '데이터베이스 과제가 등록되었습니다', message: '과제 내용', time: '5분 전', isRead: false },
-        { id: 2, type: 'ANNOUNCEMENT', typeName: '공지', title: '알고리즘 강의실이 변경되었습니다', message: '강의실 변경 안내', time: '1시간 전', isRead: false },
-        { id: 3, type: 'EXAM', typeName: '시험', title: '운영체제 중간고사 공지', message: '시험 안내', time: '3시간 전', isRead: false },
-      ]);
-    } finally {
-      setIsLoadingNotifications(false);
-    }
-  };
+    /**
+     * 알림 목록 가져오기
+     */
+    const fetchNotifications = async () => {
+        setIsLoadingNotifications(true);
+        try {
+            const response = await notificationService.getNotifications(null, 5, true);
+            // 백엔드 응답 구조에 맞게 수정 (notifications 배열)
+            if (response.notifications) {
+                // 알림 데이터 포맷팅
+                const formattedNotifications = response.notifications.map(item => ({
+                    id: item.id,
+                    type: item.typeCode || item.category, // typeCode 또는 category 사용
+                    typeName: item.typeName, // 타입 이름 추가
+                    title: item.title,
+                    message: item.message, // content 대신 message
+                    time: notificationService.formatNotificationTime(item.createdAt),
+                    isRead: item.isRead,
+                }));
+                setNotifications(formattedNotifications);
+            }
+        } catch (error) {
+            console.error('알림 목록 조회 실패:', error);
+            // API 연동 전까지는 더미 데이터 사용
+            setNotifications([
+                {
+                    id: 1,
+                    type: 'ASSIGNMENT',
+                    typeName: '과제',
+                    title: '데이터베이스 과제가 등록되었습니다',
+                    message: '과제 내용',
+                    time: '5분 전',
+                    isRead: false
+                },
+                {
+                    id: 2,
+                    type: 'ANNOUNCEMENT',
+                    typeName: '공지',
+                    title: '알고리즘 강의실이 변경되었습니다',
+                    message: '강의실 변경 안내',
+                    time: '1시간 전',
+                    isRead: false
+                },
+                {
+                    id: 3,
+                    type: 'EXAM',
+                    typeName: '시험',
+                    title: '운영체제 중간고사 공지',
+                    message: '시험 안내',
+                    time: '3시간 전',
+                    isRead: false
+                },
+            ]);
+        } finally {
+            setIsLoadingNotifications(false);
+        }
+    };
 
-  /**
-   * 읽지 않은 알림 개수 가져오기
-   */
-  const fetchUnreadCount = async () => {
-    try {
-      const response = await notificationService.getUnreadCount();
-      setUnreadCount(response.unreadCount || 0);
-    } catch (error) {
-      console.error('읽지 않은 알림 개수 조회 실패:', error);
-      setUnreadCount(3);
-    }
-  };
+    /**
+     * 읽지 않은 알림 개수 가져오기
+     */
+    const fetchUnreadCount = async () => {
+        try {
+            const response = await notificationService.getUnreadCount();
+            setUnreadCount(response.unreadCount || 0);
+        } catch (error) {
+            console.error('읽지 않은 알림 개수 조회 실패:', error);
+            setUnreadCount(3);
+        }
+    };
 
-  /**
-   * 최근 메시지 대화방 목록 가져오기
-   */
-  const fetchRecentMessages = async () => {
-    setIsLoadingMessages(true);
-    try {
-      const conversations = await messageService.getConversations();
-      // 안읽은 메시지가 있는 대화방 최대 5개
-      const unreadConversations = (conversations || [])
-        .filter(conv => conv.unreadCount > 0)
-        .slice(0, 5);
-      setRecentMessages(unreadConversations);
-    } catch (error) {
-      console.error('메시지 목록 조회 실패:', error);
-      setRecentMessages([]);
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  };
+    /**
+     * 최근 메시지 대화방 목록 가져오기
+     */
+    const fetchRecentMessages = async () => {
+        setIsLoadingMessages(true);
+        try {
+            const conversations = await messageService.getConversations();
+            // 안읽은 메시지가 있는 대화방 최대 5개
+            const unreadConversations = (conversations || [])
+                .filter(conv => conv.unreadCount > 0)
+                .slice(0, 5);
+            setRecentMessages(unreadConversations);
+        } catch (error) {
+            console.error('메시지 목록 조회 실패:', error);
+            setRecentMessages([]);
+        } finally {
+            setIsLoadingMessages(false);
+        }
+    };
 
-  /**
-   * 안읽은 메시지 수 가져오기
-   */
-  const fetchMessageUnreadCount = async () => {
-    try {
-      const count = await messageService.getUnreadCount();
-      setMessageUnreadCount(typeof count === 'number' ? count : 0);
-    } catch (error) {
-      console.error('안읽은 메시지 수 조회 실패:', error);
-      setMessageUnreadCount(0);
-    }
-  };
+    /**
+     * 안읽은 메시지 수 가져오기
+     */
+    const fetchMessageUnreadCount = async () => {
+        try {
+            const count = await messageService.getUnreadCount();
+            setMessageUnreadCount(typeof count === 'number' ? count : 0);
+        } catch (error) {
+            console.error('안읽은 메시지 수 조회 실패:', error);
+            setMessageUnreadCount(0);
+        }
+    };
 
-  /**
-   * 알림 클릭 처리 (상세보기)
-   */
-  const handleNotificationClick = (notification) => {
-    setSelectedNotification(notification);
-    setDetailDialogOpen(true);
-    handleMenuClose();
-  };
+    /**
+     * 알림 클릭 처리 (상세보기)
+     */
+    const handleNotificationClick = (notification) => {
+        setSelectedNotification(notification);
+        setDetailDialogOpen(true);
+        handleMenuClose();
+    };
 
-  /**
-   * 알림 읽음 처리 (콜백)
-   */
-  const handleNotificationRead = (notificationId) => {
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === notificationId ? { ...n, isRead: true } : n
-      )
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
+    /**
+     * 알림 읽음 처리 (콜백)
+     */
+    const handleNotificationRead = (notificationId) => {
+        setNotifications(prev =>
+            prev.map(n =>
+                n.id === notificationId ? {...n, isRead: true} : n
+            )
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+    };
 
-  /**
-   * 알림 삭제 처리 (콜백)
-   */
-  const handleNotificationDelete = (notificationId) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    const notification = notifications.find(n => n.id === notificationId);
-    if (notification && !notification.isRead) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
-  };
+    /**
+     * 알림 삭제 처리 (콜백)
+     */
+    const handleNotificationDelete = (notificationId) => {
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification && !notification.isRead) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+    };
 
-  /**
-   * 사용자 메뉴 열기
-   */
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+    /**
+     * 사용자 메뉴 열기
+     */
+    const handleProfileMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
 
-  /**
-   * 알림 메뉴 열기
-   */
-  const handleNotificationMenuOpen = (event) => {
-    setNotificationAnchor(event.currentTarget);
-    if (authService.isAuthenticated()) {
-      fetchNotifications();
-    }
-  };
+    /**
+     * 알림 메뉴 열기
+     */
+    const handleNotificationMenuOpen = (event) => {
+        setNotificationAnchor(event.currentTarget);
+        if (authService.isAuthenticated()) {
+            fetchNotifications();
+        }
+    };
 
-  /**
-   * 메시지 메뉴 열기
-   */
-  const handleMessageMenuOpen = (event) => {
-    setMessageAnchor(event.currentTarget);
-    if (authService.isAuthenticated()) {
-      fetchRecentMessages();
-    }
-  };
+    /**
+     * 메시지 메뉴 열기
+     */
+    const handleMessageMenuOpen = (event) => {
+        setMessageAnchor(event.currentTarget);
+        if (authService.isAuthenticated()) {
+            fetchRecentMessages();
+        }
+    };
 
-  /**
-   * 모바일 메뉴 열기
-   */
-  const handleMobileMenuOpen = (event) => {
-    setMobileMenuAnchor(event.currentTarget);
-  };
+    /**
+     * 모바일 메뉴 열기
+     */
+    const handleMobileMenuOpen = (event) => {
+        setMobileMenuAnchor(event.currentTarget);
+    };
 
-  /**
-   * 모든 메뉴 닫기
-   */
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setNotificationAnchor(null);
-    setMessageAnchor(null);
-    setMobileMenuAnchor(null);
-  };
+    /**
+     * 모든 메뉴 닫기
+     */
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setNotificationAnchor(null);
+        setMessageAnchor(null);
+        setMobileMenuAnchor(null);
+    };
 
-  /**
-   * 로그아웃 처리
-   */
-  const handleLogout = async () => {
-    handleMenuClose();
+    /**
+     * 로그아웃 처리
+     */
+    const handleLogout = async () => {
+        handleMenuClose();
 
-    try {
-      await authService.logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('로그아웃 실패:', error);
-      // 에러가 발생해도 로그인 페이지로 이동
-      navigate('/login');
-    }
-  };
+        try {
+            await authService.logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('로그아웃 실패:', error);
+            // 에러가 발생해도 로그인 페이지로 이동
+            navigate('/login');
+        }
+    };
 
 
-  return (
-    <AppBar
-      position="fixed"
-      sx={{
-        width: { sm: open ? `calc(100% - ${drawerWidth}px)` : '100%' },
-        ml: { sm: open ? `${drawerWidth}px` : 0 },
-        transition: theme.transitions.create(['margin', 'width'], {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.leavingScreen,
-        }),
-        backgroundColor: theme.palette.background.paper,
-        color: theme.palette.text.primary,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-      }}
-    >
-      <Toolbar>
-        {/* 사이드바 토글 버튼 */}
-        <IconButton
-          color="inherit"
-          aria-label="open drawer"
-          onClick={handleDrawerToggle}
-          edge="start"
-          sx={{
-            mr: 2,
-            color: theme.palette.primary.main,
-          }}
+    return (
+        <AppBar
+            position="fixed"
+            sx={{
+                width: {sm: open ? `calc(100% - ${drawerWidth}px)` : '100%'},
+                ml: {sm: open ? `${drawerWidth}px` : 0},
+                transition: theme.transitions.create(['margin', 'width'], {
+                    easing: theme.transitions.easing.sharp,
+                    duration: theme.transitions.duration.leavingScreen,
+                }),
+                backgroundColor: theme.palette.background.paper,
+                color: theme.palette.text.primary,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            }}
         >
-          <MenuIcon />
-        </IconButton>
-
-        {/* 페이지 제목 (모바일에서는 숨김) */}
-        {!isMobile && (
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{
-              fontWeight: 600,
-              color: theme.palette.primary.main,
-            }}
-          >
-            MZC 대학교 LMS
-          </Typography>
-        )}
-
-        {/* 여백 채우기 */}
-        <Box sx={{ flexGrow: 1 }} />
-
-        {/* 데스크탑 아이콘 그룹 */}
-        {!isMobile && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {/* 다크모드 토글 */}
-            <Tooltip title="테마 변경">
-              <IconButton onClick={toggleTheme} color="inherit">
-                {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-              </IconButton>
-            </Tooltip>
-
-            {/* 메시지 아이콘 */}
-            <Tooltip title="메시지">
-              <IconButton color="inherit" onClick={handleMessageMenuOpen}>
-                <Badge badgeContent={messageUnreadCount} color="error">
-                  <MailIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-
-            {/* 알림 아이콘 */}
-            <Tooltip title="알림">
-              <IconButton
-                color="inherit"
-                onClick={handleNotificationMenuOpen}
-              >
-                <Badge badgeContent={unreadCount} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-
-            {/* 도움말 */}
-            <Tooltip title="도움말">
-              <IconButton color="inherit">
-                <HelpIcon />
-              </IconButton>
-            </Tooltip>
-
-            {/* 사용자 프로필 */}
-            <Tooltip title="내 프로필">
-              <IconButton
-                onClick={handleProfileMenuOpen}
-                sx={{ ml: 1 }}
-              >
-                <Avatar
-                  src={currentUser?.thumbnailUrl || undefined}
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    bgcolor: theme.palette.primary.main,
-                  }}
-                >
-                  {currentUser?.name?.charAt(0) || 'U'}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
-
-        {/* 모바일 메뉴 버튼 */}
-        {isMobile && (
-          <IconButton
-            color="inherit"
-            onClick={handleMobileMenuOpen}
-          >
-            <MoreVertIcon />
-          </IconButton>
-        )}
-      </Toolbar>
-
-      {/* 사용자 프로필 메뉴 */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          elevation: 3,
-          sx: {
-            mt: 1.5,
-            minWidth: 200,
-            '& .MuiAvatar-root': {
-              width: 32,
-              height: 32,
-              ml: -0.5,
-              mr: 1,
-            },
-          },
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        {/* 사용자 정보 헤더 */}
-        <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar
-            src={currentUser?.thumbnailUrl || undefined}
-            sx={{
-              width: 48,
-              height: 48,
-              bgcolor: theme.palette.primary.main,
-            }}
-          >
-            {currentUser?.name?.charAt(0) || 'U'}
-          </Avatar>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {currentUser?.name || '사용자'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {currentUser?.userNumber || currentUser?.userId || '학번 없음'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {currentUser?.email || '이메일 없음'}
-            </Typography>
-          </Box>
-        </Box>
-        <Divider />
-
-        {/* 메뉴 아이템 */}
-        <MenuItem onClick={() => {
-          handleMenuClose();
-          navigate('/profile');
-        }}>
-          <ListItemIcon>
-            <PersonIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>내 프로필</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => {
-          handleMenuClose();
-          navigate('/settings');
-        }}>
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>설정</ListItemText>
-        </MenuItem>
-
-        <Divider />
-
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>로그아웃</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      {/* 알림 메뉴 */}
-      <Menu
-        anchorEl={notificationAnchor}
-        open={Boolean(notificationAnchor)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          elevation: 3,
-          sx: {
-            mt: 1.5,
-            minWidth: 300,
-            maxHeight: 400,
-          },
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            알림
-          </Typography>
-        </Box>
-        <Divider />
-
-        {/* 알림 리스트 */}
-        {notifications.length > 0 ? (
-          notifications.map((notification) => (
-            <MenuItem
-              key={notification.id}
-              onClick={() => handleNotificationClick(notification)}
-              sx={{
-                backgroundColor: notification.isRead ? 'transparent' : alpha(theme.palette.primary.main, 0.05),
-              }}
-            >
-              <Box sx={{ width: '100%' }}>
-                <Typography variant="body2">
-                  <Box component="span" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    [{notification.typeName || notificationService.getNotificationTypeLabel(notification.type)}]
-                  </Box>{' '}
-                  {truncateText(notification.title || '제목 없음', 10)}
-                </Typography>
-                {notification.message && (
-                  <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {truncateText(notification.message, 10)}
-                  </Typography>
-                )}
-                <Typography variant="caption" color="text.secondary">
-                  {notification.time}
-                </Typography>
-              </Box>
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem disabled>
-            <Typography variant="body2" color="text.secondary">
-              {isLoadingNotifications ? '알림을 불러오는 중...' : '새로운 알림이 없습니다'}
-            </Typography>
-          </MenuItem>
-        )}
-
-        <Divider />
-        <MenuItem onClick={() => {
-          handleMenuClose();
-          navigate('/notifications');
-        }}>
-          <Typography
-            variant="body2"
-            color="primary"
-            sx={{ width: '100%', textAlign: 'center' }}
-          >
-            모든 알림 보기
-          </Typography>
-        </MenuItem>
-      </Menu>
-
-      {/* 메시지 메뉴 */}
-      <Menu
-        anchorEl={messageAnchor}
-        open={Boolean(messageAnchor)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          elevation: 3,
-          sx: {
-            mt: 1.5,
-            minWidth: 320,
-            maxHeight: 400,
-          },
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            메시지
-          </Typography>
-        </Box>
-        <Divider />
-
-        {/* 메시지 리스트 */}
-        {recentMessages.length > 0 ? (
-          recentMessages.map((conversation) => (
-            <MenuItem
-              key={conversation.conversationId}
-              onClick={() => {
-                handleMenuClose();
-                navigate(`/messages?id=${conversation.conversationId}`);
-              }}
-              sx={{
-                backgroundColor: alpha(theme.palette.primary.main, 0.05),
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
-                <Avatar
-                  src={conversation.otherUserThumbnailUrl || undefined}
-                  sx={{ width: 40, height: 40 }}
-                >
-                  {conversation.otherUserName?.charAt(0) || 'U'}
-                </Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {conversation.otherUserId ? `${conversation.otherUserId} / ${conversation.otherUserName}` : conversation.otherUserName}
-                    </Typography>
-                    <Badge badgeContent={conversation.unreadCount} color="error" sx={{ ml: 1 }} />
-                  </Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
+            <Toolbar>
+                {/* 사이드바 토글 버튼 */}
+                <IconButton
+                    color="inherit"
+                    aria-label="open drawer"
+                    onClick={handleDrawerToggle}
+                    edge="start"
                     sx={{
-                      display: 'block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                        mr: 2,
+                        color: theme.palette.primary.main,
                     }}
-                  >
-                    <Box
-                      component="span"
-                      sx={{
-                        color: conversation.isLastMessageMine ? 'primary.main' : 'text.secondary',
-                        fontWeight: 500,
-                      }}
+                >
+                    <MenuIcon/>
+                </IconButton>
+
+                {/* 페이지 제목 (모바일에서는 숨김) */}
+                {!isMobile && (
+                    <Typography
+                        variant="h6"
+                        noWrap
+                        component="div"
+                        sx={{
+                            fontWeight: 600,
+                            color: theme.palette.primary.main,
+                        }}
                     >
-                      {conversation.isLastMessageMine ? '나: ' : `${conversation.otherUserName}: `}
+                        MZC 대학교 LMS
+                    </Typography>
+                )}
+
+                {/* 여백 채우기 */}
+                <Box sx={{flexGrow: 1}}/>
+
+                {/* 데스크탑 아이콘 그룹 */}
+                {!isMobile && (
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        {/* 다크모드 토글 */}
+                        <Tooltip title="테마 변경">
+                            <IconButton onClick={toggleTheme} color="inherit">
+                                {isDarkMode ? <Brightness7Icon/> : <Brightness4Icon/>}
+                            </IconButton>
+                        </Tooltip>
+
+                        {/* 메시지 아이콘 */}
+                        <Tooltip title="메시지">
+                            <IconButton color="inherit" onClick={handleMessageMenuOpen}>
+                                <Badge badgeContent={messageUnreadCount} color="error">
+                                    <MailIcon/>
+                                </Badge>
+                            </IconButton>
+                        </Tooltip>
+
+                        {/* 알림 아이콘 */}
+                        <Tooltip title="알림">
+                            <IconButton
+                                color="inherit"
+                                onClick={handleNotificationMenuOpen}
+                            >
+                                <Badge badgeContent={unreadCount} color="error">
+                                    <NotificationsIcon/>
+                                </Badge>
+                            </IconButton>
+                        </Tooltip>
+
+                        {/* 도움말 */}
+                        <Tooltip title="도움말">
+                            <IconButton color="inherit">
+                                <HelpIcon/>
+                            </IconButton>
+                        </Tooltip>
+
+                        {/* 사용자 프로필 */}
+                        <Tooltip title="내 프로필">
+                            <IconButton
+                                onClick={handleProfileMenuOpen}
+                                sx={{ml: 1}}
+                            >
+                                <Avatar
+                                    src={currentUser?.thumbnailUrl || undefined}
+                                    sx={{
+                                        width: 36,
+                                        height: 36,
+                                        bgcolor: theme.palette.primary.main,
+                                    }}
+                                >
+                                    {currentUser?.name?.charAt(0) || 'U'}
+                                </Avatar>
+                            </IconButton>
+                        </Tooltip>
                     </Box>
-                    {messageService.truncateContent(conversation.lastMessageContent, 20)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {messageService.formatMessageTime(conversation.lastMessageAt)}
-                  </Typography>
+                )}
+
+                {/* 모바일 메뉴 버튼 */}
+                {isMobile && (
+                    <IconButton
+                        color="inherit"
+                        onClick={handleMobileMenuOpen}
+                    >
+                        <MoreVertIcon/>
+                    </IconButton>
+                )}
+            </Toolbar>
+
+            {/* 사용자 프로필 메뉴 */}
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                    elevation: 3,
+                    sx: {
+                        mt: 1.5,
+                        minWidth: 200,
+                        '& .MuiAvatar-root': {
+                            width: 32,
+                            height: 32,
+                            ml: -0.5,
+                            mr: 1,
+                        },
+                    },
+                }}
+                transformOrigin={{horizontal: 'right', vertical: 'top'}}
+                anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+            >
+                {/* 사용자 정보 헤더 */}
+                <Box sx={{px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5}}>
+                    <Avatar
+                        src={currentUser?.thumbnailUrl || undefined}
+                        sx={{
+                            width: 48,
+                            height: 48,
+                            bgcolor: theme.palette.primary.main,
+                        }}
+                    >
+                        {currentUser?.name?.charAt(0) || 'U'}
+                    </Avatar>
+                    <Box>
+                        <Typography variant="subtitle1" sx={{fontWeight: 600}}>
+                            {currentUser?.name || '사용자'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {currentUser?.userNumber || currentUser?.userId || '학번 없음'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {currentUser?.email || '이메일 없음'}
+                        </Typography>
+                    </Box>
                 </Box>
-              </Box>
-            </MenuItem>
-          ))
-        ) : (
-          <MenuItem disabled>
-            <Typography variant="body2" color="text.secondary">
-              {isLoadingMessages ? '메시지를 불러오는 중...' : '새로운 메시지가 없습니다'}
-            </Typography>
-          </MenuItem>
-        )}
+                <Divider/>
 
-        <Divider />
-        <MenuItem onClick={() => {
-          handleMenuClose();
-          navigate('/messages');
-        }}>
-          <Typography
-            variant="body2"
-            color="primary"
-            sx={{ width: '100%', textAlign: 'center' }}
-          >
-            전체 메시지 보기
-          </Typography>
-        </MenuItem>
-      </Menu>
+                {/* 메뉴 아이템 */}
+                <MenuItem onClick={() => {
+                    handleMenuClose();
+                    navigate('/profile');
+                }}>
+                    <ListItemIcon>
+                        <PersonIcon fontSize="small"/>
+                    </ListItemIcon>
+                    <ListItemText>내 프로필</ListItemText>
+                </MenuItem>
 
-      {/* 모바일 메뉴 */}
-      <Menu
-        anchorEl={mobileMenuAnchor}
-        open={Boolean(mobileMenuAnchor)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          elevation: 3,
-          sx: { mt: 1.5 },
-        }}
-      >
-        <MenuItem onClick={toggleTheme}>
-          <ListItemIcon>
-            {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-          </ListItemIcon>
-          <ListItemText>테마 변경</ListItemText>
-        </MenuItem>
+                <MenuItem onClick={() => {
+                    handleMenuClose();
+                    navigate('/settings');
+                }}>
+                    <ListItemIcon>
+                        <SettingsIcon fontSize="small"/>
+                    </ListItemIcon>
+                    <ListItemText>설정</ListItemText>
+                </MenuItem>
 
-        <MenuItem onClick={handleMessageMenuOpen}>
-          <ListItemIcon>
-            <Badge badgeContent={messageUnreadCount} color="error">
-              <MailIcon />
-            </Badge>
-          </ListItemIcon>
-          <ListItemText>메시지</ListItemText>
-        </MenuItem>
+                <Divider/>
 
-        <MenuItem onClick={handleNotificationMenuOpen}>
-          <ListItemIcon>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </ListItemIcon>
-          <ListItemText>알림</ListItemText>
-        </MenuItem>
+                <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                        <LogoutIcon fontSize="small"/>
+                    </ListItemIcon>
+                    <ListItemText>로그아웃</ListItemText>
+                </MenuItem>
+            </Menu>
 
-        <MenuItem onClick={handleMenuClose}>
-          <ListItemIcon>
-            <HelpIcon />
-          </ListItemIcon>
-          <ListItemText>도움말</ListItemText>
-        </MenuItem>
+            {/* 알림 메뉴 */}
+            <Menu
+                anchorEl={notificationAnchor}
+                open={Boolean(notificationAnchor)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                    elevation: 3,
+                    sx: {
+                        mt: 1.5,
+                        minWidth: 300,
+                        maxHeight: 400,
+                    },
+                }}
+                transformOrigin={{horizontal: 'right', vertical: 'top'}}
+                anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+            >
+                <Box sx={{px: 2, py: 1.5}}>
+                    <Typography variant="subtitle1" sx={{fontWeight: 600}}>
+                        알림
+                    </Typography>
+                </Box>
+                <Divider/>
 
-        <Divider />
+                {/* 알림 리스트 */}
+                {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                        <MenuItem
+                            key={notification.id}
+                            onClick={() => handleNotificationClick(notification)}
+                            sx={{
+                                backgroundColor: notification.isRead ? 'transparent' : alpha(theme.palette.primary.main, 0.05),
+                            }}
+                        >
+                            <Box sx={{width: '100%'}}>
+                                <Typography variant="body2">
+                                    <Box component="span" sx={{fontWeight: 600, color: 'primary.main'}}>
+                                        [{notification.typeName || notificationService.getNotificationTypeLabel(notification.type)}]
+                                    </Box>{' '}
+                                    {truncateText(notification.title || '제목 없음', 10)}
+                                </Typography>
+                                {notification.message && (
+                                    <Typography variant="caption" display="block" color="text.secondary" sx={{mt: 0.5}}>
+                                        {truncateText(notification.message, 10)}
+                                    </Typography>
+                                )}
+                                <Typography variant="caption" color="text.secondary">
+                                    {notification.time}
+                                </Typography>
+                            </Box>
+                        </MenuItem>
+                    ))
+                ) : (
+                    <MenuItem disabled>
+                        <Typography variant="body2" color="text.secondary">
+                            {isLoadingNotifications ? '알림을 불러오는 중...' : '새로운 알림이 없습니다'}
+                        </Typography>
+                    </MenuItem>
+                )}
 
-        <MenuItem onClick={handleProfileMenuOpen}>
-          <ListItemIcon>
-            <AccountCircleIcon />
-          </ListItemIcon>
-          <ListItemText>프로필</ListItemText>
-        </MenuItem>
-      </Menu>
+                <Divider/>
+                <MenuItem onClick={() => {
+                    handleMenuClose();
+                    navigate('/notifications');
+                }}>
+                    <Typography
+                        variant="body2"
+                        color="primary"
+                        sx={{width: '100%', textAlign: 'center'}}
+                    >
+                        모든 알림 보기
+                    </Typography>
+                </MenuItem>
+            </Menu>
 
-      {/* 알림 상세보기 다이얼로그 */}
-      <NotificationDetailDialog
-        open={detailDialogOpen}
-        onClose={() => setDetailDialogOpen(false)}
-        notification={selectedNotification}
-        onMarkAsRead={handleNotificationRead}
-        onDelete={handleNotificationDelete}
-      />
-    </AppBar>
-  );
+            {/* 메시지 메뉴 */}
+            <Menu
+                anchorEl={messageAnchor}
+                open={Boolean(messageAnchor)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                    elevation: 3,
+                    sx: {
+                        mt: 1.5,
+                        minWidth: 320,
+                        maxHeight: 400,
+                    },
+                }}
+                transformOrigin={{horizontal: 'right', vertical: 'top'}}
+                anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+            >
+                <Box sx={{px: 2, py: 1.5}}>
+                    <Typography variant="subtitle1" sx={{fontWeight: 600}}>
+                        메시지
+                    </Typography>
+                </Box>
+                <Divider/>
+
+                {/* 메시지 리스트 */}
+                {recentMessages.length > 0 ? (
+                    recentMessages.map((conversation) => (
+                        <MenuItem
+                            key={conversation.conversationId}
+                            onClick={() => {
+                                handleMenuClose();
+                                navigate(`/messages?id=${conversation.conversationId}`);
+                            }}
+                            sx={{
+                                backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                            }}
+                        >
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5, width: '100%'}}>
+                                <Avatar
+                                    src={conversation.otherUserThumbnailUrl || undefined}
+                                    sx={{width: 40, height: 40}}
+                                >
+                                    {conversation.otherUserName?.charAt(0) || 'U'}
+                                </Avatar>
+                                <Box sx={{flex: 1, minWidth: 0}}>
+                                    <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                        <Typography variant="body2" sx={{fontWeight: 600}}>
+                                            {conversation.otherUserId ? `${conversation.otherUserId} / ${conversation.otherUserName}` : conversation.otherUserName}
+                                        </Typography>
+                                        <Badge badgeContent={conversation.unreadCount} color="error" sx={{ml: 1}}/>
+                                    </Box>
+                                    <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                        sx={{
+                                            display: 'block',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        <Box
+                                            component="span"
+                                            sx={{
+                                                color: conversation.isLastMessageMine ? 'primary.main' : 'text.secondary',
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            {conversation.isLastMessageMine ? '나: ' : `${conversation.otherUserName}: `}
+                                        </Box>
+                                        {messageService.truncateContent(conversation.lastMessageContent, 20)}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {messageService.formatMessageTime(conversation.lastMessageAt)}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </MenuItem>
+                    ))
+                ) : (
+                    <MenuItem disabled>
+                        <Typography variant="body2" color="text.secondary">
+                            {isLoadingMessages ? '메시지를 불러오는 중...' : '새로운 메시지가 없습니다'}
+                        </Typography>
+                    </MenuItem>
+                )}
+
+                <Divider/>
+                <MenuItem onClick={() => {
+                    handleMenuClose();
+                    navigate('/messages');
+                }}>
+                    <Typography
+                        variant="body2"
+                        color="primary"
+                        sx={{width: '100%', textAlign: 'center'}}
+                    >
+                        전체 메시지 보기
+                    </Typography>
+                </MenuItem>
+            </Menu>
+
+            {/* 모바일 메뉴 */}
+            <Menu
+                anchorEl={mobileMenuAnchor}
+                open={Boolean(mobileMenuAnchor)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                    elevation: 3,
+                    sx: {mt: 1.5},
+                }}
+            >
+                <MenuItem onClick={toggleTheme}>
+                    <ListItemIcon>
+                        {isDarkMode ? <Brightness7Icon/> : <Brightness4Icon/>}
+                    </ListItemIcon>
+                    <ListItemText>테마 변경</ListItemText>
+                </MenuItem>
+
+                <MenuItem onClick={handleMessageMenuOpen}>
+                    <ListItemIcon>
+                        <Badge badgeContent={messageUnreadCount} color="error">
+                            <MailIcon/>
+                        </Badge>
+                    </ListItemIcon>
+                    <ListItemText>메시지</ListItemText>
+                </MenuItem>
+
+                <MenuItem onClick={handleNotificationMenuOpen}>
+                    <ListItemIcon>
+                        <Badge badgeContent={unreadCount} color="error">
+                            <NotificationsIcon/>
+                        </Badge>
+                    </ListItemIcon>
+                    <ListItemText>알림</ListItemText>
+                </MenuItem>
+
+                <MenuItem onClick={handleMenuClose}>
+                    <ListItemIcon>
+                        <HelpIcon/>
+                    </ListItemIcon>
+                    <ListItemText>도움말</ListItemText>
+                </MenuItem>
+
+                <Divider/>
+
+                <MenuItem onClick={handleProfileMenuOpen}>
+                    <ListItemIcon>
+                        <AccountCircleIcon/>
+                    </ListItemIcon>
+                    <ListItemText>프로필</ListItemText>
+                </MenuItem>
+            </Menu>
+
+            {/* 알림 상세보기 다이얼로그 */}
+            <NotificationDetailDialog
+                open={detailDialogOpen}
+                onClose={() => setDetailDialogOpen(false)}
+                notification={selectedNotification}
+                onMarkAsRead={handleNotificationRead}
+                onDelete={handleNotificationDelete}
+            />
+        </AppBar>
+    );
 };
 
 export default Header;
