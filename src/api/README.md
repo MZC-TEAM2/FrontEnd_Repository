@@ -3,6 +3,7 @@
 Axios를 사용한 백엔드 API 통신 설정
 
 ## 파일 구조
+
 ```
 api/
 ├── axiosInstance.js    # Axios 인스턴스 설정
@@ -12,6 +13,7 @@ api/
 ## 사용법
 
 ### 기본 사용
+
 ```javascript
 import axiosInstance from './api/axiosInstance';
 
@@ -23,6 +25,7 @@ const result = await axiosInstance.post('/login', { email, password });
 ```
 
 ### 도메인 API에서 사용
+
 ```javascript
 // domains/user/userApi.js
 import axiosInstance from '../../api/axiosInstance';
