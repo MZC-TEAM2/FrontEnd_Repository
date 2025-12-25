@@ -12,11 +12,11 @@ import axiosInstance from './axiosInstance';
  * @param {number} params.size - 페이지 크기
  * @param {string} params.sort - 정렬 (예: 'createdAt,desc')
  */
-export const getNotices = async (courseId, { page = 0, size = 10, sort = 'createdAt,desc' } = {}) => {
-  const response = await axiosInstance.get(`/api/v1/courses/${courseId}/notices`, {
-    params: { page, size, sort },
-  });
-  return response.data;
+export const getNotices = async (courseId, {page = 0, size = 10, sort = 'createdAt,desc'} = {}) => {
+    const response = await axiosInstance.get(`/api/v1/courses/${courseId}/notices`, {
+        params: {page, size, sort},
+    });
+    return response.data;
 };
 
 /**
@@ -25,8 +25,8 @@ export const getNotices = async (courseId, { page = 0, size = 10, sort = 'create
  * @param {number} noticeId - 공지사항 ID
  */
 export const getNoticeDetail = async (courseId, noticeId) => {
-  const response = await axiosInstance.get(`/api/v1/courses/${courseId}/notices/${noticeId}`);
-  return response.data;
+    const response = await axiosInstance.get(`/api/v1/courses/${courseId}/notices/${noticeId}`);
+    return response.data;
 };
 
 /**
@@ -38,8 +38,8 @@ export const getNoticeDetail = async (courseId, noticeId) => {
  * @param {boolean} data.allowComments - 댓글 허용 여부 (필수)
  */
 export const createNotice = async (courseId, data) => {
-  const response = await axiosInstance.post(`/api/v1/courses/${courseId}/notices`, data);
-  return response.data;
+    const response = await axiosInstance.post(`/api/v1/courses/${courseId}/notices`, data);
+    return response.data;
 };
 
 /**
@@ -49,8 +49,8 @@ export const createNotice = async (courseId, data) => {
  * @param {object} data - 수정할 데이터
  */
 export const updateNotice = async (courseId, noticeId, data) => {
-  const response = await axiosInstance.put(`/api/v1/courses/${courseId}/notices/${noticeId}`, data);
-  return response.data;
+    const response = await axiosInstance.put(`/api/v1/courses/${courseId}/notices/${noticeId}`, data);
+    return response.data;
 };
 
 /**
@@ -59,8 +59,8 @@ export const updateNotice = async (courseId, noticeId, data) => {
  * @param {number} noticeId - 공지사항 ID
  */
 export const deleteNotice = async (courseId, noticeId) => {
-  const response = await axiosInstance.delete(`/api/v1/courses/${courseId}/notices/${noticeId}`);
-  return response.data;
+    const response = await axiosInstance.delete(`/api/v1/courses/${courseId}/notices/${noticeId}`);
+    return response.data;
 };
 
 // ============================================
@@ -75,11 +75,11 @@ export const deleteNotice = async (courseId, noticeId) => {
  * @param {string} data.content - 댓글 내용 (필수)
  */
 export const createComment = async (courseId, noticeId, data) => {
-  const response = await axiosInstance.post(
-    `/api/v1/courses/${courseId}/notices/${noticeId}/comments`,
-    data
-  );
-  return response.data;
+    const response = await axiosInstance.post(
+        `/api/v1/courses/${courseId}/notices/${noticeId}/comments`,
+        data
+    );
+    return response.data;
 };
 
 /**
@@ -91,11 +91,11 @@ export const createComment = async (courseId, noticeId, data) => {
  * @param {string} data.content - 대댓글 내용 (필수)
  */
 export const createReply = async (courseId, noticeId, parentId, data) => {
-  const response = await axiosInstance.post(
-    `/api/v1/courses/${courseId}/notices/${noticeId}/comments/${parentId}/replies`,
-    data
-  );
-  return response.data;
+    const response = await axiosInstance.post(
+        `/api/v1/courses/${courseId}/notices/${noticeId}/comments/${parentId}/replies`,
+        data
+    );
+    return response.data;
 };
 
 /**
@@ -107,11 +107,11 @@ export const createReply = async (courseId, noticeId, parentId, data) => {
  * @param {string} data.content - 수정할 내용
  */
 export const updateComment = async (courseId, noticeId, commentId, data) => {
-  const response = await axiosInstance.put(
-    `/api/v1/courses/${courseId}/notices/${noticeId}/comments/${commentId}`,
-    data
-  );
-  return response.data;
+    const response = await axiosInstance.put(
+        `/api/v1/courses/${courseId}/notices/${noticeId}/comments/${commentId}`,
+        data
+    );
+    return response.data;
 };
 
 /**
@@ -121,8 +121,8 @@ export const updateComment = async (courseId, noticeId, commentId, data) => {
  * @param {number} commentId - 댓글 ID
  */
 export const deleteComment = async (courseId, noticeId, commentId) => {
-  const response = await axiosInstance.delete(
-    `/api/v1/courses/${courseId}/notices/${noticeId}/comments/${commentId}`
-  );
-  return response.data;
+    const response = await axiosInstance.delete(
+        `/api/v1/courses/${courseId}/notices/${noticeId}/comments/${commentId}`
+    );
+    return response.data;
 };
