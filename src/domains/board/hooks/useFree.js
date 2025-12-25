@@ -1,10 +1,10 @@
-import { getPost, createPost } from '../../../api/postApi';
-import { usePostDetail } from './usePostDetail';
+import {createPost, getPost} from '../../../api/postApi';
+import {usePostDetail} from './usePostDetail';
 
 /**
  * 자유 게시판 상세/폼 전용 훅
  * 목록 조회는 useBoard('FREE')를 사용
- * 
+ *
  * 제공 기능:
  * - fetchFreeDetail: 상세 조회
  * - handleBackToList: 목록으로 돌아가기
@@ -13,33 +13,33 @@ import { usePostDetail } from './usePostDetail';
  * - loadFreeForEdit: 수정용 데이터 로드
  */
 export const useFree = () => {
-  const {
-    loading,
-    error,
-    setError,
-    setLoading,
-    fetchDetail,
-    handleBackToList,
-    createPost: createPostFn,
-    updatePostData,
-    loadForEdit,
-  } = usePostDetail({
-    categoryId: 2,
-    listPath: '/free',
-    detailApi: (id) => getPost('FREE', id),
-    createApi: (data) => createPost('FREE', data),
-    boardName: '자유 게시판',
-  });
+    const {
+        loading,
+        error,
+        setError,
+        setLoading,
+        fetchDetail,
+        handleBackToList,
+        createPost: createPostFn,
+        updatePostData,
+        loadForEdit,
+    } = usePostDetail({
+        categoryId: 2,
+        listPath: '/free',
+        detailApi: (id) => getPost('FREE', id),
+        createApi: (data) => createPost('FREE', data),
+        boardName: '자유 게시판',
+    });
 
-  return {
-    loading,
-    error,
-    setError,
-    setLoading,
-    fetchFreeDetail: fetchDetail,
-    handleBackToList,
-    createFreePost: createPostFn,
-    updateFreePost: updatePostData,
-    loadFreeForEdit: loadForEdit,
-  };
+    return {
+        loading,
+        error,
+        setError,
+        setLoading,
+        fetchFreeDetail: fetchDetail,
+        handleBackToList,
+        createFreePost: createPostFn,
+        updateFreePost: updatePostData,
+        loadFreeForEdit: loadForEdit,
+    };
 };
