@@ -3,6 +3,7 @@
 백엔드와 동일한 구조로 도메인별 기능 관리
 
 ## 도메인 구조
+
 ```
 domains/
 ├── user/      # 사용자: 로그인, 프로필, 알림
@@ -11,6 +12,7 @@ domains/
 ```
 
 ## 각 도메인 구성
+
 ```
 user/
 ├── LoginPage.jsx      # 페이지
@@ -20,6 +22,7 @@ user/
 ```
 
 ## 사용법
+
 ```javascript
 // 페이지 import
 import LoginPage from './domains/user/LoginPage';
