@@ -9,17 +9,17 @@
  * @returns {string} 포맷팅된 날짜 문자열
  */
 export const formatDate = (dateString, options = {}) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  
-  const defaultOptions = {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    ...options,
-  };
-  
-  return date.toLocaleDateString('ko-KR', defaultOptions);
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+
+    const defaultOptions = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        ...options,
+    };
+
+    return date.toLocaleDateString('ko-KR', defaultOptions);
 };
 
 /**
@@ -28,15 +28,15 @@ export const formatDate = (dateString, options = {}) => {
  * @returns {string} 포맷팅된 날짜 문자열 (년월일 시:분)
  */
 export const formatDateTime = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 };
 
 /**
@@ -45,14 +45,14 @@ export const formatDateTime = (dateString) => {
  * @returns {object} { label: string, color: string }
  */
 export const getPostTypeLabel = (postType) => {
-  const types = {
-    NOTICE: { label: '공지', color: 'error' },
-    URGENT: { label: '긴급', color: 'error' },
-    IMPORTANT: { label: '중요', color: 'warning' },
-    GENERAL: { label: '일반', color: 'default' },
-    NORMAL: { label: '일반', color: 'default' },
-  };
-  return types[postType] || types.GENERAL;
+    const types = {
+        NOTICE: {label: '공지', color: 'error'},
+        URGENT: {label: '긴급', color: 'error'},
+        IMPORTANT: {label: '중요', color: 'warning'},
+        GENERAL: {label: '일반', color: 'default'},
+        NORMAL: {label: '일반', color: 'default'},
+    };
+    return types[postType] || types.GENERAL;
 };
 
 /**
@@ -61,12 +61,12 @@ export const getPostTypeLabel = (postType) => {
  * @returns {string} 한글 이름
  */
 export const getBoardTypeName = (boardType) => {
-  const types = {
-    NOTICE: '공지사항',
-    QNA: 'Q&A',
-    FREE: '자유게시판',
-  };
-  return types[boardType] || '게시판';
+    const types = {
+        NOTICE: '공지사항',
+        QNA: 'Q&A',
+        FREE: '자유게시판',
+    };
+    return types[boardType] || '게시판';
 };
 
 /**
@@ -75,11 +75,11 @@ export const getBoardTypeName = (boardType) => {
  * @returns {string} 포맷팅된 파일 크기 (예: "1.5 MB")
  */
 export const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 };
 
 /**
@@ -88,17 +88,17 @@ export const formatFileSize = (bytes) => {
  * @returns {object} { label: string, color: string } - Chip에 사용할 라벨과 색상
  */
 export const getDueDateStatus = (dueDate) => {
-  const now = new Date();
-  const due = new Date(dueDate);
-  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0) {
-    return { label: '마감', color: 'error' };
-  } else if (diffDays === 0) {
-    return { label: '오늘 마감', color: 'warning' };
-  } else if (diffDays <= 3) {
-    return { label: `D-${diffDays}`, color: 'warning' };
-  } else {
-    return { label: `D-${diffDays}`, color: 'success' };
-  }
+    if (diffDays < 0) {
+        return {label: '마감', color: 'error'};
+    } else if (diffDays === 0) {
+        return {label: '오늘 마감', color: 'warning'};
+    } else if (diffDays <= 3) {
+        return {label: `D-${diffDays}`, color: 'warning'};
+    } else {
+        return {label: `D-${diffDays}`, color: 'success'};
+    }
 };
