@@ -3,17 +3,20 @@
 ## 개발 환경 설정
 
 ### 필수 도구
+
 ```bash
 node --version  # v14 이상
 npm --version
 ```
 
 ### 라이브러리 설치
+
 ```bash
 npm install @reduxjs/toolkit react-redux react-router-dom axios
 ```
 
 ### 환경 변수 (.env)
+
 ```
 REACT_APP_API_BASE_URL=http://localhost:8080/api
 ```
@@ -35,6 +38,7 @@ export default HomePage;
 ## API 연동
 
 ### Axios 설정
+
 ```javascript
 // src/api/axiosInstance.js
 import axios from 'axios';
@@ -54,6 +58,7 @@ export default axiosInstance;
 ```
 
 ### API 함수
+
 ```javascript
 // src/domains/user/userApi.js
 import axiosInstance from '../../api/axiosInstance';
@@ -65,6 +70,7 @@ export const login = async (email, password) => {
 ```
 
 ### 사용
+
 ```javascript
 import { login } from './userApi';
 
@@ -79,6 +85,7 @@ const handleLogin = async () => {
 ## Redux
 
 ### Store 설정
+
 ```javascript
 // src/store/store.js
 import { configureStore } from '@reduxjs/toolkit';
@@ -90,6 +97,7 @@ export const store = configureStore({
 ```
 
 ### Slice
+
 ```javascript
 // src/store/slices/authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
@@ -114,6 +122,7 @@ export default authSlice.reducer;
 ```
 
 ### Provider
+
 ```javascript
 // src/main.jsx
 import { Provider } from 'react-redux';
@@ -127,6 +136,7 @@ root.render(
 ```
 
 ### 사용
+
 ```javascript
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from './store/slices/authSlice';
@@ -148,6 +158,7 @@ function Header() {
 ## 라우팅
 
 ### 기본
+
 ```javascript
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -165,6 +176,7 @@ function App() {
 ```
 
 ### 보호된 라우트
+
 ```javascript
 // src/components/ProtectedRoute.jsx
 import { Navigate } from 'react-router-dom';
@@ -208,6 +220,7 @@ npm run build
 ```
 
 **.env.production**
+
 ```
 REACT_APP_API_BASE_URL=https://api.example.com
 ```
