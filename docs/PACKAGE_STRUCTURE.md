@@ -28,6 +28,7 @@ frontend/
 ## 주요 폴더
 
 ### domains/ - 도메인별 기능
+
 각 도메인의 페이지, 컴포넌트, API를 **평면적**으로 관리
 
 ```
@@ -39,12 +40,15 @@ user/
 ```
 
 ### components/ - 공통 컴포넌트
+
 재사용 가능한 UI: Button, Input, Card, Modal, Layout
 
 ### pages/ - 공통 페이지
+
 도메인 외 페이지: HomePage, DashboardPage, NotFoundPage
 
 ### store/ - Redux
+
 ```
 store/
 ├── store.js
@@ -58,6 +62,7 @@ store/
 ## 코드 예시
 
 ### API (domains/user/userApi.js)
+
 ```javascript
 import axiosInstance from '../../api/axiosInstance';
 
@@ -68,6 +73,7 @@ export const login = async (credentials) => {
 ```
 
 ### 페이지 (domains/user/LoginPage.jsx)
+
 ```javascript
 import Layout from '../../components/Layout';
 import LoginForm from './LoginForm';
@@ -84,6 +90,7 @@ export default LoginPage;
 ```
 
 ### Redux (store/slices/authSlice.js)
+
 ```javascript
 import { createSlice } from '@reduxjs/toolkit';
 
@@ -107,6 +114,7 @@ export default authSlice.reducer;
 ```
 
 ### 라우팅 (App.jsx)
+
 ```javascript
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -138,14 +146,14 @@ function App() {
 
 ## 파일 위치
 
-| 기능 | 위치 |
-|------|------|
-| 사용자 | `src/domains/user/` |
-| 강좌 | `src/domains/course/` |
-| 게시판 | `src/domains/board/` |
-| 공통 컴포넌트 | `src/components/` |
-| 공통 페이지 | `src/pages/` |
-| Redux | `src/store/slices/` |
+| 기능      | 위치                    |
+|---------|-----------------------|
+| 사용자     | `src/domains/user/`   |
+| 강좌      | `src/domains/course/` |
+| 게시판     | `src/domains/board/`  |
+| 공통 컴포넌트 | `src/components/`     |
+| 공통 페이지  | `src/pages/`          |
+| Redux   | `src/store/slices/`   |
 
 ---
 
