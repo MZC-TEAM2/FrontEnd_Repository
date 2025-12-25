@@ -15,10 +15,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
  * GET /api/v1/enrollments/periods/current?type=GRADE_CALCULATION
  */
 export const getCurrentGradeCalculationPeriod = async () => {
-  const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/enrollments/periods/current?type=GRADE_CALCULATION`
-  );
-  return response.data;
+    const response = await axiosInstance.get(
+        `${BASE_URL}/api/v1/enrollments/periods/current?type=GRADE_CALCULATION`
+    );
+    return response.data;
 };
 
 /**
@@ -26,10 +26,10 @@ export const getCurrentGradeCalculationPeriod = async () => {
  * GET /api/v1/enrollments/periods/current?type=GRADE_PUBLISH
  */
 export const getCurrentGradePublishPeriod = async () => {
-  const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/enrollments/periods/current?type=GRADE_PUBLISH`
-  );
-  return response.data;
+    const response = await axiosInstance.get(
+        `${BASE_URL}/api/v1/enrollments/periods/current?type=GRADE_PUBLISH`
+    );
+    return response.data;
 };
 
 /**
@@ -37,8 +37,8 @@ export const getCurrentGradePublishPeriod = async () => {
  * GET /api/v1/student/academic-terms
  */
 export const getStudentAcademicTerms = async () => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/student/academic-terms`);
-  return response.data;
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/student/academic-terms`);
+    return response.data;
 };
 
 /**
@@ -46,8 +46,8 @@ export const getStudentAcademicTerms = async () => {
  * GET /api/v1/professor/academic-terms
  */
 export const getProfessorAcademicTerms = async () => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/professor/academic-terms`);
-  return response.data;
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/professor/academic-terms`);
+    return response.data;
 };
 
 /**
@@ -55,10 +55,10 @@ export const getProfessorAcademicTerms = async () => {
  * GET /api/v1/student/grades?academicTermId={academicTermId}
  */
 export const getStudentGrades = async (academicTermId = null) => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/student/grades`, {
-    params: academicTermId ? { academicTermId } : {},
-  });
-  return response.data;
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/student/grades`, {
+        params: academicTermId ? {academicTermId} : {},
+    });
+    return response.data;
 };
 
 /**
@@ -66,10 +66,10 @@ export const getStudentGrades = async (academicTermId = null) => {
  * POST /api/v1/professor/grades/publish-ended-terms
  */
 export const publishEndedTermsGrades = async () => {
-  const response = await axiosInstance.post(
-    `${BASE_URL}/api/v1/professor/grades/publish-ended-terms`
-  );
-  return response.data;
+    const response = await axiosInstance.post(
+        `${BASE_URL}/api/v1/professor/grades/publish-ended-terms`
+    );
+    return response.data;
 };
 
 /**
@@ -77,10 +77,10 @@ export const publishEndedTermsGrades = async () => {
  * POST /api/v1/professor/grades/publish/terms/{academicTermId}
  */
 export const publishGradesForTerm = async (academicTermId) => {
-  const response = await axiosInstance.post(
-    `${BASE_URL}/api/v1/professor/grades/publish/terms/${academicTermId}`
-  );
-  return response.data;
+    const response = await axiosInstance.post(
+        `${BASE_URL}/api/v1/professor/grades/publish/terms/${academicTermId}`
+    );
+    return response.data;
 };
 
 /**
@@ -88,10 +88,10 @@ export const publishGradesForTerm = async (academicTermId) => {
  * GET /api/v1/professor/courses/{courseId}/grades?status=ALL|PUBLISHED
  */
 export const getCourseGradesForProfessor = async (courseId, status = 'ALL') => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/professor/courses/${courseId}/grades`, {
-    params: { status },
-  });
-  return response.data;
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/professor/courses/${courseId}/grades`, {
+        params: {status},
+    });
+    return response.data;
 };
 
 /**
@@ -99,10 +99,10 @@ export const getCourseGradesForProfessor = async (courseId, status = 'ALL') => {
  * POST /api/v1/professor/courses/{courseId}/grades/calculate
  */
 export const calculateGradesForCourse = async (courseId) => {
-  const response = await axiosInstance.post(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/grades/calculate`
-  );
-  return response.data;
+    const response = await axiosInstance.post(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}/grades/calculate`
+    );
+    return response.data;
 };
 
 /**
@@ -110,10 +110,10 @@ export const calculateGradesForCourse = async (courseId) => {
  * POST /api/v1/professor/courses/{courseId}/grades/publish
  */
 export const publishGradesForCourse = async (courseId) => {
-  const response = await axiosInstance.post(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/grades/publish`
-  );
-  return response.data;
+    const response = await axiosInstance.post(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}/grades/publish`
+    );
+    return response.data;
 };
 
 
