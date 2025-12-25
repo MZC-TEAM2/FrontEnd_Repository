@@ -1,6 +1,6 @@
 /**
  * 교수용 강의 관리 API 함수
- * 
+ *
  * 주요 기능:
  * - 내가 담당하는 강의 목록 조회
  * - 강의 등록
@@ -18,28 +18,28 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
  * @returns {Promise} 강의 등록 기간 정보 (periodType: COURSE_REGISTRATION)
  */
 export const getCurrentCourseRegistrationPeriod = async () => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current?type=COURSE_REGISTRATION`);
-  
-  // periodType이 COURSE_REGISTRATION인 기간만 필터링
-  if (response.data?.success && response.data.data?.currentPeriod) {
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/enrollments/periods/current?type=COURSE_REGISTRATION`);
 
-    const period = response.data.data.currentPeriod;
-    if (period.periodType?.typeCode === 'COURSE_REGISTRATION') {
-      return response.data;
-    } else {
-      // 강의 등록 기간이 아닌 경우
-      return {
-        success: false,
-        error: {
-          code: 'COURSE_REGISTRATION_PERIOD_NOT_ACTIVE',
-          message: '현재 강의 등록 기간이 아닙니다.',
-        },
-        data: null,
-      };
+    // periodType이 COURSE_REGISTRATION인 기간만 필터링
+    if (response.data?.success && response.data.data?.currentPeriod) {
+
+        const period = response.data.data.currentPeriod;
+        if (period.periodType?.typeCode === 'COURSE_REGISTRATION') {
+            return response.data;
+        } else {
+            // 강의 등록 기간이 아닌 경우
+            return {
+                success: false,
+                error: {
+                    code: 'COURSE_REGISTRATION_PERIOD_NOT_ACTIVE',
+                    message: '현재 강의 등록 기간이 아닙니다.',
+                },
+                data: null,
+            };
+        }
     }
-  }
-  
-  return response.data;
+
+    return response.data;
 };
 
 /**
@@ -50,37 +50,37 @@ export const getCurrentCourseRegistrationPeriod = async () => {
  * @returns {Promise} 강의 목록
  */
 export const getMyCourses = async (params = {}) => {
-  const { academicTermId, status } = params;
-  
-  const queryParams = new URLSearchParams();
-  
-  // academicTermId는 0일 수도 있으므로(null/undefined만 제외)
-  if (academicTermId !== null && academicTermId !== undefined) {
-    queryParams.append('academicTermId', academicTermId);
-  }
-  
-  if (status) {
-    queryParams.append('status', status);
-  }
+    const {academicTermId, status} = params;
 
-  const url = queryParams.toString() 
-    ? `${BASE_URL}/api/v1/professor/courses?${queryParams.toString()}`
-    : `${BASE_URL}/api/v1/professor/courses`;
-    
-  try {
-    const response = await axiosInstance.get(url);
-    return response.data;
-  } catch (error) {
-    // 404 에러를 명확히 전달
-    if (error.response?.status === 404) {
-      throw {
-        status: 404,
-        message: 'API 엔드포인트를 찾을 수 없습니다. 백엔드 API가 구현되었는지 확인해주세요.',
-        response: error.response,
-      };
+    const queryParams = new URLSearchParams();
+
+    // academicTermId는 0일 수도 있으므로(null/undefined만 제외)
+    if (academicTermId !== null && academicTermId !== undefined) {
+        queryParams.append('academicTermId', academicTermId);
     }
-    throw error;
-  }
+
+    if (status) {
+        queryParams.append('status', status);
+    }
+
+    const url = queryParams.toString()
+        ? `${BASE_URL}/api/v1/professor/courses?${queryParams.toString()}`
+        : `${BASE_URL}/api/v1/professor/courses`;
+
+    try {
+        const response = await axiosInstance.get(url);
+        return response.data;
+    } catch (error) {
+        // 404 에러를 명확히 전달
+        if (error.response?.status === 404) {
+            throw {
+                status: 404,
+                message: 'API 엔드포인트를 찾을 수 없습니다. 백엔드 API가 구현되었는지 확인해주세요.',
+                response: error.response,
+            };
+        }
+        throw error;
+    }
 };
 
 /**
@@ -89,13 +89,13 @@ export const getMyCourses = async (params = {}) => {
  * @returns {Promise} 등록된 강의 정보
  */
 export const createCourse = async (courseData) => {
-  
-  const response = await axiosInstance.post(
-    `${BASE_URL}/api/v1/professor/courses`,
-    courseData
-  );
-  
-  return response.data;
+
+    const response = await axiosInstance.post(
+        `${BASE_URL}/api/v1/professor/courses`,
+        courseData
+    );
+
+    return response.data;
 };
 
 /**
@@ -105,11 +105,11 @@ export const createCourse = async (courseData) => {
  * @returns {Promise} 수정된 강의 정보
  */
 export const updateCourse = async (courseId, courseData) => {
-  const response = await axiosInstance.put(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}`,
-    courseData
-  );
-  return response.data;
+    const response = await axiosInstance.put(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}`,
+        courseData
+    );
+    return response.data;
 };
 
 /**
@@ -118,10 +118,10 @@ export const updateCourse = async (courseId, courseData) => {
  * @returns {Promise} 삭제 결과
  */
 export const deleteCourse = async (courseId) => {
-  const response = await axiosInstance.delete(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}`
-  );
-  return response.data;
+    const response = await axiosInstance.delete(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}`
+    );
+    return response.data;
 };
 
 /**
@@ -130,10 +130,10 @@ export const deleteCourse = async (courseId) => {
  * @returns {Promise} 강의 상세 정보
  */
 export const getCourseDetailForProfessor = async (courseId) => {
-  const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}`
-  );
-  return response.data;
+    const response = await axiosInstance.get(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}`
+    );
+    return response.data;
 };
 
 /**
@@ -152,12 +152,12 @@ export const getCourseDetailForProfessor = async (courseId) => {
  */
 export const createWeek = async (courseId, weekData) => {
 
-  const response = await axiosInstance.post(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`,
-    weekData
-  );
-  
-  return response.data;
+    const response = await axiosInstance.post(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`,
+        weekData
+    );
+
+    return response.data;
 };
 
 /**
@@ -168,11 +168,11 @@ export const createWeek = async (courseId, weekData) => {
  * @returns {Promise} 수정된 주차 정보
  */
 export const updateWeek = async (courseId, weekId, weekData) => {
-  const response = await axiosInstance.put(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}`,
-    weekData
-  );
-  return response.data;
+    const response = await axiosInstance.put(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}`,
+        weekData
+    );
+    return response.data;
 };
 
 /**
@@ -182,10 +182,10 @@ export const updateWeek = async (courseId, weekId, weekData) => {
  * @returns {Promise} 삭제 결과
  */
 export const deleteWeek = async (courseId, weekId) => {
-  const response = await axiosInstance.delete(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}`
-  );
-  return response.data;
+    const response = await axiosInstance.delete(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}`
+    );
+    return response.data;
 };
 
 /**
@@ -200,11 +200,11 @@ export const deleteWeek = async (courseId, weekId) => {
  * @returns {Promise} 생성된 콘텐츠 정보
  */
 export const createContent = async (courseId, weekId, contentData) => {
-  const response = await axiosInstance.post(
-    `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}/contents`,
-    contentData
-  );
-  return response.data;
+    const response = await axiosInstance.post(
+        `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks/${weekId}/contents`,
+        contentData
+    );
+    return response.data;
 };
 
 /**
@@ -214,11 +214,11 @@ export const createContent = async (courseId, weekId, contentData) => {
  * @returns {Promise} 수정된 콘텐츠 정보
  */
 export const updateContent = async (contentId, contentData) => {
-  const response = await axiosInstance.put(
-    `${BASE_URL}/api/v1/professor/contents/${contentId}`,
-    contentData
-  );
-  return response.data;
+    const response = await axiosInstance.put(
+        `${BASE_URL}/api/v1/professor/contents/${contentId}`,
+        contentData
+    );
+    return response.data;
 };
 
 /**
@@ -227,10 +227,10 @@ export const updateContent = async (contentId, contentData) => {
  * @returns {Promise} 삭제 결과
  */
 export const deleteContent = async (contentId) => {
-  const response = await axiosInstance.delete(
-    `${BASE_URL}/api/v1/professor/contents/${contentId}`
-  );
-  return response.data;
+    const response = await axiosInstance.delete(
+        `${BASE_URL}/api/v1/professor/contents/${contentId}`
+    );
+    return response.data;
 };
 
 /**
@@ -239,24 +239,24 @@ export const deleteContent = async (contentId) => {
  * @returns {Promise} 주차 목록
  */
 export const getWeeksForProfessor = async (courseId) => {
-  // 최신 스펙(12.1): 교수/수강중 학생 공용
-  // GET /api/v1/courses/{courseId}/weeks
-  // 교수 페이지에서도 "목록 조회"는 공용 경로를 사용.
-  const commonUrl = `${BASE_URL}/api/v1/courses/${courseId}/weeks`;
+    // 최신 스펙(12.1): 교수/수강중 학생 공용
+    // GET /api/v1/courses/{courseId}/weeks
+    // 교수 페이지에서도 "목록 조회"는 공용 경로를 사용.
+    const commonUrl = `${BASE_URL}/api/v1/courses/${courseId}/weeks`;
 
 
-  try {
-    const response = await axiosInstance.get(commonUrl);
-    return response.data;
-  } catch (eCommon) {
-    // 구버전 백엔드 fallback (기존 professor 경로가 살아있는 환경)
-    if (eCommon?.status === 404 || eCommon?.status === 405) {
-      const legacyUrl = `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`;
-      const response = await axiosInstance.get(legacyUrl);
-      return response.data;
+    try {
+        const response = await axiosInstance.get(commonUrl);
+        return response.data;
+    } catch (eCommon) {
+        // 구버전 백엔드 fallback (기존 professor 경로가 살아있는 환경)
+        if (eCommon?.status === 404 || eCommon?.status === 405) {
+            const legacyUrl = `${BASE_URL}/api/v1/professor/courses/${courseId}/weeks`;
+            const response = await axiosInstance.get(legacyUrl);
+            return response.data;
+        }
+        throw eCommon;
     }
-    throw eCommon;
-  }
 };
 
 /**
@@ -267,14 +267,14 @@ export const getWeeksForProfessor = async (courseId) => {
  * @returns {Promise} 과목 목록 (페이징)
  */
 export const searchSubjects = async (query, page = 0, size = 20) => {
-  const queryParams = new URLSearchParams();
-  queryParams.append('q', query);
-  queryParams.append('page', page);
-  queryParams.append('size', size);
-  
-  const url = `${BASE_URL}/api/v1/subjects/search?${queryParams.toString()}`;
-  const response = await axiosInstance.get(url);
-  return response.data;
+    const queryParams = new URLSearchParams();
+    queryParams.append('q', query);
+    queryParams.append('page', page);
+    queryParams.append('size', size);
+
+    const url = `${BASE_URL}/api/v1/subjects/search?${queryParams.toString()}`;
+    const response = await axiosInstance.get(url);
+    return response.data;
 };
 
 /**
@@ -290,23 +290,23 @@ export const searchSubjects = async (query, page = 0, size = 20) => {
  * @returns {Promise} 과목 목록 (페이징)
  */
 export const getSubjects = async (params = {}) => {
-  const queryParams = new URLSearchParams();
-  
-  if (params.page !== undefined) queryParams.append('page', params.page);
-  if (params.size !== undefined) queryParams.append('size', params.size);
-  if (params.keyword) queryParams.append('keyword', params.keyword);
-  if (params.departmentId) queryParams.append('departmentId', params.departmentId);
-  if (params.courseType) queryParams.append('courseType', params.courseType);
-  if (params.credits) queryParams.append('credits', params.credits);
-  if (params.isActive !== undefined) queryParams.append('isActive', params.isActive);
-  
-  const url = queryParams.toString()
-    ? `${BASE_URL}/api/v1/subjects?${queryParams.toString()}`
-    : `${BASE_URL}/api/v1/subjects`;
-  
-  
-  const response = await axiosInstance.get(url);
-  return response.data;
+    const queryParams = new URLSearchParams();
+
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.size !== undefined) queryParams.append('size', params.size);
+    if (params.keyword) queryParams.append('keyword', params.keyword);
+    if (params.departmentId) queryParams.append('departmentId', params.departmentId);
+    if (params.courseType) queryParams.append('courseType', params.courseType);
+    if (params.credits) queryParams.append('credits', params.credits);
+    if (params.isActive !== undefined) queryParams.append('isActive', params.isActive);
+
+    const url = queryParams.toString()
+        ? `${BASE_URL}/api/v1/subjects?${queryParams.toString()}`
+        : `${BASE_URL}/api/v1/subjects`;
+
+
+    const response = await axiosInstance.get(url);
+    return response.data;
 };
 
 /**
@@ -315,9 +315,9 @@ export const getSubjects = async (params = {}) => {
  * @returns {Promise} 과목 상세 정보
  */
 export const getSubjectDetail = async (subjectId) => {
-  const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/subjects/${subjectId}`
-  );
-  return response.data;
+    const response = await axiosInstance.get(
+        `${BASE_URL}/api/v1/subjects/${subjectId}`
+    );
+    return response.data;
 };
 
