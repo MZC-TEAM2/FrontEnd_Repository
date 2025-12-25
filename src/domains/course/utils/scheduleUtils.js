@@ -8,10 +8,10 @@
  * @returns {number} 분 단위 시간
  */
 const timeToMinutes = (timeStr) => {
-  if (!timeStr) return 0;
-  // "HH:mm:ss" 형식에서 시간과 분만 추출 (초는 무시)
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + (minutes || 0);
+    if (!timeStr) return 0;
+    // "HH:mm:ss" 형식에서 시간과 분만 추출 (초는 무시)
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + (minutes || 0);
 };
 
 /**
@@ -20,12 +20,12 @@ const timeToMinutes = (timeStr) => {
  * @returns {string} "HH:mm" 형식의 시간 문자열
  */
 export const formatTime = (timeStr) => {
-  if (!timeStr) return '';
-  // "HH:mm:ss" 형식에서 시간과 분만 추출
-  const parts = timeStr.split(':');
-  const hours = parts[0] || '00';
-  const minutes = parts[1] || '00';
-  return `${hours}:${minutes}`;
+    if (!timeStr) return '';
+    // "HH:mm:ss" 형식에서 시간과 분만 추출
+    const parts = timeStr.split(':');
+    const hours = parts[0] || '00';
+    const minutes = parts[1] || '00';
+    return `${hours}:${minutes}`;
 };
 
 /**
@@ -34,14 +34,14 @@ export const formatTime = (timeStr) => {
  * @returns {string} "요일 HH:MM-HH:MM" 형식의 문자열
  */
 export const formatScheduleTime = (schedule) => {
-  if (!schedule) return '';
-  
-  const dayMap = { 1: '월', 2: '화', 3: '수', 4: '목', 5: '금' };
-  const dayName = dayMap[schedule.dayOfWeek] || schedule.dayName || '';
-  const startTime = formatTime(schedule.startTime);
-  const endTime = formatTime(schedule.endTime);
-  
-  return `${dayName} ${startTime}-${endTime}`;
+    if (!schedule) return '';
+
+    const dayMap = {1: '월', 2: '화', 3: '수', 4: '목', 5: '금'};
+    const dayName = dayMap[schedule.dayOfWeek] || schedule.dayName || '';
+    const startTime = formatTime(schedule.startTime);
+    const endTime = formatTime(schedule.endTime);
+
+    return `${dayName} ${startTime}-${endTime}`;
 };
 
 /**
@@ -51,19 +51,19 @@ export const formatScheduleTime = (schedule) => {
  * @returns {boolean} 충돌 여부
  */
 const isScheduleConflict = (schedule1, schedule2) => {
-  // 요일이 다르면 충돌 없음
-  if (schedule1.dayOfWeek !== schedule2.dayOfWeek) {
-    return false;
-  }
+    // 요일이 다르면 충돌 없음
+    if (schedule1.dayOfWeek !== schedule2.dayOfWeek) {
+        return false;
+    }
 
-  const start1 = timeToMinutes(schedule1.startTime);
-  const end1 = timeToMinutes(schedule1.endTime);
-  const start2 = timeToMinutes(schedule2.startTime);
-  const end2 = timeToMinutes(schedule2.endTime);
+    const start1 = timeToMinutes(schedule1.startTime);
+    const end1 = timeToMinutes(schedule1.endTime);
+    const start2 = timeToMinutes(schedule2.startTime);
+    const end2 = timeToMinutes(schedule2.endTime);
 
-  // 시간이 겹치는지 확인
-  // 겹치는 경우: start1 < end2 && start2 < end1
-  return start1 < end2 && start2 < end1;
+    // 시간이 겹치는지 확인
+    // 겹치는 경우: start1 < end2 && start2 < end1
+    return start1 < end2 && start2 < end1;
 };
 
 /**
@@ -73,31 +73,31 @@ const isScheduleConflict = (schedule1, schedule2) => {
  * @returns {Object} { hasConflict: boolean, conflictingCourse: Object|null }
  */
 export const checkScheduleConflict = (newCourse, existingCourses) => {
-  if (!newCourse.schedule || !Array.isArray(newCourse.schedule)) {
-    return { hasConflict: false, conflictingCourse: null };
-  }
-
-  for (const existingCourse of existingCourses) {
-    if (!existingCourse.schedule || !Array.isArray(existingCourse.schedule)) {
-      continue;
+    if (!newCourse.schedule || !Array.isArray(newCourse.schedule)) {
+        return {hasConflict: false, conflictingCourse: null};
     }
 
-    // 새 강의의 각 시간표와 기존 강의의 각 시간표를 비교
-    for (const newSchedule of newCourse.schedule) {
-      for (const existingSchedule of existingCourse.schedule) {
-        if (isScheduleConflict(newSchedule, existingSchedule)) {
-          return {
-            hasConflict: true,
-            conflictingCourse: existingCourse,
-            conflictingSchedule: newSchedule,
-            existingSchedule: existingSchedule,
-          };
+    for (const existingCourse of existingCourses) {
+        if (!existingCourse.schedule || !Array.isArray(existingCourse.schedule)) {
+            continue;
         }
-      }
-    }
-  }
 
-  return { hasConflict: false, conflictingCourse: null };
+        // 새 강의의 각 시간표와 기존 강의의 각 시간표를 비교
+        for (const newSchedule of newCourse.schedule) {
+            for (const existingSchedule of existingCourse.schedule) {
+                if (isScheduleConflict(newSchedule, existingSchedule)) {
+                    return {
+                        hasConflict: true,
+                        conflictingCourse: existingCourse,
+                        conflictingSchedule: newSchedule,
+                        existingSchedule: existingSchedule,
+                    };
+                }
+            }
+        }
+    }
+
+    return {hasConflict: false, conflictingCourse: null};
 };
 
 /**
@@ -107,25 +107,25 @@ export const checkScheduleConflict = (newCourse, existingCourses) => {
  * @returns {Object} { hasConflict: boolean, conflicts: Array }
  */
 export const checkMultipleScheduleConflicts = (newCourses, existingCourses) => {
-  const conflicts = [];
-  const allCourses = [...existingCourses];
+    const conflicts = [];
+    const allCourses = [...existingCourses];
 
-  for (const newCourse of newCourses) {
-    // 기존 강의들과 충돌 확인
-    const conflict = checkScheduleConflict(newCourse, allCourses);
-    if (conflict.hasConflict) {
-      conflicts.push({
-        course: newCourse,
-        conflictingCourse: conflict.conflictingCourse,
-      });
-    } else {
-      // 충돌이 없으면 임시로 추가하여 다음 강의와의 충돌도 확인
-      allCourses.push(newCourse);
+    for (const newCourse of newCourses) {
+        // 기존 강의들과 충돌 확인
+        const conflict = checkScheduleConflict(newCourse, allCourses);
+        if (conflict.hasConflict) {
+            conflicts.push({
+                course: newCourse,
+                conflictingCourse: conflict.conflictingCourse,
+            });
+        } else {
+            // 충돌이 없으면 임시로 추가하여 다음 강의와의 충돌도 확인
+            allCourses.push(newCourse);
+        }
     }
-  }
 
-  return {
-    hasConflict: conflicts.length > 0,
-    conflicts,
-  };
+    return {
+        hasConflict: conflicts.length > 0,
+        conflicts,
+    };
 };
