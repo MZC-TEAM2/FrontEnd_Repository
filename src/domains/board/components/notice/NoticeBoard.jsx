@@ -1,6 +1,6 @@
 import React from 'react';
 import BoardListPage from '../common/BoardListPage';
-import { Campaign as CampaignIcon } from '@mui/icons-material';
+import {Campaign as CampaignIcon} from '@mui/icons-material';
 
 /**
  * 공지사항 게시판 페이지
@@ -8,17 +8,17 @@ import { Campaign as CampaignIcon } from '@mui/icons-material';
  * - 모든 사용자 접근 가능
  */
 const NoticeBoard = () => {
-  return (
-    <BoardListPage
-      boardType="NOTICE"
-      title="공지사항"
-      icon={<CampaignIcon sx={{ fontSize: 32, color: 'primary.main' }} />}
-      basePath="/notices"
-      createPath="/notices/create"
-      createButtonText="공지 작성"
-      showLikeCount={false}
-    />
-  );
+    return (
+        <BoardListPage
+            boardType="NOTICE"
+            title="공지사항"
+            icon={<CampaignIcon sx={{fontSize: 32, color: 'primary.main'}}/>}
+            basePath="/notices"
+            createPath="/notices/create"
+            createButtonText="공지 작성"
+            showLikeCount={false}
+        />
+    );
 };
 
 export default NoticeBoard;
