@@ -1,6 +1,6 @@
 import React from 'react';
 import BoardListPage from '../common/BoardListPage';
-import { Description as DescriptionIcon } from '@mui/icons-material';
+import {Description as DescriptionIcon} from '@mui/icons-material';
 
 /**
  * 시험 게시판 페이지
@@ -8,18 +8,18 @@ import { Description as DescriptionIcon } from '@mui/icons-material';
  * - 시험 정보 공유
  */
 const ExamBoardPage = () => {
-  return (
-    <BoardListPage
-      boardType="EXAM"
-      title="시험"
-      icon={<DescriptionIcon sx={{ fontSize: 32, color: 'primary.main' }} />}
-      basePath="/boards/exam"
-      createPath="/boards/exam/create"
-      createButtonText="시험 정보 등록"
-      showViewCount={false}
-      showLikeCount={false}
-    />
-  );
+    return (
+        <BoardListPage
+            boardType="EXAM"
+            title="시험"
+            icon={<DescriptionIcon sx={{fontSize: 32, color: 'primary.main'}}/>}
+            basePath="/boards/exam"
+            createPath="/boards/exam/create"
+            createButtonText="시험 정보 등록"
+            showViewCount={false}
+            showLikeCount={false}
+        />
+    );
 };
 
 export default ExamBoardPage;
