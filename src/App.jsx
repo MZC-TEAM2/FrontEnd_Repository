@@ -16,10 +16,10 @@
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
 
 // 테마 Context 임포트
-import { ThemeContextProvider } from './contexts/ThemeContext';
+import {ThemeContextProvider} from './contexts/ThemeContext';
 
 // 레이아웃 컴포넌트
 import MainLayout from './layouts/MainLayout';
@@ -27,7 +27,6 @@ import MainLayout from './layouts/MainLayout';
 // 페이지 컴포넌트들
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
-import Community from './pages/Community';
 import CourseRegistration from './pages/CourseRegistration';
 import CourseDetail from './pages/CourseDetail';
 import CourseSchedule from './pages/CourseSchedule';
@@ -49,7 +48,7 @@ import Settings from './pages/Settings';
 import Messages from './pages/Messages';
 
 // 임시 페이지 컴포넌트 (나중에 실제 페이지로 교체)
-import { Box, Typography, Paper } from '@mui/material';
+import {Box, Paper, Typography} from '@mui/material';
 
 // 게시판 컴포넌트
 import NoticeBoard from './domains/board/components/notice/NoticeBoard';
@@ -83,9 +82,6 @@ import AssignmentBoard from './domains/course/components/assignment/AssignmentBo
 import AssignmentDetailPage from './domains/course/components/assignment/AssignmentDetailPage';
 import AssignmentFormPage from './domains/course/components/assignment/AssignmentFormPage';
 import AssignmentSubmissionsPage from './domains/course/components/assignment/AssignmentSubmissionsPage';
-import ExamBoard from './domains/board/components/exam/ExamBoardPage';
-import QuizBoard from './domains/board/components/quiz/QuizBoardPage';
-import StudyBoard from './domains/board/components/study/StudyRecruitmentBoardPage';
 
 /**
  * 임시 페이지 컴포넌트
@@ -93,166 +89,167 @@ import StudyBoard from './domains/board/components/study/StudyRecruitmentBoardPa
  *
  * @param {string} title - 페이지 제목
  */
-const TempPage = ({ title }) => (
-  <Box>
-    <Paper sx={{ p: 4, textAlign: 'center' }}>
-      <Typography variant="h4" sx={{ mb: 2 }}>
-        {title}
-      </Typography>
-      <Typography variant="body1" color="text.secondary">
-        이 페이지는 아직 준비 중입니다.
-      </Typography>
-    </Paper>
-  </Box>
+const TempPage = ({title}) => (
+    <Box>
+        <Paper sx={{p: 4, textAlign: 'center'}}>
+            <Typography variant="h4" sx={{mb: 2}}>
+                {title}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+                이 페이지는 아직 준비 중입니다.
+            </Typography>
+        </Paper>
+    </Box>
 );
 
 /**
  * App 컴포넌트
  */
 function App() {
-  return (
-    // 테마 Context Provider (다크모드 지원)
-    <ThemeContextProvider>
-      {/* React Router 설정 */}
-      <Router>
-        <Routes>
-          {/* 인증 관련 라우트 (MainLayout 없음) */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+    return (
+        // 테마 Context Provider (다크모드 지원)
+        <ThemeContextProvider>
+            {/* React Router 설정 */}
+            <Router>
+                <Routes>
+                    {/* 인증 관련 라우트 (MainLayout 없음) */}
+                    <Route path="/login" element={<Login/>}/>
+                    <Route path="/signup" element={<SignUp/>}/>
+                    <Route path="/forgot-password" element={<ForgotPassword/>}/>
 
-          {/* 메인 앱 라우트 (MainLayout 포함) */}
-          <Route element={<MainLayout />}>
-            {/* 기본 경로 - 로그인 페이지로 리다이렉트 */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+                    {/* 메인 앱 라우트 (MainLayout 포함) */}
+                    <Route element={<MainLayout/>}>
+                        {/* 기본 경로 - 로그인 페이지로 리다이렉트 */}
+                        <Route path="/" element={<Navigate to="/login" replace/>}/>
 
-            {/* 대시보드 */}
-            <Route path="/dashboard" element={<Dashboard />} />
+                        {/* 대시보드 */}
+                        <Route path="/dashboard" element={<Dashboard/>}/>
 
-            {/* 강의 관련 라우트 - 순서 중요: 구체적인 경로를 먼저 */}
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/courses/all" element={<Courses />} />
-            <Route path="/courses/my" element={<Courses />} />
-            <Route path="/courses/schedule" element={<CourseSchedule />} />
-            <Route path="/course/:courseId" element={<CourseDetail />} />
-            <Route path="/course/:courseId/exams/:examId" element={<AssessmentDetail />} />
-            <Route path="/exams/attempts/:attemptId" element={<AssessmentAttempt />} />
+                        {/* 강의 관련 라우트 - 순서 중요: 구체적인 경로를 먼저 */}
+                        <Route path="/courses" element={<Courses/>}/>
+                        <Route path="/courses/all" element={<Courses/>}/>
+                        <Route path="/courses/my" element={<Courses/>}/>
+                        <Route path="/courses/schedule" element={<CourseSchedule/>}/>
+                        <Route path="/course/:courseId" element={<CourseDetail/>}/>
+                        <Route path="/course/:courseId/exams/:examId" element={<AssessmentDetail/>}/>
+                        <Route path="/exams/attempts/:attemptId" element={<AssessmentAttempt/>}/>
 
-            {/* 수강신청 */}
-            <Route path="/registration" element={<CourseRegistration />} />
+                        {/* 수강신청 */}
+                        <Route path="/registration" element={<CourseRegistration/>}/>
 
-            {/* 교수용 강의 관리 */}
-            <Route path="/professor/courses" element={<ProfessorCourseManagement />} />
-            <Route path="/professor/my-courses" element={<ProfessorMyCourses />} />
-            <Route path="/professor/schedule" element={<ProfessorSchedule />} />
-            <Route path="/professor/course/:courseId/manage" element={<ProfessorCourseDetail />} />
+                        {/* 교수용 강의 관리 */}
+                        <Route path="/professor/courses" element={<ProfessorCourseManagement/>}/>
+                        <Route path="/professor/my-courses" element={<ProfessorMyCourses/>}/>
+                        <Route path="/professor/schedule" element={<ProfessorSchedule/>}/>
+                        <Route path="/professor/course/:courseId/manage" element={<ProfessorCourseDetail/>}/>
 
-            {/* 과제 */}
-            <Route path="/assignments" element={<TempPage title="과제" />} />
+                        {/* 과제 */}
+                        <Route path="/assignments" element={<TempPage title="과제"/>}/>
 
-            {/* 퀴즈/시험: 사이드바 진입은 제거했지만, 혹시 남아있는 링크/북마크를 위해 강의 상세로 유도 */}
-            <Route path="/exams" element={<Navigate to="/courses/my" replace />} />
+                        {/* 퀴즈/시험: 사이드바 진입은 제거했지만, 혹시 남아있는 링크/북마크를 위해 강의 상세로 유도 */}
+                        <Route path="/exams" element={<Navigate to="/courses/my" replace/>}/>
 
-            {/* 커뮤니티 관련 라우트 */}
-            <Route path="/notices" element={<NoticeBoard />} />
-            <Route path="/notices/create" element={<NoticeFormPage />} />
-            <Route path="/notices/:id/edit" element={<NoticeFormPage />} />
-            <Route path="/notices/:id" element={<Notice />} />
-            
-            {/* 자유 게시판 */}
-            <Route path="/free" element={<FreeBoard />} />
-            <Route path="/free/create" element={<FreeFormPage />} />
-            <Route path="/free/:id/edit" element={<FreeFormPage />} />
-            <Route path="/free/:id" element={<FreePage />} />
-            
-            {/* 질문 게시판 */}
-            <Route path="/questions" element={<QuestionBoard />} />
-            <Route path="/questions/create" element={<QuestionFormPage />} />
-            <Route path="/questions/:id/edit" element={<QuestionFormPage />} />
-            <Route path="/questions/:id" element={<QuestionPage />} />
-            
-            {/* 토론 게시판 */}
-            <Route path="/discussions" element={<DiscussionBoard />} />
-            <Route path="/discussions/create" element={<DiscussionFormPage />} />
-            <Route path="/discussions/:id/edit" element={<DiscussionFormPage />} />
-            <Route path="/discussions/:id" element={<DiscussionPage />} />
-            
-            {/* 학과 게시판 */}
-            <Route path="/departments" element={<DepartmentBoard />} />
-            <Route path="/departments/create" element={<DepartmentFormPage />} />
-            <Route path="/departments/:id/edit" element={<DepartmentFormPage />} />
-            <Route path="/departments/:id" element={<DepartmentPage />} />
+                        {/* 커뮤니티 관련 라우트 */}
+                        <Route path="/notices" element={<NoticeBoard/>}/>
+                        <Route path="/notices/create" element={<NoticeFormPage/>}/>
+                        <Route path="/notices/:id/edit" element={<NoticeFormPage/>}/>
+                        <Route path="/notices/:id" element={<Notice/>}/>
 
-            {/* 교수, 학생 게시판 라우트 (레거시 경로 유지) */}
-            <Route path="/boards/professor" element={<ProfessorBoard />} />
-            <Route path="/boards/professor/create" element={<ProfessorFormPage />} />
-            <Route path="/boards/professor/:id/edit" element={<ProfessorFormPage />} />
-            <Route path="/boards/professor/:id" element={<ProfessorPage />} />
+                        {/* 자유 게시판 */}
+                        <Route path="/free" element={<FreeBoard/>}/>
+                        <Route path="/free/create" element={<FreeFormPage/>}/>
+                        <Route path="/free/:id/edit" element={<FreeFormPage/>}/>
+                        <Route path="/free/:id" element={<FreePage/>}/>
 
-            <Route path="/boards/student" element={<StudentBoard />} />
-            <Route path="/boards/student/create" element={<StudentFormPage />} />
-            <Route path="/boards/student/:id/edit" element={<StudentFormPage />} />
-            <Route path="/boards/student/:id" element={<StudentPage />} />
+                        {/* 질문 게시판 */}
+                        <Route path="/questions" element={<QuestionBoard/>}/>
+                        <Route path="/questions/create" element={<QuestionFormPage/>}/>
+                        <Route path="/questions/:id/edit" element={<QuestionFormPage/>}/>
+                        <Route path="/questions/:id" element={<QuestionPage/>}/>
 
-            {/* 공모전 게시판 */}
-            <Route path="/contest" element={<ContestBoard />} />
-            <Route path="/contest/create" element={<ContestFormPage />} />
-            <Route path="/contest/:id/edit" element={<ContestFormPage />} />
-            <Route path="/contest/:id" element={<ContestPage />} />
+                        {/* 토론 게시판 */}
+                        <Route path="/discussions" element={<DiscussionBoard/>}/>
+                        <Route path="/discussions/create" element={<DiscussionFormPage/>}/>
+                        <Route path="/discussions/:id/edit" element={<DiscussionFormPage/>}/>
+                        <Route path="/discussions/:id" element={<DiscussionPage/>}/>
 
-            {/* 취업정보 게시판 */}
-            <Route path="/career" element={<CareerBoard />} />
-            <Route path="/career/create" element={<CareerFormPage />} />
-            <Route path="/career/:id/edit" element={<CareerFormPage />} />
-            <Route path="/career/:id" element={<CareerPage />} />
+                        {/* 학과 게시판 */}
+                        <Route path="/departments" element={<DepartmentBoard/>}/>
+                        <Route path="/departments/create" element={<DepartmentFormPage/>}/>
+                        <Route path="/departments/:id/edit" element={<DepartmentFormPage/>}/>
+                        <Route path="/departments/:id" element={<DepartmentPage/>}/>
 
-            {/* 과제 라우트 */}
-            <Route path="/assignment" element={<AssignmentBoard />} />
-            <Route path="/assignment/create" element={<AssignmentFormPage />} />
-            <Route path="/assignment/:id/edit" element={<AssignmentFormPage />} />
-            <Route path="/assignment/:id/submissions" element={<AssignmentSubmissionsPage />} />
-            <Route path="/assignment/:id" element={<AssignmentDetailPage />} />
+                        {/* 교수, 학생 게시판 라우트 (레거시 경로 유지) */}
+                        <Route path="/boards/professor" element={<ProfessorBoard/>}/>
+                        <Route path="/boards/professor/create" element={<ProfessorFormPage/>}/>
+                        <Route path="/boards/professor/:id/edit" element={<ProfessorFormPage/>}/>
+                        <Route path="/boards/professor/:id" element={<ProfessorPage/>}/>
 
-            {/* 학습자 관리 */}
-            <Route path="/students" element={<TempPage title="학습자 관리" />} />
+                        <Route path="/boards/student" element={<StudentBoard/>}/>
+                        <Route path="/boards/student/create" element={<StudentFormPage/>}/>
+                        <Route path="/boards/student/:id/edit" element={<StudentFormPage/>}/>
+                        <Route path="/boards/student/:id" element={<StudentPage/>}/>
 
-            {/* 성적 조회 */}
-            <Route path="/grades" element={<Grades />} />
+                        {/* 공모전 게시판 */}
+                        <Route path="/contest" element={<ContestBoard/>}/>
+                        <Route path="/contest/create" element={<ContestFormPage/>}/>
+                        <Route path="/contest/:id/edit" element={<ContestFormPage/>}/>
+                        <Route path="/contest/:id" element={<ContestPage/>}/>
 
-            {/* 알림 */}
-            <Route path="/notifications" element={<Notifications />} />
+                        {/* 취업정보 게시판 */}
+                        <Route path="/career" element={<CareerBoard/>}/>
+                        <Route path="/career/create" element={<CareerFormPage/>}/>
+                        <Route path="/career/:id/edit" element={<CareerFormPage/>}/>
+                        <Route path="/career/:id" element={<CareerPage/>}/>
 
-            {/* 메시지 */}
-            <Route path="/messages" element={<Messages />} />
+                        {/* 과제 라우트 */}
+                        <Route path="/assignment" element={<AssignmentBoard/>}/>
+                        <Route path="/assignment/create" element={<AssignmentFormPage/>}/>
+                        <Route path="/assignment/:id/edit" element={<AssignmentFormPage/>}/>
+                        <Route path="/assignment/:id/submissions" element={<AssignmentSubmissionsPage/>}/>
+                        <Route path="/assignment/:id" element={<AssignmentDetailPage/>}/>
 
-            {/* 프로필 */}
-            <Route path="/profile" element={<Profile />} />
+                        {/* 학습자 관리 */}
+                        <Route path="/students" element={<TempPage title="학습자 관리"/>}/>
 
-            {/* 설정 */}
-            <Route path="/settings" element={<Settings />} />
+                        {/* 성적 조회 */}
+                        <Route path="/grades" element={<Grades/>}/>
 
-            {/* 404 페이지 */}
-            <Route
-              path="*"
-              element={
-                <Box sx={{ textAlign: 'center', mt: 8 }}>
-                  <Typography variant="h1" sx={{ fontSize: '6rem', fontWeight: 700, color: 'primary.main' }}>
-                    404
-                  </Typography>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    페이지를 찾을 수 없습니다
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    요청하신 페이지가 존재하지 않습니다.
-                  </Typography>
-                </Box>
-              }
-            />
-          </Route>
-        </Routes>
-      </Router>
-    </ThemeContextProvider>
-  );
+                        {/* 알림 */}
+                        <Route path="/notifications" element={<Notifications/>}/>
+
+                        {/* 메시지 */}
+                        <Route path="/messages" element={<Messages/>}/>
+
+                        {/* 프로필 */}
+                        <Route path="/profile" element={<Profile/>}/>
+
+                        {/* 설정 */}
+                        <Route path="/settings" element={<Settings/>}/>
+
+                        {/* 404 페이지 */}
+                        <Route
+                            path="*"
+                            element={
+                                <Box sx={{textAlign: 'center', mt: 8}}>
+                                    <Typography variant="h1"
+                                                sx={{fontSize: '6rem', fontWeight: 700, color: 'primary.main'}}>
+                                        404
+                                    </Typography>
+                                    <Typography variant="h5" sx={{mb: 2}}>
+                                        페이지를 찾을 수 없습니다
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary">
+                                        요청하신 페이지가 존재하지 않습니다.
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    </Route>
+                </Routes>
+            </Router>
+        </ThemeContextProvider>
+    );
 }
 
 export default App;
