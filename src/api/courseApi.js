@@ -1,6 +1,6 @@
 /**
  * 강의 관련 API 함수
- * 
+ *
  * 주요 기능:
  * - 수강신청 기간 조회
  * - 강의 목록 조회 (검색, 필터링, 정렬, 페이지네이션)
@@ -17,23 +17,23 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
  * @returns {Promise} 수강신청 기간 정보 (enrollmentPeriodId, periodType 포함)
  */
 export const getCurrentEnrollmentPeriod = async (typeCode = null) => {
-  const url = typeCode
-    ? `${BASE_URL}/api/v1/enrollments/periods/current?type=${encodeURIComponent(typeCode)}`
-    : `${BASE_URL}/api/v1/enrollments/periods/current`;
+    const url = typeCode
+        ? `${BASE_URL}/api/v1/enrollments/periods/current?type=${encodeURIComponent(typeCode)}`
+        : `${BASE_URL}/api/v1/enrollments/periods/current`;
 
-  const response = await axiosInstance.get(url);
+    const response = await axiosInstance.get(url);
 
-  if (response.data?.success && response.data.data?.currentPeriod) {
-    const period = response.data.data.currentPeriod;
-    
-    console.log( 'period ', period);
-  }
-  return response.data;
+    if (response.data?.success && response.data.data?.currentPeriod) {
+        const period = response.data.data.currentPeriod;
+
+        console.log('period ', period);
+    }
+    return response.data;
 };
 
 /**
  * 강의 목록 조회 (검색, 필터링, 정렬, 페이지네이션)
- * 
+ *
  * @param {Object} params - 쿼리 파라미터
  * @param {number} params.page - 페이지 번호 (기본값: 0)
  * @param {number} params.size - 페이지 크기 (기본값: 10)
@@ -46,70 +46,70 @@ export const getCurrentEnrollmentPeriod = async (typeCode = null) => {
  * @returns {Promise} 강의 목록 및 페이지네이션 정보
  */
 export const getCourses = async (params = {}) => {
-  const {
-    page = 0,
-    size = 10,
-    keyword = '',
-    departmentId = null,
-    courseType = null,
-    credits = null,
-    enrollmentPeriodId,
-    sort = 'courseCode,asc',
-  } = params;
+    const {
+        page = 0,
+        size = 10,
+        keyword = '',
+        departmentId = null,
+        courseType = null,
+        credits = null,
+        enrollmentPeriodId,
+        sort = 'courseCode,asc',
+    } = params;
 
-  // 쿼리 파라미터 구성
-  const queryParams = new URLSearchParams();
-  
-  queryParams.append('page', page);
-  queryParams.append('size', size);
-  queryParams.append('sort', sort);
-  
-  if (enrollmentPeriodId) {
-    queryParams.append('enrollmentPeriodId', enrollmentPeriodId);
-  }
-  
-  if (keyword) {
-    queryParams.append('keyword', keyword);
-  }
-  
-  if (departmentId !== null && departmentId !== '') {
-    queryParams.append('departmentId', departmentId);
-  }
-  
-  if (courseType) {
-    queryParams.append('courseType', courseType);
-  }
-  
-  if (credits !== null && credits !== '') {
-    queryParams.append('credits', credits);
-  }
+    // 쿼리 파라미터 구성
+    const queryParams = new URLSearchParams();
 
-  // 수강신청 기간 중 강의 목록 조회는 /api/v1/enrollment/courses 사용
-  const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/enrollments/courses?${queryParams.toString()}`
-  );
+    queryParams.append('page', page);
+    queryParams.append('size', size);
+    queryParams.append('sort', sort);
 
-  return response.data;
+    if (enrollmentPeriodId) {
+        queryParams.append('enrollmentPeriodId', enrollmentPeriodId);
+    }
+
+    if (keyword) {
+        queryParams.append('keyword', keyword);
+    }
+
+    if (departmentId !== null && departmentId !== '') {
+        queryParams.append('departmentId', departmentId);
+    }
+
+    if (courseType) {
+        queryParams.append('courseType', courseType);
+    }
+
+    if (credits !== null && credits !== '') {
+        queryParams.append('credits', credits);
+    }
+
+    // 수강신청 기간 중 강의 목록 조회는 /api/v1/enrollment/courses 사용
+    const response = await axiosInstance.get(
+        `${BASE_URL}/api/v1/enrollments/courses?${queryParams.toString()}`
+    );
+
+    return response.data;
 };
 
 /**
  * 강의 상세 조회
- * 
+ *
  * @param {number} courseId - 강의 ID
  * @returns {Promise} 강의 상세 정보
  */
 export const getCourseDetail = async (courseId) => {
-  try {
-    const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}`);
-    return response.data;
-  } catch (err) {
-    // fallback: 스펙에 맞춘 prefix 없는 경로
-    if (err?.status === 404) {
-      const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}`);
-      return response.data;
+    try {
+        const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}`);
+        return response.data;
+    } catch (err) {
+        // fallback: 스펙에 맞춘 prefix 없는 경로
+        if (err?.status === 404) {
+            const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}`);
+            return response.data;
+        }
+        throw err;
     }
-    throw err;
-  }
 };
 
 /**
@@ -120,17 +120,17 @@ export const getCourseDetail = async (courseId) => {
  * 백엔드 라우팅이 /api/v1 prefix를 사용하는 경우가 있어 1회 fallback을 둠.
  */
 export const getCourseWeeks = async (courseId) => {
-  try {
-    const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}/weeks`);
-    return response.data;
-  } catch (eStudent) {
-    if (eStudent?.status === 404) {
-      // legacy fallback
-      const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}/weeks`);
-      return response.data;
+    try {
+        const response = await axiosInstance.get(`${BASE_URL}/api/v1/courses/${courseId}/weeks`);
+        return response.data;
+    } catch (eStudent) {
+        if (eStudent?.status === 404) {
+            // legacy fallback
+            const response = await axiosInstance.get(`${BASE_URL}/courses/${courseId}/weeks`);
+            return response.data;
+        }
+        throw eStudent;
     }
-    throw eStudent;
-  }
 };
 
 /**
@@ -139,10 +139,10 @@ export const getCourseWeeks = async (courseId) => {
  * - GET /api/v1/courses/{courseId}/weeks/{weekId}/contents
  */
 export const getWeekContents = async (courseId, weekId) => {
-  const response = await axiosInstance.get(
-    `${BASE_URL}/api/v1/courses/${courseId}/weeks/${weekId}/contents`
-  );
-  return response.data;
+    const response = await axiosInstance.get(
+        `${BASE_URL}/api/v1/courses/${courseId}/weeks/${weekId}/contents`
+    );
+    return response.data;
 };
 
 /**
@@ -151,12 +151,12 @@ export const getWeekContents = async (courseId, weekId) => {
  * @returns {Promise} 학과 목록
  */
 export const getDepartments = async () => {
-  // API 엔드포인트 확인 필요
-  // const response = await axiosInstance.get('/api/v1/departments');
-  // return response.data;
-  
-  // 임시로 빈 배열 반환
-  return { success: true, data: [] };
+    // API 엔드포인트 확인 필요
+    // const response = await axiosInstance.get('/api/v1/departments');
+    // return response.data;
+
+    // 임시로 빈 배열 반환
+    return {success: true, data: []};
 };
 
 /**
@@ -164,8 +164,8 @@ export const getDepartments = async () => {
  * @returns {Promise} 장바구니 목록
  */
 export const getCarts = async () => {
-  const response = await axiosInstance.get(`${BASE_URL}/api/v1/carts`);
-  return response.data;
+    const response = await axiosInstance.get(`${BASE_URL}/api/v1/carts`);
+    return response.data;
 };
 
 /**
@@ -174,10 +174,10 @@ export const getCarts = async () => {
  * @returns {Promise} 추가 결과
  */
 export const addToCarts = async (courseIds) => {
-  const response = await axiosInstance.post(`${BASE_URL}/api/v1/carts/bulk`, {
-    courseIds,
-  });
-  return response.data;
+    const response = await axiosInstance.post(`${BASE_URL}/api/v1/carts/bulk`, {
+        courseIds,
+    });
+    return response.data;
 };
 
 /**
@@ -186,10 +186,10 @@ export const addToCarts = async (courseIds) => {
  * @returns {Promise} 제거 결과
  */
 export const removeFromCarts = async (cartIds) => {
-  const response = await axiosInstance.delete(`${BASE_URL}/api/v1/carts/bulk`, {
-    data: { cartIds },
-  });
-  return response.data;
+    const response = await axiosInstance.delete(`${BASE_URL}/api/v1/carts/bulk`, {
+        data: {cartIds},
+    });
+    return response.data;
 };
 
 /**
@@ -197,8 +197,8 @@ export const removeFromCarts = async (cartIds) => {
  * @returns {Promise} 제거 결과
  */
 export const clearCarts = async () => {
-  const response = await axiosInstance.delete(`${BASE_URL}/api/v1/carts`);
-  return response.data;
+    const response = await axiosInstance.delete(`${BASE_URL}/api/v1/carts`);
+    return response.data;
 };
 
 /**
@@ -207,10 +207,10 @@ export const clearCarts = async () => {
  * @returns {Promise} 수강신청 결과
  */
 export const enrollFromCart = async (courseIds) => {
-  const response = await axiosInstance.post(`${BASE_URL}/api/v1/enrollments/bulk`, {
-    courseIds,
-  });
-  return response.data;
+    const response = await axiosInstance.post(`${BASE_URL}/api/v1/enrollments/bulk`, {
+        courseIds,
+    });
+    return response.data;
 };
 
 /**
@@ -219,35 +219,35 @@ export const enrollFromCart = async (courseIds) => {
  * @returns {Promise} 수강신청 목록 및 요약 정보
  */
 export const getMyEnrollments = async (enrollmentPeriodId = null) => {
-  const queryParams = new URLSearchParams();
-  
-  if (enrollmentPeriodId) {
-    queryParams.append('enrollmentPeriodId', enrollmentPeriodId);
-  }
+    const queryParams = new URLSearchParams();
 
-  const url = queryParams.toString() 
-    ? `${BASE_URL}/api/v1/enrollments/my?${queryParams.toString()}`
-    : `${BASE_URL}/api/v1/enrollments/my`;
-
-  try {
-    const response = await axiosInstance.get(url);
-    return response.data;
-  } catch (e) {
-    // 일부 백엔드에서 "수강신청(수강중) 내역 없음"을 400으로 내려주는 케이스가 있어
-    // 시간표/수강과목 화면이 깨지지 않도록 빈 데이터로 처리한다.
-    if (e?.status === 400) {
-      return {
-        success: true,
-        data: {
-          term: null,
-          summary: { totalCourses: 0, totalCredits: 0 },
-          enrollments: [],
-        },
-        message: e?.message || '수강 과목이 없습니다.',
-      };
+    if (enrollmentPeriodId) {
+        queryParams.append('enrollmentPeriodId', enrollmentPeriodId);
     }
-    throw e;
-  }
+
+    const url = queryParams.toString()
+        ? `${BASE_URL}/api/v1/enrollments/my?${queryParams.toString()}`
+        : `${BASE_URL}/api/v1/enrollments/my`;
+
+    try {
+        const response = await axiosInstance.get(url);
+        return response.data;
+    } catch (e) {
+        // 일부 백엔드에서 "수강신청(수강중) 내역 없음"을 400으로 내려주는 케이스가 있어
+        // 시간표/수강과목 화면이 깨지지 않도록 빈 데이터로 처리한다.
+        if (e?.status === 400) {
+            return {
+                success: true,
+                data: {
+                    term: null,
+                    summary: {totalCourses: 0, totalCredits: 0},
+                    enrollments: [],
+                },
+                message: e?.message || '수강 과목이 없습니다.',
+            };
+        }
+        throw e;
+    }
 };
 
 /**
@@ -261,18 +261,18 @@ export const getMyEnrollments = async (enrollmentPeriodId = null) => {
  * @returns {Promise} 시간표 데이터
  */
 export const getMySchedule = async (params = {}) => {
-  const { year, term } = params;
-  const queryParams = new URLSearchParams();
+    const {year, term} = params;
+    const queryParams = new URLSearchParams();
 
-  if (year !== undefined && year !== null && year !== '') queryParams.append('year', year);
-  if (term !== undefined && term !== null && term !== '') queryParams.append('term', term);
+    if (year !== undefined && year !== null && year !== '') queryParams.append('year', year);
+    if (term !== undefined && term !== null && term !== '') queryParams.append('term', term);
 
-  const url = queryParams.toString()
-    ? `${BASE_URL}/schedule?${queryParams.toString()}`
-    : `${BASE_URL}/schedule`;
+    const url = queryParams.toString()
+        ? `${BASE_URL}/schedule?${queryParams.toString()}`
+        : `${BASE_URL}/schedule`;
 
-  const response = await axiosInstance.get(url);
-  return response.data;
+    const response = await axiosInstance.get(url);
+    return response.data;
 };
 
 /**
@@ -284,26 +284,26 @@ export const getMySchedule = async (params = {}) => {
  * @param {string|number} params.term - 학기 (termType)
  */
 export const getCurrentEnrolledCourses = async (params = {}) => {
-  const { year, term } = params;
-  const queryParams = new URLSearchParams();
-  if (year !== undefined && year !== null && year !== '') queryParams.append('year', year);
-  if (term !== undefined && term !== null && term !== '') queryParams.append('term', term);
+    const {year, term} = params;
+    const queryParams = new URLSearchParams();
+    if (year !== undefined && year !== null && year !== '') queryParams.append('year', year);
+    if (term !== undefined && term !== null && term !== '') queryParams.append('term', term);
 
-  const basePath = queryParams.toString() ? `?${queryParams.toString()}` : '';
-  const url = `${BASE_URL}/enrollments/current${basePath}`;
+    const basePath = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    const url = `${BASE_URL}/enrollments/current${basePath}`;
 
-  try {
-    const response = await axiosInstance.get(url);
-    return response.data;
-  } catch (err) {
-    // 일부 환경에서 /api/v1 prefix가 필요한 경우 fallback
-    if (err?.response?.status === 404 || err?.status === 404) {
-      const fallbackUrl = `${BASE_URL}/api/v1/enrollments/current${basePath}`;
-      const response = await axiosInstance.get(fallbackUrl);
-      return response.data;
+    try {
+        const response = await axiosInstance.get(url);
+        return response.data;
+    } catch (err) {
+        // 일부 환경에서 /api/v1 prefix가 필요한 경우 fallback
+        if (err?.response?.status === 404 || err?.status === 404) {
+            const fallbackUrl = `${BASE_URL}/api/v1/enrollments/current${basePath}`;
+            const response = await axiosInstance.get(fallbackUrl);
+            return response.data;
+        }
+        throw err;
     }
-    throw err;
-  }
 };
 
 /**
@@ -312,8 +312,8 @@ export const getCurrentEnrolledCourses = async (params = {}) => {
  * @returns {Promise} 취소 결과
  */
 export const cancelEnrollments = async (enrollmentIds) => {
-  const response = await axiosInstance.delete(`${BASE_URL}/api/v1/enrollments/bulk`, {
-    data: { enrollmentIds },
-  });
-  return response.data;
+    const response = await axiosInstance.delete(`${BASE_URL}/api/v1/enrollments/bulk`, {
+        data: {enrollmentIds},
+    });
+    return response.data;
 };
