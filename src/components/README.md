@@ -3,6 +3,7 @@
 전체 앱에서 재사용 가능한 UI 컴포넌트
 
 ## 주요 컴포넌트
+
 - `Button.jsx` - 버튼
 - `Input.jsx` - 입력 필드
 - `Card.jsx` - 카드
@@ -13,6 +14,7 @@
 ## 사용법
 
 ### Button
+
 ```javascript
 import Button from './components/Button';
 
@@ -22,6 +24,7 @@ import Button from './components/Button';
 ```
 
 ### Layout
+
 ```javascript
 import Layout from './components/Layout';
 
