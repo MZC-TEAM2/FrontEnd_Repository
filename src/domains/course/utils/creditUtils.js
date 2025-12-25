@@ -11,7 +11,7 @@ const MAX_CREDITS = 21;
  * @returns {boolean} 최대 학점 초과 여부
  */
 export const isCreditLimitExceeded = (currentCredits, additionalCredits) => {
-  return currentCredits + additionalCredits > MAX_CREDITS;
+    return currentCredits + additionalCredits > MAX_CREDITS;
 };
 
 /**
@@ -20,7 +20,7 @@ export const isCreditLimitExceeded = (currentCredits, additionalCredits) => {
  * @returns {number} 총 학점
  */
 export const calculateTotalCredits = (courses) => {
-  return courses.reduce((sum, course) => sum + (course.credits || 0), 0);
+    return courses.reduce((sum, course) => sum + (course.credits || 0), 0);
 };
 
 /**
@@ -29,7 +29,7 @@ export const calculateTotalCredits = (courses) => {
  * @returns {number} 남은 학점
  */
 export const getRemainingCredits = (currentCredits) => {
-  return Math.max(0, MAX_CREDITS - currentCredits);
+    return Math.max(0, MAX_CREDITS - currentCredits);
 };
 
 /**
@@ -37,5 +37,5 @@ export const getRemainingCredits = (currentCredits) => {
  * @returns {number} 최대 학점
  */
 export const getMaxCredits = () => {
-  return MAX_CREDITS;
+    return MAX_CREDITS;
 };
