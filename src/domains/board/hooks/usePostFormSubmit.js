@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 
 /**
  * 게시글 작성/수정 폼 제출 로직 공통 훅
- * 
+ *
  * @param {Object} config - 설정 객체
  * @param {string} config.id - 게시글 ID (수정 모드일 때)
  * @param {boolean} config.isEditMode - 수정 모드 여부
@@ -22,90 +22,90 @@ import { useNavigate } from 'react-router-dom';
  * @param {Object} config.formData - 폼 데이터
  */
 export const usePostFormSubmit = (config) => {
-  const {
-    id,
-    isEditMode,
-    basePath,
-    categoryId,
-    boardName = '게시판',
-    createPostFn,
-    updatePostFn,
-    loadForEditFn,
-    setFormData,
-    setExistingFiles,
-    validateForm,
-    setError,
-    uploadFiles,
-    deletedFileIds,
-    formData,
-  } = config;
+    const {
+        id,
+        isEditMode,
+        basePath,
+        categoryId,
+        boardName = '게시판',
+        createPostFn,
+        updatePostFn,
+        loadForEditFn,
+        setFormData,
+        setExistingFiles,
+        validateForm,
+        setError,
+        uploadFiles,
+        deletedFileIds,
+        formData,
+    } = config;
 
-  const navigate = useNavigate();
-  const [submitting, setSubmitting] = useState(false);
-  const [hashtags, setHashtags] = useState([]);
+    const navigate = useNavigate();
+    const [submitting, setSubmitting] = useState(false);
+    const [hashtags, setHashtags] = useState([]);
 
-  // 수정 모드일 때 기존 게시글 데이터 로드
-  useEffect(() => {
-    if (isEditMode && loadForEditFn) {
-      loadForEditFn(id, setFormData, setExistingFiles).then(post => {
-        if (post?.hashtags) {
-          setHashtags(post.hashtags.map(tag => tag.tagName || tag.name));
+    // 수정 모드일 때 기존 게시글 데이터 로드
+    useEffect(() => {
+        if (isEditMode && loadForEditFn) {
+            loadForEditFn(id, setFormData, setExistingFiles).then(post => {
+                if (post?.hashtags) {
+                    setHashtags(post.hashtags.map(tag => tag.tagName || tag.name));
+                }
+            });
         }
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, isEditMode]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, isEditMode]);
 
-  // 제출 처리
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const validation = validateForm();
-    if (!validation.valid) {
-      setError(validation.message);
-      return;
-    }
+    // 제출 처리
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    setSubmitting(true);
-    setError(null);
+        const validation = validateForm();
+        if (!validation.valid) {
+            setError(validation.message);
+            return;
+        }
 
-    try {
-      const attachmentIds = await uploadFiles();
-      
-      const postData = {
-        ...formData,
-        hashtags: hashtags || []
-      };
-      
-      if (isEditMode) {
-        await updatePostFn(id, postData, attachmentIds, deletedFileIds);
-        navigate(`${basePath}/${id}`, { replace: true });
-      } else {
-        const response = await createPostFn(postData, attachmentIds);
-        navigate(`${basePath}/${response.id}`);
-      }
-    } catch (err) {
-      console.error(`${boardName} ${isEditMode ? '수정' : '생성'} 실패:`, err);
-      setError(err.response?.data?.message || `게시글 ${isEditMode ? '수정' : '작성'}에 실패했습니다.`);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+        setSubmitting(true);
+        setError(null);
 
-  // 취소 처리
-  const handleCancel = () => {
-    if (isEditMode) {
-      navigate(`${basePath}/${id}`);
-    } else {
-      navigate(basePath);
-    }
-  };
+        try {
+            const attachmentIds = await uploadFiles();
 
-  return {
-    submitting,
-    hashtags,
-    setHashtags,
-    handleSubmit,
-    handleCancel,
-  };
+            const postData = {
+                ...formData,
+                hashtags: hashtags || []
+            };
+
+            if (isEditMode) {
+                await updatePostFn(id, postData, attachmentIds, deletedFileIds);
+                navigate(`${basePath}/${id}`, {replace: true});
+            } else {
+                const response = await createPostFn(postData, attachmentIds);
+                navigate(`${basePath}/${response.id}`);
+            }
+        } catch (err) {
+            console.error(`${boardName} ${isEditMode ? '수정' : '생성'} 실패:`, err);
+            setError(err.response?.data?.message || `게시글 ${isEditMode ? '수정' : '작성'}에 실패했습니다.`);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // 취소 처리
+    const handleCancel = () => {
+        if (isEditMode) {
+            navigate(`${basePath}/${id}`);
+        } else {
+            navigate(basePath);
+        }
+    };
+
+    return {
+        submitting,
+        hashtags,
+        setHashtags,
+        handleSubmit,
+        handleCancel,
+    };
 };
