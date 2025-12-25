@@ -1,7 +1,7 @@
 import React from 'react';
 import BoardListPage from '../common/BoardListPage';
-import { Work as WorkIcon } from '@mui/icons-material';
-import { CAREER_HASHTAGS } from '../../constants/boardHashtags';
+import {Work as WorkIcon} from '@mui/icons-material';
+import {CAREER_HASHTAGS} from '../../constants/boardHashtags';
 
 /**
  * 취업정보 게시판 페이지
@@ -11,18 +11,18 @@ import { CAREER_HASHTAGS } from '../../constants/boardHashtags';
  */
 const CareerBoardPage = () => {
 
-  return (
-    <BoardListPage
-      boardType="CAREER"
-      title="취업정보 게시판"
-      icon={<WorkIcon sx={{ fontSize: 32, color: 'primary.main' }} />}
-      basePath="/career"
-      createPath="/career/create"
-      createButtonText="채용 공고 등록"
-      hashtags={CAREER_HASHTAGS}
-      showHashtagsInTable={true}
-    />
-  );
+    return (
+        <BoardListPage
+            boardType="CAREER"
+            title="취업정보 게시판"
+            icon={<WorkIcon sx={{fontSize: 32, color: 'primary.main'}}/>}
+            basePath="/career"
+            createPath="/career/create"
+            createButtonText="채용 공고 등록"
+            hashtags={CAREER_HASHTAGS}
+            showHashtagsInTable={true}
+        />
+    );
 };
 
 export default CareerBoardPage;
